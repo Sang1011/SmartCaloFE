@@ -1,0 +1,43 @@
+import { StyleSheet } from "react-native";
+
+export const FONTS = {
+  thin: "Montserrat-Thin",
+  thinItalic: "Montserrat-ThinItalic",
+  extraLight: "Montserrat-ExtraLight",
+  extraLightItalic: "Montserrat-ExtraLightItalic",
+  light: "Montserrat-Light",
+  lightItalic: "Montserrat-LightItalic",
+  regular: "Montserrat-Regular",
+  italic: "Montserrat-Italic",
+  medium: "Montserrat-Medium",
+  mediumItalic: "Montserrat-MediumItalic",
+  semiBold: "Montserrat-SemiBold",
+  semiBoldItalic: "Montserrat-SemiBoldItalic",
+  bold: "Montserrat-Bold",
+  boldItalic: "Montserrat-BoldItalic",
+  extraBold: "Montserrat-ExtraBold",
+  extraBoldItalic: "Montserrat-ExtraBoldItalic",
+  black: "Montserrat-Black",
+  blackItalic: "Montserrat-BlackItalic",
+};
+
+export const globalStyles = StyleSheet.create({
+  thin: { fontFamily: FONTS.thin },
+  thinItalic: { fontFamily: FONTS.thinItalic },
+  extraLight: { fontFamily: FONTS.extraLight },
+  extraLightItalic: { fontFamily: FONTS.extraLightItalic },
+  light: { fontFamily: FONTS.light },
+  lightItalic: { fontFamily: FONTS.lightItalic },
+  regular: { fontFamily: FONTS.regular },
+  italic: { fontFamily: FONTS.italic },
+  medium: { fontFamily: FONTS.medium },
+  mediumItalic: { fontFamily: FONTS.mediumItalic },
+  semiBold: { fontFamily: FONTS.semiBold },
+  semiBoldItalic: { fontFamily: FONTS.semiBoldItalic },
+  bold: { fontFamily: FONTS.bold },
+  boldItalic: { fontFamily: FONTS.boldItalic },
+  extraBold: { fontFamily: FONTS.extraBold },
+  extraBoldItalic: { fontFamily: FONTS.extraBoldItalic },
+  black: { fontFamily: FONTS.black },
+  blackItalic: { fontFamily: FONTS.blackItalic },
+});
