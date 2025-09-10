@@ -10,10 +10,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import color from "../constants/color";
-import { FONTS, globalStyles } from "@/constants/fonts";
-import SCButton from "@/components/ui/SCButton";
+import { FONTS, globalStyles } from "../constants/fonts";
+import SCButton from "../components/ui/SCButton";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import Wave from "@/components/ui/waveBackground";
+import Wave from "../components/ui/waveBackground";
 import { Image } from "expo-image";
 
 interface IIntroScreenProps {

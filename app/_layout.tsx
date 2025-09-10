@@ -3,19 +3,19 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import "react-native-reanimated";
-import { getBooleanData, saveBooleanData } from "@/stores";
+import { getBooleanData, saveBooleanData } from "../stores";
 import {
   AppScreen,
   HAS_DONE_SURVEY,
   HAS_OPENED_APP,
   IS_LOGGED_IN,
-} from "@/constants/app";
+} from "../constants/app";
 import { Text, View } from "react-native";
 import IntroScreen from "./introScreen";
 import LoginScreen from "./login";
 import SurveyScreen from "./surveyScreen";
 import { Provider } from "react-redux";
-import { store } from "@/redux";
+import { store } from "../redux";
 import Welcome from "./welcomeScreen";
 
 export default function RootLayout() {

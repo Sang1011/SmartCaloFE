@@ -1,5 +1,5 @@
-import Color from "@/constants/color";
-import { FONTS } from "@/constants/fonts";
+import Color from "../../constants/color";
+import { FONTS } from "../../constants/fonts";
 import * as React from "react";
 import {
   TextInput,

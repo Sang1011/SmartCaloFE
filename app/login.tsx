@@ -1,15 +1,15 @@
-import SCInput from "@/components/ui/SCInput";
-import color from "@/constants/color";
-import { FONTS, globalStyles } from "@/constants/fonts";
+import SCInput from "../components/ui/SCInput";
+import color from "../constants/color";
+import { FONTS, globalStyles } from "../constants/fonts";
 import { Image } from "expo-image";
 import { StyleSheet, Dimensions, Text, View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import SCCheckBox from "@/components/ui/SCCheckBox";
+import SCCheckBox from "../components/ui/SCCheckBox";
 import { Link } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
-import SCButton from "@/components/ui/SCButton";
+import SCButton from "../components/ui/SCButton";
 
 interface ILoginScreenProps {
   onLoginSuccess: () => void;

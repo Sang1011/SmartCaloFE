@@ -1,8 +1,8 @@
-import Color from "@/constants/color";
+import Color from "../../constants/color";
 import React, { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Entypo from "@expo/vector-icons/Entypo";
-import { FONTS } from "@/constants/fonts";
+import { FONTS } from "../../constants/fonts";
 
 export interface SCCheckBoxProps {
   label?: string;

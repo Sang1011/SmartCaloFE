@@ -6,8 +6,9 @@
     "start": "expo start --dev-client",
     "dev": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
+    "android": "cross-env NODE_ENV=development expo run:android",
+    "android:start": "expo start --android",
+    "ios": "cross-env NODE_ENV=development expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint"
   },
@@ -52,7 +53,9 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@react-native-community/cli": "^20.0.2",
     "@types/react": "~19.0.10",
+    "cross-env": "^10.0.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
     "typescript": "~5.8.3"

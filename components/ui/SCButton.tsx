@@ -9,7 +9,7 @@ import {
   StyleProp,
   ViewStyle,
 } from "react-native";
-import { FONTS, globalStyles } from "@/constants/fonts";
+import { FONTS, globalStyles } from "../../constants/fonts";
 import Color from "../../constants/color";
 
 interface SCButtonProps extends PressableProps {

@@ -1,7 +1,7 @@
-import SCButton from "@/components/ui/SCButton";
-import SCCarousel from "@/components/ui/SCCarousel";
-import color from "@/constants/color";
-import { globalStyles } from "@/constants/fonts";
+import SCButton from "../components/ui/SCButton";
+import SCCarousel from "../components/ui/SCCarousel";
+import color from "../constants/color";
+import { globalStyles } from "../constants/fonts";
 import { Button, Dimensions, StyleSheet, Text, View } from "react-native";
 
 interface IWelcomeProps {
