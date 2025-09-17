@@ -91,11 +91,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 14,
+    height: 48,
     paddingHorizontal: 24,
     gap: 5,
   },
   text: {
     fontSize: 16,
+    textAlignVertical: "center"
   },
 });

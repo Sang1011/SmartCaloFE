@@ -1,7 +1,6 @@
-interface ISplashScreenProps {
-  onFinish : () => void; 
-}
+import { Text } from "react-native";
 
-export default function SplashScreen(onFinish: ISplashScreenProps) {
-return <>SplashScreen</>;
+
+export default function SplashScreen() {
+return (<Text>SplashScreen</Text>);
 }

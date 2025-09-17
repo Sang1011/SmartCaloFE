@@ -1,16 +1,14 @@
+import { navigateWithFlag } from "@utils/navigation";
 import SCButton from "../components/ui/SCButton";
 import SCCarousel from "../components/ui/SCCarousel";
 import color from "../constants/color";
 import { globalStyles } from "../constants/fonts";
 import { Button, Dimensions, StyleSheet, Text, View } from "react-native";
 
-interface IWelcomeProps {
-  onFinish: () => void;
-}
 
 const { width, height } = Dimensions.get("window");
 
-export default function Welcome({ onFinish }: IWelcomeProps) {
+export default function Welcome() {
   return (
     <>
       {/* Title*/}
@@ -35,7 +33,7 @@ export default function Welcome({ onFinish }: IWelcomeProps) {
           <SCButton title="Đăng ký" onPress={() => console.log("Register pressed")} />
         </View>
         <View style={styles.buttonLogin}>
-          <SCButton title="Đăng nhập" variant="outline" onPress={() => onFinish()} />
+          <SCButton title="Đăng nhập" variant="outline" onPress={() => navigateWithFlag("/login")} />
         </View>
       </View>
     </>

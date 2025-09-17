@@ -7,18 +7,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import SCCheckBox from "../components/ui/SCCheckBox";
-import { Link } from "expo-router";
-import { useNavigation } from "@react-navigation/native";
 import SCButton from "../components/ui/SCButton";
+import { navigateWithFlag } from "@utils/navigation";
+import { IS_LOGGED_IN } from "@constants/app";
 
-interface ILoginScreenProps {
-  onLoginSuccess: () => void;
-}
-
-const { width, height } = Dimensions.get("window");
-
-export default function LoginScreen({ onLoginSuccess }: ILoginScreenProps) {
-  const navigation = useNavigation();
+export default function LoginScreen() {
   return (
     <SafeAreaView
       style={styles.screen}
@@ -66,7 +59,10 @@ export default function LoginScreen({ onLoginSuccess }: ILoginScreenProps) {
           </Pressable>
         </View>
         <View style={styles.button}>
-          <SCButton title="Đăng nhập" onPress={() => onLoginSuccess()} />
+          <SCButton
+            title="Đăng nhập"
+            onPress={() => navigateWithFlag("/surveyScreen", IS_LOGGED_IN)}
+          />
         </View>
       </View>
       <View style={styles.registerContainer}>
@@ -138,24 +134,26 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     position: "relative",
+    marginHorizontal: "auto"
   },
   logo: {
-    marginTop: height * 0.05,
-    width: width * 0.3, // responsive
-    height: width * 0.3, // vuông theo tỉ lệ
+    marginTop: 40, 
+    width: "30%",
+    aspectRatio: 1, 
+    resizeMode: "contain",
   },
   title: {
-    fontSize: width * 0.06,
-    marginVertical: height * 0.01,
+    fontSize: 24, 
+    marginVertical: 8,
     color: color.dark_green,
   },
   form: {
     width: "100%",
+    paddingHorizontal: 20,
+    marginTop: 16,
   },
   inputContainer: {
-    width: "100%",
-    paddingHorizontal: 20,
-    gap: 8,
+    gap: 12,
   },
   checkboxContainer: {
     flexDirection: "row",
@@ -166,7 +164,7 @@ const styles = StyleSheet.create({
   button: {
     width: "90%",
     alignSelf: "center",
-    marginTop: height * 0.03,
+    marginTop: 24,
   },
   registerContainer: {
     marginTop: 8,
@@ -174,31 +172,27 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   ORContainer: {
+    marginHorizontal: "auto",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     marginVertical: 24,
-    gap: 5,
   },
   divider: {
-    width: "100%",
-    backgroundColor: color.black,
-    height: 2,
+    width: "50%",
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "#aaa",
   },
   OR: {
+    marginHorizontal: 8,
     fontFamily: FONTS.medium,
+    fontSize: 14,
     textTransform: "uppercase",
-    width: 52,
-    height: 24,
-    fontSize: 16,
   },
   groupButton: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 5,
     width: "100%",
+    alignItems: "center",
+    gap: 10,
   },
   google: {
     width: "80%",
@@ -220,18 +214,12 @@ const styles = StyleSheet.create({
   },
   groupImageContainer: {
     position: "absolute",
-    bottom: 0,
-    left: "50%",
-    transform: [{ translateX: -0.5 * 65 }],
-    width: 65,
-    height: 50,
-    alignItems: "center",
-    justifyContent: "center",
+    bottom: 16,
+    alignSelf: "center", // thay translateX thủ công
   },
-
   logoGroup: {
-    resizeMode: "contain",
     width: 65,
     height: 25,
+    resizeMode: "contain",
   },
 });

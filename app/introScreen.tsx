@@ -15,14 +15,12 @@ import SCButton from "../components/ui/SCButton";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Wave from "../components/ui/waveBackground";
 import { Image } from "expo-image";
-
-interface IIntroScreenProps {
-  onFinish: () => void;
-}
+import { navigateWithFlag } from "@utils/navigation";
+import { HAS_OPENED_APP } from "@constants/app";
 
 const { width, height } = Dimensions.get("window");
 
-export default function IntroScreen({ onFinish }: IIntroScreenProps) {
+export default function IntroScreen() {
   return (
     <SafeAreaView
       style={styles.screen}
@@ -53,7 +51,7 @@ export default function IntroScreen({ onFinish }: IIntroScreenProps) {
       <View style={styles.buttonBox}>
         <SCButton
           title="Tiếp tục"
-          onPress={onFinish}
+          onPress={() => navigateWithFlag("/welcomeScreen", HAS_OPENED_APP)}
           fontFamily={FONTS.semiBold}
           style={styles.button}
           iconPos="right"

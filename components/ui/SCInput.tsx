@@ -48,9 +48,8 @@ export default function SCInput({
     <Pressable style={styles.container} onPress={() => handlePress()}>
       {icon && (
         <>
-          {" "}
-          <View style={styles.iconContainer}>{icon}</View>{" "}
-          <View style={styles.divider}></View>{" "}
+          <View style={styles.iconContainer}>{icon}</View>
+          <View style={styles.divider}></View>
         </>
       )}
 
@@ -100,7 +99,7 @@ const styles = StyleSheet.create({
     borderColor: Color.light_gray,
     display: "flex",
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "flex-start",
     gap: 10,
   },
   input: {
