@@ -58,10 +58,16 @@ export default function LoginScreen() {
             </Text>
           </Pressable>
         </View>
+        {/* <View style={styles.button}>
+          <SCButton
+            title="Đăng nhập"
+            onPress={() => navigateWithFlag("/(survey)/step1", IS_LOGGED_IN)}
+          />
+        </View> */}
         <View style={styles.button}>
           <SCButton
             title="Đăng nhập"
-            onPress={() => navigateWithFlag("/surveyScreen", IS_LOGGED_IN)}
+            onPress={() => navigateWithFlag("/home", IS_LOGGED_IN)}
           />
         </View>
       </View>
@@ -214,7 +220,7 @@ const styles = StyleSheet.create({
   },
   groupImageContainer: {
     position: "absolute",
-    bottom: 16,
+    bottom: 25,
     alignSelf: "center", // thay translateX thủ công
   },
   logoGroup: {

@@ -90,30 +90,28 @@ export default function SCInput({
 const styles = StyleSheet.create({
   container: {
     height: 50,
-    paddingVertical: 16,
     paddingHorizontal: 12,
     borderWidth: 1,
     borderRadius: 12,
     color: Color.black,
     backgroundColor: Color.white,
     borderColor: Color.light_gray,
-    display: "flex",
     flexDirection: "row",
-    justifyContent: "flex-start",
+    alignItems: "center", // đảm bảo input + icon thẳng hàng
     gap: 10,
   },
   input: {
-    width: "95%",
+    flex: 1,              // thay vì width: "95%"
+    color: Color.black,   // default màu chữ
   },
   iconContainer: {
-    width: "5%",
     justifyContent: "center",
     alignItems: "center",
   },
   divider: {
     width: 1,
     backgroundColor: Color.light_gray,
-    height: "100%",
+    height: "65%",
     alignSelf: "center",
   },
 });

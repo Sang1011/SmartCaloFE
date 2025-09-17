@@ -7,5 +7,6 @@ export default {
     black_50: "#00000066",
     white: "#ffffff",
     white_50: "#FFFFFF80",
-    checkbox: "#6C9C39"
+    checkbox: "#6C9C39",
+    grey: "#737373"
 };

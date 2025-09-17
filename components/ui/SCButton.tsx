@@ -96,7 +96,9 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   text: {
+    maxWidth: "90%",
+    textAlign: "right",
     fontSize: 16,
-    textAlignVertical: "center"
+    textAlignVertical: "center",
   },
 });
