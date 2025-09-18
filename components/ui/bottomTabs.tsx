@@ -1,12 +1,28 @@
 import React, { useState } from "react";
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
 import Color from "@constants/color";
 import { UserTab, LogTab, MenuTab, BetweenTab, ExploreTab } from "./tabIcons";
+import { FONTS } from "@constants/fonts";
+import { TabType } from "../../types/tabs";
 
-export default function BottomTabs() {
-  const [activeTab, setActiveTab] = useState("log");
+interface IBottomTabsProps {
+  name?: TabType;
+}
+export default function BottomTabs({ name = "log" }: IBottomTabsProps) {
+  const [activeTab, setActiveTab] = useState(name);
+  const [isCenterOpen, setIsCenterOpen] = useState(false);
 
-  const tabs = [
+  const tabs: {
+    key: TabType;
+    label: string;
+    component: React.FC<{ isActive: boolean }>;
+  }[] = [
     { key: "log", label: "Nhật ký", component: LogTab },
     { key: "explore", label: "Khám phá", component: ExploreTab },
     { key: "center", label: "", component: BetweenTab },
@@ -16,17 +32,31 @@ export default function BottomTabs() {
 
   return (
     <View style={styles.container}>
-        <View style={styles.centerTabBehind}></View>
+      {/* Outer của centerTab đặt ở đây, chung cấp tabBar */}
+      <View style={styles.centerTabOuter} />
+
       <View style={styles.tabBar}>
         {tabs.map((tab) => {
           const IconComponent = tab.component;
+          if (tab.key === "center") {
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                style={styles.centerTabWrapper}
+                onPress={() => setIsCenterOpen(!isCenterOpen)}
+              >
+                <View style={styles.centerTabInnerContainer}>
+                <View style={styles.centerTabInner}>
+                  <BetweenTab isActive={isCenterOpen} />
+                </View>
+                </View>
+              </TouchableOpacity>
+            );
+          }
           return (
             <TouchableOpacity
               key={tab.key}
-              style={[
-                styles.tabItem,
-                tab.key === "center" && styles.centerTab,
-              ]}
+              style={styles.tabItem}
               onPress={() => setActiveTab(tab.key)}
             >
               <IconComponent isActive={activeTab === tab.key} />
@@ -34,7 +64,7 @@ export default function BottomTabs() {
                 <Text
                   style={[
                     styles.label,
-                    activeTab === tab.key && { color: Color.dark_green } && styles.labelActive,
+                    activeTab === tab.key && styles.labelActive,
                   ]}
                 >
                   {tab.label}
@@ -50,44 +80,72 @@ export default function BottomTabs() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    height: 88,
     justifyContent: "flex-end",
-    position: "relative"
+    alignItems: "center",
+    position: "fixed",
   },
   tabBar: {
+    width: "100%",
+    marginHorizontal: "auto",
     height: 88,
+    position: "relative",
+    zIndex: 1,
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: Color.white,
     borderTopWidth: 1,
-    borderColor: "#ddd",
+    borderColor: Color.border,
     justifyContent: "space-around",
   },
   tabItem: {
     alignItems: "center",
     marginTop: 15,
+    width: "20%",
   },
-  centerTab: {
-    backgroundColor: Color.dark_green,
+  centerTabOuter: {
+    backgroundColor: Color.white,
+    borderRadius: 9999,
+    height: 56,
+    width: 56,
+    borderWidth: 1,
+    transform: [{ rotate: "-180deg" }],
+    borderColor: Color.border,
+    alignItems: "center",
     justifyContent: "center",
-    borderRadius: "50%",
+    position: "relative",
+    top: 43,
+    zIndex: 0, // nằm dưới tabBar
+  },
+  centerTabWrapper: {
+    marginTop: -8,
+    alignItems: "center",
+  },
+  centerTabInnerContainer: {
+    backgroundColor: Color.white,
+    borderRadius: 9999,
+    height: 56,
+    width: 56,
+    marginTop: -5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  centerTabInner: {
+    backgroundColor: Color.dark_green,
+    borderRadius: 24,
     height: 48,
     width: 48,
-    marginTop: -8,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  centerTabBehind: {
-    position: "absolute",
-    bottom: -100,
-    left: "50%",
-    backgroundColor: "red",
-    borderRadius: "50%",
-    // zIndex: -1,
-  },
+
   label: {
     fontSize: 12,
     marginTop: 4,
-    color: "#555",
+    color: Color.grey,
+    fontFamily: FONTS.medium,
   },
   labelActive: {
     color: Color.dark_green,
+    fontFamily: FONTS.bold,
   },
 });

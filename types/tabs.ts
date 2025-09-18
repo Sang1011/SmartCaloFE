@@ -1,0 +1,1 @@
+export type TabType = "log" | "explore" | "center" | "menu" | "profile";

@@ -45,7 +45,7 @@ export default function RootLayout() {
         <Stack.Screen name="welcomeScreen" />
         <Stack.Screen name="login" />
         <Stack.Screen name="(survey)" />
-        <Stack.Screen name="(tabs)"/>
+        <Stack.Screen name="tabs"/>
         <Stack.Screen name="+not-found" />
       </Stack>
     </Provider>

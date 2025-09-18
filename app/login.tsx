@@ -67,7 +67,7 @@ export default function LoginScreen() {
         <View style={styles.button}>
           <SCButton
             title="Đăng nhập"
-            onPress={() => navigateWithFlag("/home", IS_LOGGED_IN)}
+            onPress={() => navigateWithFlag("/tabs", IS_LOGGED_IN)}
           />
         </View>
       </View>

@@ -8,5 +8,20 @@ export default {
     white: "#ffffff",
     white_50: "#FFFFFF80",
     checkbox: "#6C9C39",
-    grey: "#737373"
+    grey: "#737373",
+    border: "#ddd",
+    donut_chart_background: "#EDEDED",
+    donut_chart_segment_1: "#7FF1E4",
+    donut_chart_segment_2: "#FDB1A0",
+    donut_chart_segment_3: "#BCBEFA",
+    progress_carb: "#F5B88C",
+    progress_carb_fill: "#C46212",
+    progress_protein: "#FC6363",
+    progress_protein_fill: "#E60000",
+    progress_fat: "#F9C31A",
+    progress_fat_fill: "#A9A000",
+    progress_fiber: "#47C074",
+    progress_fiber_fill: "#287F48",
+    progress_sugar: "#F684BC",
+    progress_sugar_fill: "#BA4F84"
 };
