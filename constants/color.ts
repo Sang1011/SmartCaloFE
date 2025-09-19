@@ -1,12 +1,17 @@
 export default {
+    transparent: "transparent",
     lime: "#6D9B38",
     light_green: "#81BF44",
     dark_green: "#426342",
     light_gray: "#D9D9D9",
     black: "#000000",
     black_50: "#00000066",
+    black_60: "#00000099",
     white: "#ffffff",
+    white_40: "#FFFFFF66",
     white_50: "#FFFFFF80",
+    white_60: "#FFFFFF99",
+    white_70: "#FFFFFFB3",
     checkbox: "#6C9C39",
     grey: "#737373",
     border: "#ddd",
@@ -23,5 +28,10 @@ export default {
     progress_fiber: "#47C074",
     progress_fiber_fill: "#287F48",
     progress_sugar: "#F684BC",
-    progress_sugar_fill: "#BA4F84"
+    progress_sugar_fill: "#BA4F84",
+    progress_default: "#C2C84F",
+    undereating: "#F4A300",
+    overeating: "#e74c3c",
+    eat_default: "#2ecc71",
+    fast_button: "#EFEFEF"
 };

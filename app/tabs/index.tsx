@@ -13,6 +13,9 @@ import Color from "@constants/color";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { FONTS, globalStyles } from "@constants/fonts";
 import SCDonutChart from "@components/ui/SCDonutChart";
+import SCProgressBar from "@components/ui/SCProgressBar";
+import { SCTask } from "@components/ui/SCTask";
+import SCNutritionThisWeek from "@components/ui/SCNutritionThisWeek";
 export default function DefaultScreen() {
   return (
     <SafeAreaView style={styles.container}>
@@ -49,18 +52,47 @@ export default function DefaultScreen() {
                 <View style={styles.nutrionfield}>
                   <Text style={styles.nutritionValue}>300g</Text>
                   <Text style={styles.nutritionText}>Carb</Text>
-                  {/* progress bar */}
+                  <View style={styles.progressBarContainer}>
+                    <SCProgressBar progress={45} color={Color.progress_carb} />
+                  </View>
                 </View>
                 <View style={styles.nutrionfield}>
                   <Text style={styles.nutritionValue}>50g</Text>
                   <Text style={styles.nutritionText}>Protein</Text>
-                  {/* progress bar */}
+                  <View style={styles.progressBarContainer}>
+                    <SCProgressBar
+                      progress={20}
+                      color={Color.progress_protein}
+                    />
+                  </View>
                 </View>
                 <View style={styles.nutrionfield}>
                   <Text style={styles.nutritionValue}>400g</Text>
                   <Text style={styles.nutritionText}>Fat</Text>
-                  {/* progress bar */}
+                  <View style={styles.progressBarContainer}>
+                    <SCProgressBar progress={60} />
+                  </View>
                 </View>
+              </View>
+              <View style={styles.dailySection}>
+                <View style={styles.checklist}>
+                  <Text style={styles.checklistTitle}>Nhiệm vụ hàng ngày</Text>
+                  <View style={styles.checklistItems}>
+                    <SCTask
+                      title="Kiểm tra cân nặng trước khi ăn sáng"
+                      completed={false}
+                    />
+                    <SCTask title="Uống 1 ly nước" completed={false} />
+                    <SCTask title="Ăn theo thực đơn & Ghi lại nhật ký ăn uống" completed={true} />
+                    <SCTask title="Không ăn sau 20h" completed={true} />
+                    <SCTask title="Không ăn đồ ngoài thực đơn" completed={true} />
+                    <SCTask title="Thực hiện các bài tập hôm nay" completed={true} />
+                  </View>
+                </View>
+              </View>
+              <Text style={[globalStyles.medium, styles.warningText]}>Bạn chưa hoàn thành tất cả nhiệm vụ hôm nay!</Text>
+              <View> 
+                  <SCNutritionThisWeek/>
               </View>
             </View>
           </View>
@@ -164,7 +196,7 @@ const styles = StyleSheet.create({
     backgroundColor: Color.white,
     borderRadius: 16,
     paddingVertical: 16,
-    paddingHorizontal: 10
+    paddingHorizontal: 10,
   },
   nutritionValue: {
     textAlign: "left",
@@ -176,10 +208,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: FONTS.medium,
   },
-  progressBar: {
+  progressBarContainer: {
     width: "100%",
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Color.dark_green,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
+  dailySection: {
+    width: "100%",
+    backgroundColor: Color.white,
+    borderRadius: 16,
+    padding: 12,
+  },
+  checklist: {},
+  checklistTitle: {
+    fontSize: 16,
+    fontFamily: FONTS.semiBold,
+  },
+  checklistItems: {
+    paddingVertical: 8,
+  },
+  warningText: {
+    textAlign: "center",
+    fontSize: 12,
+    color: "red",
+  }
 });

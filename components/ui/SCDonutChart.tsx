@@ -1,6 +1,6 @@
 import color from "@constants/color";
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, Text, StyleSheet, Animated } from "react-native";
 import Svg, { Circle, G } from "react-native-svg";
 
 interface ISCDonutChartProps {
@@ -10,10 +10,11 @@ interface ISCDonutChartProps {
   maxValue: number;            // giá trị tổng tối đa
   strokeWidth?: number;
   radius?: number;
-  size?: number;               // 👈 thêm để chỉnh kích thước trực tiếp
+  size?: number;               // 👈 chỉnh kích thước trực tiếp
   centerText?: string;
   centerTextColor?: string;
   backgroundColor?: string;    // màu nền vòng tròn
+  duration?: number;           // thời gian animation (ms)
 }
 
 export default function SCDonutChart({
@@ -27,22 +28,38 @@ export default function SCDonutChart({
   ],
   strokeWidth = 20,
   radius = 70,
-  size, // 👈 lấy từ props
+  size,
   centerText,
   centerTextColor = color.black,
   backgroundColor = color.donut_chart_background,
   maxValue,
+  duration = 800,
 }: ISCDonutChartProps) {
-  // Nếu truyền size → tự tính radius từ size
   const effectiveSize = size ?? radius * 2 + strokeWidth;
   const adjustedRadius = (effectiveSize - strokeWidth) / 2;
   const circumference = 2 * Math.PI * adjustedRadius;
   const center = effectiveSize / 2;
 
-  // Nếu có value thì coi như progress 1 vòng
+  // ✅ Animated value cho single progress
+  const animatedValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (value !== undefined) {
+      const percent = Math.min(value / maxValue, 1);
+      Animated.timing(animatedValue, {
+        toValue: percent,
+        duration,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [value, maxValue]);
+
   if (value !== undefined) {
-    const percent = value / maxValue;
-    const dashOffset = circumference * (1 - percent);
+    // Tính dashOffset từ animated value
+    const strokeDashoffset = animatedValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: [circumference, 0],
+    });
 
     return (
       <View style={{ alignItems: "center", justifyContent: "center" }}>
@@ -58,8 +75,8 @@ export default function SCDonutChart({
               fill="transparent"
             />
 
-            {/* Progress */}
-            <Circle
+            {/* Progress có animation */}
+            <AnimatedCircle
               cx={center}
               cy={center}
               r={adjustedRadius}
@@ -67,7 +84,7 @@ export default function SCDonutChart({
               strokeWidth={strokeWidth}
               fill="transparent"
               strokeDasharray={circumference}
-              strokeDashoffset={dashOffset}
+              strokeDashoffset={strokeDashoffset}
               strokeLinecap="butt"
             />
           </G>
@@ -87,7 +104,8 @@ export default function SCDonutChart({
     );
   }
 
-  // Nếu có segments
+  // Nếu có segments → (advanced) animate từng segment cũng được,
+  // nhưng để đơn giản thì hiển thị tĩnh như trước
   let cumulativePercent = 0;
 
   return (
@@ -143,3 +161,6 @@ export default function SCDonutChart({
     </View>
   );
 }
+
+// 👇 Animated wrapper cho Circle
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
