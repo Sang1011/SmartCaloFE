@@ -23,7 +23,7 @@ interface SCButtonProps extends PressableProps {
   fontFamily?: string; // font chữ (Montserrat-Regular, Montserrat-Bold, ...)
   borderRadius?: number; // bo góc
   height?: number; // chiều cao
-  width?: number; // chiều rộng
+  width?: number | string; // chiều rộng
   fontSize?: number; // kích thước chữ
   textAlign?: "left" | "center" | "right"; // căn chỉnh chữ
 }
@@ -40,7 +40,7 @@ export default function SCButton({
   borderRadius = 12,
   style,
   height = 48,
-  width = 100,
+  width = "100%",
   fontSize = 16,
   textAlign = "left",
   ...rest
