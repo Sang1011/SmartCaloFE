@@ -2,7 +2,7 @@ import SCInput from "../components/ui/SCInput";
 import color from "../constants/color";
 import { FONTS, globalStyles } from "../constants/fonts";
 import { Image } from "expo-image";
-import { StyleSheet, Dimensions, Text, View, Pressable } from "react-native";
+import { StyleSheet, Text, View, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -10,8 +10,9 @@ import SCCheckBox from "../components/ui/SCCheckBox";
 import SCButton from "../components/ui/SCButton";
 import { navigateWithFlag } from "@utils/navigation";
 import { IS_LOGGED_IN } from "@constants/app";
-
+import React, { useState } from "react";
 export default function LoginScreen() {
+  const [keepLogin, setKeepLogin] = useState(false);
   return (
     <SafeAreaView
       style={styles.screen}
@@ -41,6 +42,8 @@ export default function LoginScreen() {
         </View>
         <View style={styles.checkboxContainer}>
           <SCCheckBox
+            checked={keepLogin}
+            onChange={(val) => setKeepLogin(val)}
             fontFamily={FONTS.medium}
             fontSize={12}
             label="Duy trì đăng nhập"
@@ -58,10 +61,16 @@ export default function LoginScreen() {
             </Text>
           </Pressable>
         </View>
+        {/* <View style={styles.button}>
+          <SCButton
+            title="Đăng nhập"
+            onPress={() => navigateWithFlag("/(survey)/step1", IS_LOGGED_IN)}
+          />
+        </View> */}
         <View style={styles.button}>
           <SCButton
             title="Đăng nhập"
-            onPress={() => navigateWithFlag("/surveyScreen", IS_LOGGED_IN)}
+            onPress={() => navigateWithFlag("/tabs", IS_LOGGED_IN)}
           />
         </View>
       </View>
@@ -134,16 +143,16 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     position: "relative",
-    marginHorizontal: "auto"
+    marginHorizontal: "auto",
   },
   logo: {
-    marginTop: 40, 
+    marginTop: 40,
     width: "30%",
-    aspectRatio: 1, 
+    aspectRatio: 1,
     resizeMode: "contain",
   },
   title: {
-    fontSize: 24, 
+    fontSize: 24,
     marginVertical: 8,
     color: color.dark_green,
   },
@@ -214,7 +223,7 @@ const styles = StyleSheet.create({
   },
   groupImageContainer: {
     position: "absolute",
-    bottom: 16,
+    bottom: 25,
     alignSelf: "center", // thay translateX thủ công
   },
   logoGroup: {

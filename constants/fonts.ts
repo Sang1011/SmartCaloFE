@@ -22,22 +22,23 @@ export const FONTS = {
 };
 
 export const globalStyles = StyleSheet.create({
-  thin: { fontFamily: FONTS.thin },
-  thinItalic: { fontFamily: FONTS.thinItalic },
-  extraLight: { fontFamily: FONTS.extraLight },
-  extraLightItalic: { fontFamily: FONTS.extraLightItalic },
-  light: { fontFamily: FONTS.light },
-  lightItalic: { fontFamily: FONTS.lightItalic },
-  regular: { fontFamily: FONTS.regular },
-  italic: { fontFamily: FONTS.italic },
-  medium: { fontFamily: FONTS.medium },
-  mediumItalic: { fontFamily: FONTS.mediumItalic },
-  semiBold: { fontFamily: FONTS.semiBold },
-  semiBoldItalic: { fontFamily: FONTS.semiBoldItalic },
-  bold: { fontFamily: FONTS.bold },
-  boldItalic: { fontFamily: FONTS.boldItalic },
-  extraBold: { fontFamily: FONTS.extraBold },
-  extraBoldItalic: { fontFamily: FONTS.extraBoldItalic },
-  black: { fontFamily: FONTS.black },
-  blackItalic: { fontFamily: FONTS.blackItalic },
+  thin: { fontFamily: FONTS.thin },                     // 100
+  thinItalic: { fontFamily: FONTS.thinItalic },         // 100 italic
+  extraLight: { fontFamily: FONTS.extraLight },         // 200
+  extraLightItalic: { fontFamily: FONTS.extraLightItalic }, // 200 italic
+  light: { fontFamily: FONTS.light },                   // 300
+  lightItalic: { fontFamily: FONTS.lightItalic },       // 300 italic
+  regular: { fontFamily: FONTS.regular },               // 400
+  italic: { fontFamily: FONTS.italic },                 // 400 italic
+  medium: { fontFamily: FONTS.medium },                 // 500
+  mediumItalic: { fontFamily: FONTS.mediumItalic },     // 500 italic
+  semiBold: { fontFamily: FONTS.semiBold },             // 600
+  semiBoldItalic: { fontFamily: FONTS.semiBoldItalic }, // 600 italic
+  bold: { fontFamily: FONTS.bold },                     // 700
+  boldItalic: { fontFamily: FONTS.boldItalic },         // 700 italic
+  extraBold: { fontFamily: FONTS.extraBold },           // 800
+  extraBoldItalic: { fontFamily: FONTS.extraBoldItalic }, // 800 italic
+  black: { fontFamily: FONTS.black },                   // 900
+  blackItalic: { fontFamily: FONTS.blackItalic },       // 900 italic
 });
+

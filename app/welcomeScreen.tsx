@@ -10,7 +10,7 @@ const { width, height } = Dimensions.get("window");
 
 export default function Welcome() {
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: "white" }}>
       {/* Title*/}
       <Text style={[styles.title, styles.boldText, globalStyles.black]}>
         <Text style={[styles.title, styles.limeText, globalStyles.black]}>
@@ -36,7 +36,7 @@ export default function Welcome() {
           <SCButton title="Đăng nhập" variant="outline" onPress={() => navigateWithFlag("/login")} />
         </View>
       </View>
-    </>
+    </View>
   );
 }
 
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   description: {
     color: color.dark_green,
     fontSize: 12,
-    marginBottom: height * 0.05,
+    marginBottom: 25,
     lineHeight: (1.5 * 12),
     textAlign: "center"
   },
