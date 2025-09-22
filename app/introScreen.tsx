@@ -1,22 +1,19 @@
+import { HAS_OPENED_APP } from "@constants/app";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import { navigateWithFlag } from "@utils/navigation";
+import { Image } from "expo-image";
 import React from "react";
 import {
-  Button,
-  Pressable,
+  Dimensions,
   StyleSheet,
   Text,
-  View,
-  GestureResponderEvent,
-  Dimensions,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import SCButton from "../components/ui/SCButton";
+import Wave from "../components/ui/waveBackground";
 import color from "../constants/color";
 import { FONTS, globalStyles } from "../constants/fonts";
-import SCButton from "../components/ui/SCButton";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import Wave from "../components/ui/waveBackground";
-import { Image } from "expo-image";
-import { navigateWithFlag } from "@utils/navigation";
-import { HAS_OPENED_APP } from "@constants/app";
 
 const { width, height } = Dimensions.get("window");
 

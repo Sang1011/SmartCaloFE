@@ -1,6 +1,4 @@
-import BottomTabs from "@components/ui/bottomTabs";
-import { TabType } from "../../types/tabs";
-import { Button, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Button, StyleSheet, Text, View } from "react-native";
 
 // interface ITabLayoutProps {
 //   children: React.ReactNode;

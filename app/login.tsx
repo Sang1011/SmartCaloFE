@@ -61,18 +61,18 @@ export default function LoginScreen() {
             </Text>
           </Pressable>
         </View>
-        {/* <View style={styles.button}>
+        <View style={styles.button}>
           <SCButton
             title="Đăng nhập"
-            onPress={() => navigateWithFlag("/(survey)/step1", IS_LOGGED_IN)}
+            onPress={() => navigateWithFlag("/survey")}
           />
-        </View> */}
-        <View style={styles.button}>
+        </View>
+        {/* <View style={styles.button}>
           <SCButton
             title="Đăng nhập"
             onPress={() => navigateWithFlag("/tabs", IS_LOGGED_IN)}
           />
-        </View>
+        </View> */}
       </View>
       <View style={styles.registerContainer}>
         <Text style={{ fontFamily: FONTS.medium }}>

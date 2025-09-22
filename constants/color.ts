@@ -33,5 +33,9 @@ export default {
     undereating: "#F4A300",
     overeating: "#e74c3c",
     eat_default: "#2ecc71",
-    fast_button: "#EFEFEF"
+    fast_button: "#EFEFEF",
+    scan_button_inner_left: "#43633E",
+    scan_button_inner_right: "#609E57",
+    scan_button_outer_top: "#81BE45",
+    scan_button_outer_bottom: "#48D5B3",
 };

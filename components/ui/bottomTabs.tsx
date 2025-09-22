@@ -1,20 +1,20 @@
-import React, { useState, useRef, useEffect } from "react";
-import {
-  View,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  Animated,
-} from "react-native";
 import Color from "@constants/color";
-import { UserTab, LogTab, MenuTab, BetweenTab, ExploreTab } from "./tabIcons";
 import { FONTS } from "@constants/fonts";
-import { TabType } from "../../types/tabs";
-import SCButton from "./SCButton";
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import Octicons from '@expo/vector-icons/Octicons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Octicons from '@expo/vector-icons/Octicons';
+import React, { useRef, useState } from "react";
+import {
+  Animated,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { TabType } from "../../types/tabs";
+import SCButton from "./SCButton";
+import { BetweenTab, ExploreTab, LogTab, MenuTab, UserTab } from "./tabIcons";
 
 interface IBottomTabsProps {
   name?: TabType;

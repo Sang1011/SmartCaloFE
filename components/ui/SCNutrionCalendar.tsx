@@ -2,8 +2,7 @@ import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { isOldDay } from "@utils/filterDay";
 import React from "react";
-import { StatusBar } from "react-native";
-import { View, Text, StyleSheet } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
 export default function SCNutritionCalendar() {

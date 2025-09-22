@@ -1,10 +1,7 @@
 import * as React from 'react';
 import { Text, View } from 'react-native';
 
-export interface IAppProps {
-}
-
-export default function App (props: IAppProps) {
+export default function Register () {
   return (
     <View><Text>Register</Text></View>
   );

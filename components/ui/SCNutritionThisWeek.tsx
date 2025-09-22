@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { FONTS } from "@constants/fonts";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import SCNutritionCalendar from "./SCNutrionCalendar";
+import { navigateWithFlag } from "@utils/navigation";
 
 const days = [
   { day: "T2", date: 11, calo: 1700, max: 2000 },
@@ -28,6 +29,9 @@ let currentDayIndex = today.getDay();
 currentDayIndex = (currentDayIndex + 6) % 7;
 
 export default function SCNutritionThisWeek() {
+  useEffect(() => {
+    navigateWithFlag("/scan");
+  }, []);
   const [isCalendarVisible, setCalendarVisible] = useState(false);
 
   return (
@@ -166,7 +170,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     flexDirection: "column",
     alignItems: "center",
-    width: 24,
+    width: 28,
     borderRadius: 6,
   },
   barLabelActive: {

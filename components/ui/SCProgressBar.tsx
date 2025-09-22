@@ -25,7 +25,7 @@ export default function SCProgressBar({
       duration: duration,
       useNativeDriver: false,
     }).start();
-  }, [progress]);
+  }, [progress, duration, animatedWidth]);
 
   const barWidth = animatedWidth.interpolate({
     inputRange: [0, 100],
