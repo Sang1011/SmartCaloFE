@@ -1,11 +1,11 @@
-import { useEffect } from "react";
 import { router } from "expo-router";
-import { getBooleanData, saveBooleanData } from "../stores";
+import { useEffect } from "react";
 import {
   HAS_DONE_SURVEY,
   HAS_OPENED_APP,
   IS_LOGGED_IN,
 } from "../constants/app";
+import { getBooleanData } from "../stores";
 
 export function useRedirect() {
   useEffect(() => {
@@ -19,9 +19,9 @@ export function useRedirect() {
       } else if (!isLoggedIn) {
         router.replace("/login");
       } else if (!hasDoneSurvey) {
-        router.replace("/(survey)/step1");
+        router.replace("/survey");
       } else {
-        router.replace("/(tabs)");
+        router.replace("/tabs");
       }
     }
 

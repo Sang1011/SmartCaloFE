@@ -1,21 +1,17 @@
-import BottomTabs from "@components/ui/bottomTabs";
-import { TabType } from "../../types/tabs";
+import SCDonutChart from "@components/ui/SCDonutChart";
+import SCNutritionThisWeek from "@components/ui/SCNutritionThisWeek";
+import SCProgressBar from "@components/ui/SCProgressBar";
+import { SCTask } from "@components/ui/SCTask";
+import Color from "@constants/color";
+import { FONTS, globalStyles } from "@constants/fonts";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import {
-  Button,
-  ProgressBarAndroidComponent,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  View,
+  View
 } from "react-native";
-import Color from "@constants/color";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { FONTS, globalStyles } from "@constants/fonts";
-import SCDonutChart from "@components/ui/SCDonutChart";
-import SCProgressBar from "@components/ui/SCProgressBar";
-import { SCTask } from "@components/ui/SCTask";
-import SCNutritionThisWeek from "@components/ui/SCNutritionThisWeek";
 export default function DefaultScreen() {
   return (
     <SafeAreaView style={styles.container}>

@@ -13,19 +13,21 @@ import { FONTS, globalStyles } from "../../constants/fonts";
 import Color from "../../constants/color";
 
 interface SCButtonProps extends PressableProps {
-  title: string;
+  title?: string;
   onPress: (event: GestureResponderEvent) => void;
   color?: string; // text color
   bgColor?: string; // background color
-  icon?: React.ReactNode; // truyền icon vào
-  iconPos?: "left" | "right" | "top" | "bottom"; // vị trí icon
-  variant?: "primary" | "outline"; // kiểu button
-  fontFamily?: string; // font chữ (Montserrat-Regular, Montserrat-Bold, ...)
-  borderRadius?: number; // bo góc
-  height?: number; // chiều cao
-  width?: number | string; // chiều rộng
-  fontSize?: number; // kích thước chữ
-  textAlign?: "left" | "center" | "right"; // căn chỉnh chữ
+  gradientMode?: "vertical" | "horizontal"; // gradient direction
+  gradient?: { start: string; end: string }; // gradient background
+  icon?: React.ReactNode; // icon component
+  iconPos?: "left" | "right" | "top" | "bottom"; // icon position
+  variant?: "primary" | "outline"; // button type
+  fontFamily?: string;
+  borderRadius?: number;
+  height?: number;
+  width?: number | string;
+  fontSize?: number;
+  textAlign?: "left" | "center" | "right";
 }
 
 export default function SCButton({
@@ -43,9 +45,11 @@ export default function SCButton({
   width = "100%",
   fontSize = 16,
   textAlign = "left",
+  gradientMode = "horizontal",
+  gradient,
   ...rest
 }: SCButtonProps) {
-  // style theo variant
+  // styles theo variant
   const variantStyles =
     variant === "primary"
       ? {
@@ -59,58 +63,76 @@ export default function SCButton({
           borderWidth: 1,
         };
 
+  const getButtonStyle = (pressed: boolean): StyleProp<ViewStyle> => [
+    styles.button,
+    {
+      backgroundColor: variantStyles.backgroundColor,
+      borderColor: Color.dark_green,
+      borderWidth: variantStyles.borderWidth,
+      borderRadius,
+      opacity: pressed ? 0.8 : 1,
+      height,
+      width,
+      flexDirection:
+        iconPos === "top" || iconPos === "bottom" ? "column" : "row",
+      justifyContent: "center", // icon + text hay chỉ icon
+      alignItems: "center",
+    } as ViewStyle,
+    ...(
+      Array.isArray(style)
+        ? style.filter((s) => typeof s !== "function")
+        : style && typeof style !== "function"
+        ? [style]
+        : []
+    ),
+  ];
+
   return (
     <Pressable
-  onPress={onPress}
-  style={({ pressed }) =>
-    [
-      styles.button,
-      {
-        backgroundColor: variantStyles.backgroundColor,
-        borderColor: Color.dark_green,
-        borderWidth: variantStyles.borderWidth,
-        borderRadius,
-        opacity: pressed ? 0.8 : 1,
-        height,
-        width,
-        flexDirection:
-          iconPos === "top" || iconPos === "bottom" ? "column" : "row",
-        justifyContent: "center",
-        alignItems: "center",
-      },
-      ...(Array.isArray(style) ? style : style ? [style] : []),
-    ] as StyleProp<ViewStyle>
-  }
-  {...rest}
->
-  {/* Render icon và text theo vị trí */}
-  {icon && (iconPos === "left" || iconPos === "top") && (
-    <View style={iconPos === "top" ? { marginBottom: 0 } : { marginRight: 5 }}>
-      {icon}
-    </View>
-  )}
+      onPress={onPress}
+      style={({ pressed }) => getButtonStyle(pressed)}
+      {...rest}
+    >
+      {/* icon bên trái / trên */}
+      {icon && (iconPos === "left" || iconPos === "top") && (
+        <View
+          style={
+            iconPos === "top"
+              ? { marginBottom: title ? 5 : 0 }
+              : { marginRight: title ? 5 : 0 }
+          }
+        >
+          {icon}
+        </View>
+      )}
 
-  <Text
-    style={[
-      styles.text,
-      {
-        color: variantStyles.textColor,
-        fontFamily: fontFamily || globalStyles.semiBold.fontFamily,
-        fontSize,
-        textAlign,
-      },
-    ]}
-  >
-    {title}
-  </Text>
+      {/* text */}
+      {title && (
+        <Text
+          style={{
+            color: variantStyles.textColor,
+            fontFamily: fontFamily || globalStyles.semiBold.fontFamily,
+            fontSize,
+            textAlign,
+          }}
+        >
+          {title}
+        </Text>
+      )}
 
-  {icon && (iconPos === "right" || iconPos === "bottom") && (
-    <View style={iconPos === "bottom" ? { marginTop: 0 } : { marginLeft: 5 }}>
-      {icon}
-    </View>
-  )}
-</Pressable>
-
+      {/* icon bên phải / dưới */}
+      {icon && (iconPos === "right" || iconPos === "bottom") && (
+        <View
+          style={
+            iconPos === "bottom"
+              ? { marginTop: title ? 5 : 0 }
+              : { marginLeft: title ? 5 : 0 }
+          }
+        >
+          {icon}
+        </View>
+      )}
+    </Pressable>
   );
 }
 

@@ -52,7 +52,7 @@ export default function SCDonutChart({
         useNativeDriver: false,
       }).start();
     }
-  }, [value, maxValue]);
+  }, [value, maxValue, duration, animatedValue]);
 
   if (value !== undefined) {
     // Tính dashOffset từ animated value

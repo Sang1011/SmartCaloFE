@@ -1,12 +1,12 @@
 import { navigateWithFlag } from "@utils/navigation";
+import { Dimensions, StyleSheet, Text, View } from "react-native";
 import SCButton from "../components/ui/SCButton";
 import SCCarousel from "../components/ui/SCCarousel";
 import color from "../constants/color";
 import { globalStyles } from "../constants/fonts";
-import { Button, Dimensions, StyleSheet, Text, View } from "react-native";
 
 
-const { width, height } = Dimensions.get("window");
+const { height } = Dimensions.get("window");
 
 export default function Welcome() {
   return (
