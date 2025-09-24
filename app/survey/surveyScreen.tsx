@@ -15,7 +15,7 @@ import Step4_Obstacles from "../survey/Step4_Obstacles";
 import Step5_Info from "../survey/Step5_Info";
 import Step6_Habits from "../survey/Step6_Habits";
 import Step7_Info from "../survey/Step7_Info";
-// import Step8_PlanningFrequency from "../components/survey/Step8_PlanningFrequency";
+import Step8_PlanningFrequency from "../survey/Step8_PlanningFrequency";
 // import Step9_Willingness from "../components/survey/Step9_Willingness";
 
 const SURVEY_SCREENS = [
@@ -26,7 +26,7 @@ const SURVEY_SCREENS = [
   Step5_Info,
   Step6_Habits,
   Step7_Info,
-  // Step8_PlanningFrequency,
+  Step8_PlanningFrequency,
   // Step9_Willingness,
   // Step10_ActivityLevel,
   // Step11_Demographics,
@@ -41,8 +41,8 @@ export interface SurveyData {
   obstacles?: string[];
   eatingHabit?: string;
   healthyHabits?: string[];
-  planningFrequency?: string;
-  willingness?: number; // 1 to 5
+  planningFrequency?: string[];
+  willingness?: number;
   activityLevel?: string;
   gender?: "male" | "female";
   age?: string;
