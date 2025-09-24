@@ -180,6 +180,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     flexDirection: "row",
     alignItems: "center",
+    position: "absolute",
+    width: "100%",
+    bottom: 0,
+    left: 0
   },
   flipButton: {},
   takePictureButton: {},
