@@ -14,7 +14,6 @@ import {
 } from "react-native";
 export default function DefaultScreen() {
   return (
-    <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.layoutView}>
           <View style={styles.header}>
@@ -94,23 +93,20 @@ export default function DefaultScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   scrollView: {
     flexGrow: 1,
+    backgroundColor: Color.background,
   },
   layoutView: {
     flex: 1,
     marginHorizontal: "auto",
     width: "92%",
     justifyContent: "center",
-    marginTop: 60,
+    marginTop: 20
   },
   header: {
     flexDirection: "row",

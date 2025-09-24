@@ -1,5 +1,7 @@
 import ButtonGoBack from "@components/ui/buttonGoBack";
 import SCDonutChart from "@components/ui/SCDonutChart";
+import SCShadowCard from "@components/ui/SCShadowCard";
+import color from "@constants/color";
 import { Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 export default function Dishes() {
@@ -9,9 +11,11 @@ export default function Dishes() {
                 <View style={styles.gobackButton}>
                     <ButtonGoBack />
                 </View>
+                <View style={styles.imageContainer}>
                 <Image source={require("@assets/images/com-tam.png")} style={styles.image} />
+                </View>
             </View>
-            <View style={styles.content}>
+            <SCShadowCard>
                 <Text>Com suon bi cha</Text>
                 <View style={styles.iconContainer}>
                     <View style={styles.icon}>
@@ -28,7 +32,7 @@ export default function Dishes() {
                     <Text>Gioi thieu</Text>
                     <Text>Com suon bi cha la mot mon an truyen thong cua nguoi Viet....</Text>
                 </View>
-            </View>
+            </SCShadowCard>
             <View style={styles.nutrions}>
                 <View style={styles.headerNutrions}>
                     <Text>Giá trị dinh dưỡng</Text>
@@ -68,16 +72,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    // style cho header: background, padding, flexDirection...
+    backgroundColor: color.background_dish,
+    height: 230,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
   },
   gobackButton: {
-    // style cho button go back
+    position: "absolute",
+    top: 12,
+    left: 15
+  },
+  imageContainer: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
   },
   image: {
-    // style cho ảnh món ăn
-  },
-  content: {
-    // style cho phần nội dung: tên món, giới thiệu...
+    marginHorizontal: "auto"
   },
   iconContainer: {
 
