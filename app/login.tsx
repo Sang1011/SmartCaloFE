@@ -8,7 +8,7 @@ import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import SCCheckBox from "../components/ui/SCCheckBox";
 import SCButton from "../components/ui/SCButton";
-import { navigateWithFlag } from "@utils/navigation";
+import { navigateCustom } from "@utils/navigation";
 import { IS_LOGGED_IN } from "@constants/app";
 import React, { useState } from "react";
 export default function LoginScreen() {
@@ -64,13 +64,13 @@ export default function LoginScreen() {
         <View style={styles.button}>
           <SCButton
             title="Đăng nhập"
-            onPress={() => navigateWithFlag("/survey")}
+            onPress={() => navigateCustom("/survey")}
           />
         </View>
         {/* <View style={styles.button}>
           <SCButton
             title="Đăng nhập"
-            onPress={() => navigateWithFlag("/tabs", IS_LOGGED_IN)}
+            onPress={() => navigateCustom("/tabs", { flagKey: IS_LOGGED_IN })}
           />
         </View> */}
       </View>

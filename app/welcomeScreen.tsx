@@ -1,4 +1,4 @@
-import { navigateWithFlag } from "@utils/navigation";
+import { navigateCustom } from "@utils/navigation";
 import { Dimensions, StyleSheet, Text, View } from "react-native";
 import SCButton from "../components/ui/SCButton";
 import SCCarousel from "../components/ui/SCCarousel";
@@ -33,7 +33,7 @@ export default function Welcome() {
           <SCButton title="Đăng ký" onPress={() => console.log("Register pressed")} />
         </View>
         <View style={styles.buttonLogin}>
-          <SCButton title="Đăng nhập" variant="outline" onPress={() => navigateWithFlag("/login")} />
+          <SCButton title="Đăng nhập" variant="outline" onPress={() => navigateCustom("/login")} />
         </View>
       </View>
     </View>

@@ -12,7 +12,7 @@ import { FONTS } from "@constants/fonts";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import SCNutritionCalendar from "./SCNutrionCalendar";
-import { navigateWithFlag } from "@utils/navigation";
+import { navigateCustom } from "@utils/navigation";
 
 const days = [
   { day: "T2", date: 11, calo: 1700, max: 2000 },
@@ -29,9 +29,6 @@ let currentDayIndex = today.getDay();
 currentDayIndex = (currentDayIndex + 6) % 7;
 
 export default function SCNutritionThisWeek() {
-  useEffect(() => {
-    navigateWithFlag("/scan");
-  }, []);
   const [isCalendarVisible, setCalendarVisible] = useState(false);
 
   return (

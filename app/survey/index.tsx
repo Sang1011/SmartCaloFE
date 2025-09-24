@@ -15,6 +15,8 @@ import Step4_Obstacles from "../survey/Step4_Obstacles";
 import Step5_Info from "../survey/Step5_Info";
 import Step6_Habits from "../survey/Step6_Habits";
 import Step7_Info from "../survey/Step7_Info";
+import { navigateCustom } from "@utils/navigation";
+import { HAS_DONE_SURVEY } from "@constants/app";
 // import Step8_PlanningFrequency from "../components/survey/Step8_PlanningFrequency";
 // import Step9_Willingness from "../components/survey/Step9_Willingness";
 
@@ -74,7 +76,7 @@ export default function SurveyScreen() {
   };
 
   const handleFinish = () => {
-    console.log("Survey Data Submitted:", surveyData);
+    navigateCustom("/tabs", { flagKey: HAS_DONE_SURVEY });
   };
 
   const CurrentStepComponent = SURVEY_SCREENS[currentStep];

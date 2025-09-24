@@ -4,6 +4,8 @@ export default {
     light_green: "#81BF44",
     dark_green: "#426342",
     light_gray: "#D9D9D9",
+    icon: "#666",
+    background: "#EDEDED",
     black: "#000000",
     black_50: "#00000066",
     black_60: "#00000099",
@@ -38,4 +40,5 @@ export default {
     scan_button_inner_right: "#609E57",
     scan_button_outer_top: "#81BE45",
     scan_button_outer_bottom: "#48D5B3",
+    background_dish: "#657E6F"
 };

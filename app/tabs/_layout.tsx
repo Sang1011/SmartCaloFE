@@ -4,20 +4,22 @@ import { SafeAreaView, StyleSheet, View } from "react-native";
 
 export default function TabsLayout() {
   return (
-    <SafeAreaView style={styles.container}>
+    <>
       <View style={styles.content}>
         <Slot />
       </View>
-      <BottomTabs />
-    </SafeAreaView>
+      <View style={styles.bottom}>
+        <BottomTabs />
+      </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   content: {
     flex: 1,
   },
+  bottom: {
+    width: "100%"
+  }
 });

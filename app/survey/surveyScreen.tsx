@@ -8,6 +8,8 @@ import SurveyLayout from "../survey/SurveyLayout";
 // import Step12_Measurements from "../components/survey/Step12_Measurements";
 // import Step13_AccountCreation from "../components/survey/Step13_AccountCreation";
 // import Step14_Completion from "../components/survey/Step14_Completion";
+import { HAS_DONE_SURVEY } from "@constants/app";
+import { navigateCustom } from "@utils/navigation";
 import Step1_Name from "../survey/Step1_Name";
 import Step2_Goals from "../survey/Step2_Goals";
 import Step3_Info from "../survey/Step3_Info";
@@ -74,7 +76,7 @@ export default function SurveyScreen() {
   };
 
   const handleFinish = () => {
-    console.log("Survey Data Submitted:", surveyData);
+    navigateCustom("/tabs", { flagKey: HAS_DONE_SURVEY });
   };
 
   const CurrentStepComponent = SURVEY_SCREENS[currentStep];

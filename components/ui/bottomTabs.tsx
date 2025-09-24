@@ -15,6 +15,8 @@ import {
 import { TabType } from "../../types/tabs";
 import SCButton from "./SCButton";
 import { BetweenTab, ExploreTab, LogTab, MenuTab, UserTab } from "./tabIcons";
+import { navigateCustom } from "@utils/navigation";
+import { Href, useRouter } from "expo-router";
 
 interface IBottomTabsProps {
   name?: TabType;
@@ -51,18 +53,19 @@ const toggleCenter = () => {
     }),
   ]).start();
 };
+const router = useRouter();
 
-
-  const tabs: {
+   const tabs: {
     key: TabType;
     label: string;
     component: React.FC<{ isActive: boolean }>;
+    route?: string; 
   }[] = [
-    { key: "log", label: "Nhật ký", component: LogTab },
-    { key: "explore", label: "Khám phá", component: ExploreTab },
-    { key: "center", label: "", component: BetweenTab },
-    { key: "menu", label: "Thực đơn", component: MenuTab },
-    { key: "profile", label: "Hồ sơ", component: UserTab },
+    { key: "log", label: "Nhật ký", component: LogTab, route: "/tabs" },
+    { key: "explore", label: "Khám phá", component: ExploreTab, route: "/tabs/explore" },
+    { key: "center", label: "", component: BetweenTab }, 
+    { key: "menu", label: "Thực đơn", component: MenuTab, route: "/tabs/recipe" },
+    { key: "profile", label: "Hồ sơ", component: UserTab, route: "/tabs/profile" },
   ];
 
   return (
@@ -100,7 +103,7 @@ const toggleCenter = () => {
           width={77}
           height={77}
           textAlign="center"
-          onPress={() => {}}
+          onPress={() => { navigateCustom("/scan") }}
         />
         <SCButton
           title="Thể dục"
@@ -152,7 +155,10 @@ const toggleCenter = () => {
             <TouchableOpacity
               key={tab.key}
               style={styles.tabItem}
-              onPress={() => setActiveTab(tab.key)}
+              onPress={() => {
+                setActiveTab(tab.key);
+                if (tab.route) router.push(tab.route as Href);
+              }}
             >
               <IconComponent isActive={activeTab === tab.key} />
               {tab.label !== "" && (
@@ -180,7 +186,6 @@ const styles = StyleSheet.create({
     position: "relative",
     width: "100%",
     backgroundColor: "white",
-    borderRadius: 18,
   },
   groupButtons: {
     position: "absolute",
@@ -193,6 +198,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   tabBar: {
+    borderRadius: 18,
     width: "100%",
     height: 88,
     flexDirection: "row",

@@ -1,6 +1,6 @@
 import { HAS_OPENED_APP } from "@constants/app";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { navigateWithFlag } from "@utils/navigation";
+import { navigateCustom } from "@utils/navigation";
 import { Image } from "expo-image";
 import React from "react";
 import {
@@ -48,7 +48,7 @@ export default function IntroScreen() {
       <View style={styles.buttonBox}>
         <SCButton
           title="Tiếp tục"
-          onPress={() => navigateWithFlag("/welcomeScreen", HAS_OPENED_APP)}
+          onPress={() => navigateCustom("/welcomeScreen", { flagKey: HAS_OPENED_APP })}
           fontFamily={FONTS.semiBold}
           style={styles.button}
           iconPos="right"

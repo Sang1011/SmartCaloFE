@@ -1,10 +1,13 @@
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
-import { Text, View } from "react-native"; // import thêm StatusBar
+import { Platform, StatusBar, StyleSheet, Text, View } from "react-native"; // import thêm StatusBar
 import { LocaleConfig } from "react-native-calendars";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Provider } from "react-redux";
 import { useRedirect } from "../hooks/useRedirect";
 import { store } from "../redux";
+import color from "@constants/color";
+import { useSystemBars } from "@hooks/useSystemBars";
 
 export default function RootLayout() {
   LocaleConfig.locales["vi"] = {
@@ -73,6 +76,9 @@ export default function RootLayout() {
 
   useRedirect();
 
+  useSystemBars();
+  
+
   if (!loaded) {
     return (
       <View>
@@ -83,14 +89,24 @@ export default function RootLayout() {
 
   return (
     <Provider store={store}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="introScreen" />
-        <Stack.Screen name="welcomeScreen" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="survey" />
-        <Stack.Screen name="tabs" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
+      <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1 }} edges={["bottom"]}>
+        <StatusBar barStyle="dark-content" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: color.white },
+          }}
+        >
+          <Stack.Screen name="introScreen" />
+          <Stack.Screen name="welcomeScreen" />
+          <Stack.Screen name="login" />
+          <Stack.Screen name="survey" />
+          <Stack.Screen name="tabs" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+      </SafeAreaView>
+      </SafeAreaProvider>
     </Provider>
   );
 }
