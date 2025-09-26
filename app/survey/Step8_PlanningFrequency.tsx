@@ -1,9 +1,8 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
-import color from "../../constants/color";
+import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
-import { SurveyData } from "./surveyScreen";
 
 const { width } = Dimensions.get("window");
 
@@ -15,24 +14,24 @@ const FREQUENCY = [
   "Luôn luôn",
 ];
 
-interface MultiSelectOptionProps {
+interface SingleSelectOptionProps {
   label: string;
   isSelected: boolean;
   onPress: () => void;
 }
 
-const MultiSelectOption = ({
+const SingleSelectOption = ({
   label,
   isSelected,
   onPress,
-}: MultiSelectOptionProps) => (
+}: SingleSelectOptionProps) => (
   <Pressable
     onPress={onPress}
     style={[styles.optionContainer, isSelected && styles.optionSelected]}
   >
-    <Text style={[styles.optionText, globalStyles.medium]}>{label}</Text>
+    <Text style={[styles.optionText, globalStyles.bold]}>{label}</Text>
     <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-      {isSelected && <AntDesign name="check" size={16} color={color.white} />}
+      {isSelected && <AntDesign name="check" size={16} color={"#D9D9D9"} />}
     </View>
   </Pressable>
 );
@@ -46,35 +45,28 @@ export default function Step8_PlanningFrequency({
   surveyData,
   updateSurveyData,
 }: Props) {
-  const selectedFrequencies = Array.isArray(surveyData.planningFrequency)
-    ? surveyData.planningFrequency
-    : [];
+  const selectedFrequency = surveyData.planningFrequency || "";
 
   const handleSelect = (item: string) => {
-    const updatedFrequencies = selectedFrequencies.includes(item)
-      ? selectedFrequencies.filter((i) => i !== item)
-      : [...selectedFrequencies, item];
+    const newFrequency = selectedFrequency === item ? "" : item;
 
     updateSurveyData((prev) => ({
       ...prev,
-      planningFrequency: updatedFrequencies,
+      planningFrequency: newFrequency,
     }));
   };
 
   return (
     <View style={styles.container}>
       <Text style={[styles.title, globalStyles.extraBold]}>
-        Bạn lên kế hoạch cho bữa ăn trước bao lâu?
-      </Text>
-      <Text style={[styles.subtitle, globalStyles.regular]}>
-        Chọn tất cả những điều áp dụng:
+        Bạn có thường xuyên lên kế hoạch cho bữa ăn?
       </Text>
       <View style={styles.optionsList}>
         {FREQUENCY.map((item) => (
-          <MultiSelectOption
+          <SingleSelectOption
             key={item}
             label={item}
-            isSelected={selectedFrequencies.includes(item)}
+            isSelected={selectedFrequency === item}
             onPress={() => handleSelect(item)}
           />
         ))}
@@ -86,18 +78,10 @@ export default function Step8_PlanningFrequency({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
   },
   title: {
-    fontSize: width * 0.06,
+    fontSize: width * 0.07,
     color: "#000000",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: width * 0.04,
-    color: "#656565",
-    marginBottom: 20,
   },
   optionsList: {
     gap: 12,
@@ -112,6 +96,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "transparent",
   },
+
   optionSelected: {
     borderColor: "transparent",
     backgroundColor: "#EEEEEE",
