@@ -9,6 +9,8 @@ export default {
     black: "#000000",
     black_50: "#00000066",
     black_60: "#00000099",
+    black_70: "#000000B3",
+    background_icon: "#f0f0f0",
     white: "#ffffff",
     white_40: "#FFFFFF66",
     white_50: "#FFFFFF80",

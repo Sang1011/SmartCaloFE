@@ -29,11 +29,8 @@ export default function Welcome() {
 
       {/* Group Button */}
       <View style={styles.groupButton}>
-        <View style={styles.buttonRegister}>
-          <SCButton title="Đăng ký" onPress={() => console.log("Register pressed")} />
-        </View>
         <View style={styles.buttonLogin}>
-          <SCButton title="Đăng nhập" variant="outline" onPress={() => navigateCustom("/login")} />
+          <SCButton title="Tiếp tục" variant="outline" onPress={() => navigateCustom("/login")} />
         </View>
       </View>
     </View>

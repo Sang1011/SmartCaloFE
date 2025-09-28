@@ -2,18 +2,16 @@ import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons, MaterialIcons, Feather, FontAwesome5 } from '@expo/vector-icons';
+import { Link } from "expo-router";
 
 export default function ProfileScreen() {
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.headerContainer}>
-        <Text style={styles.mainTitle}>Hồ sơ cá nhân</Text>
-      </View>
 
       <ScrollView style={styles.contentContainer}>
         {/* User Info Section */}
         <View style={styles.userSection}>
+          <Link href="/tabs/profile/details" style={styles.detailText}>Xem chi tiết {">"}</Link>
           <View style={styles.avatarContainer}>
             <Text style={styles.avatarText}>H</Text>
           </View>
@@ -26,7 +24,7 @@ export default function ProfileScreen() {
           
           <View style={styles.goalItem}>
             <View style={styles.goalIcon}>
-              <FontAwesome5 name="weight" size={20} color={color.dark_green} />
+              <FontAwesome5 name="weight" size={20} color={color.icon} />
             </View>
             <View style={styles.goalContent}>
               <Text style={styles.goalLabel}>Cân nặng ban đầu</Text>
@@ -36,7 +34,7 @@ export default function ProfileScreen() {
 
           <View style={styles.goalItem}>
             <View style={styles.goalIcon}>
-              <FontAwesome5 name="flag" size={20} color={color.dark_green} />
+              <FontAwesome5 name="flag" size={20} color={color.icon} />
             </View>
             <View style={styles.goalContent}>
               <Text style={styles.goalLabel}>Cân nặng mục tiêu</Text>
@@ -46,7 +44,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity style={styles.trackingButton}>
             <View style={styles.goalIcon}>
-              <Feather name="trending-up" size={20} color={color.dark_green} />
+              <Feather name="trending-up" size={20} color={color.icon} />
             </View>
             <View style={styles.goalContent}>
               <Text style={styles.goalLabel}>Theo dõi cân nặng</Text>
@@ -112,29 +110,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: color.background,
   },
-  headerContainer: {
-    width: "100%",
-    marginBottom: 20,
-    height: 70,
-    backgroundColor: color.white,
-    borderBottomColor: color.border,
-    borderBottomWidth: 1,
-    justifyContent: 'center',
-  },
-  mainTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#000",
-    fontFamily: FONTS.semiBold,
-    textAlign: "center",
-  },
   contentContainer: {
     flex: 1,
+    paddingTop: 20,
     paddingHorizontal: 16,
   },
   userSection: {
     alignItems: 'center',
     marginBottom: 24,
+    position: 'relative',
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: FONTS.medium,
+    position: 'absolute',
+    right: 16,
+    top: 5,
   },
   avatarContainer: {
     width: 80,
@@ -184,8 +176,6 @@ const styles = StyleSheet.create({
   goalIcon: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
