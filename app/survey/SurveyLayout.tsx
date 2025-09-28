@@ -1,6 +1,6 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React from "react";
-import { Dimensions, StyleSheet, View } from "react-native";
+import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
 
 import SCButton from "../../components/ui/SCButton";
 import color from "../../constants/color";
@@ -14,6 +14,7 @@ interface SurveyLayoutProps {
   onBack: () => void;
   onNext: () => void;
   isFinalStep?: boolean;
+  isNextDisabled?: boolean;
 }
 
 const { width } = Dimensions.get("window");
@@ -25,6 +26,7 @@ export default function SurveyLayout({
   onBack,
   onNext,
   isFinalStep = false,
+  isNextDisabled = false,
 }: SurveyLayoutProps) {
   return (
     <View style={styles.container}>
@@ -32,7 +34,13 @@ export default function SurveyLayout({
         <ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
       </View>
 
-      <View style={styles.content}>{children}</View>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {children}
+      </ScrollView>
 
       <View style={styles.footer}>
         {currentStep > 1 && (
@@ -45,9 +53,13 @@ export default function SurveyLayout({
         )}
         <SCButton
           title={isFinalStep ? "Hoàn thành" : "Tiếp tục"}
-          onPress={onNext}
+          onPress={isNextDisabled ? () => {} : onNext}
           fontFamily={FONTS.semiBold}
-          style={[styles.nextButton, currentStep === 1 && { width: "100%" }]}
+          style={[
+            styles.nextButton,
+            currentStep === 1 && { width: "100%" },
+            isNextDisabled && styles.disabledButton,
+          ]}
           iconPos="right"
           icon={
             !isFinalStep && (
@@ -66,25 +78,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  header: {
-    flex: 0.1,
+  header: {},
+  content: {
+    flex: 1,
+  },
+  contentContainer: {
+    flexGrow: 1,
     justifyContent: "center",
   },
-  content: {
-    flex: 0.8,
-  },
   footer: {
-    flex: 0.1,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 15,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#F2F2F2",
   },
   backButton: {
-    width: 60,
-    backgroundColor: color.light_gray,
+    width: "20%",
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: color.dark_green,
   },
   nextButton: {
-    flex: 1,
+    width: "78%",
+  },
+  disabledButton: {
+    backgroundColor: "#564d4dd2",
+    opacity: 0.7,
   },
 });

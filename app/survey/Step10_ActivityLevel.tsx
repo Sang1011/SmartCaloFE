@@ -1,30 +1,29 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
-import React, { useState } from "react";
+import React from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
 
 const { width } = Dimensions.get("window");
 
-const OBSTACLES = [
-  "Thiếu thời gian",
-  "Chế độ ăn khó để tuân theo",
-  "Chế độ ăn thiếu sự đa dạng",
-  "Căng thẳng khi lựa chọn",
-  "Kỳ nghỉ / Sự kiện / Xã giao",
-  "Ăn uống theo cảm xúc",
-  "Vấn đề tài chính",
-  "Thiếu sự hỗ trợ",
-  "Thói quen ăn uống",
+const ACTIVITY_LEVELS = [
+  "Ít vận động",
+  "Thỉnh thoảng",
+  "Thường xuyên",
+  "Rất năng động",
 ];
 
-interface OptionProps {
+interface SingleSelectOptionProps {
   label: string;
   isSelected: boolean;
   onPress: () => void;
 }
 
-const SurveyOption = ({ label, isSelected, onPress }: OptionProps) => (
+const SingleSelectOption = ({
+  label,
+  isSelected,
+  onPress,
+}: SingleSelectOptionProps) => (
   <Pressable
     onPress={onPress}
     style={[styles.optionContainer, isSelected && styles.optionSelected]}
@@ -41,42 +40,28 @@ interface Props {
   updateSurveyData: React.Dispatch<React.SetStateAction<SurveyData>>;
 }
 
-export default function Step4_Obstacles({
+export default function Step10_ActivityLevel({
   surveyData,
   updateSurveyData,
 }: Props) {
-  const [selected, setSelected] = useState<string[]>(
-    surveyData.obstacles || []
-  );
-
-  const handleSelect = (item: string) => {
-    const isCurrentlySelected = selected.includes(item);
-
-    let newSelection;
-    if (isCurrentlySelected) {
-      newSelection = selected.filter((i) => i !== item);
-    } else {
-      newSelection = [...selected, item];
-    }
-
-    setSelected(newSelection);
-    updateSurveyData((prev) => ({ ...prev, obstacles: newSelection }));
+  const handleSelect = (level: string) => {
+    updateSurveyData((prev) => ({ ...prev, activityLevel: level }));
   };
 
   return (
     <View style={styles.container}>
       <Text style={[styles.title, globalStyles.extraBold]}>
-        Trong quá khứ, điều gì đã cản trở bạn duy trì cân nặng?
+        Tần suất hoạt động cơ bản của bạn là gì?
       </Text>
       <Text style={[styles.subtitle, globalStyles.semiBold]}>
-        Chọn tất cả những điều áp dụng:
+        Hãy chọn mô tả phù hợp nhất với bạn:
       </Text>
       <View style={styles.optionsList}>
-        {OBSTACLES.map((item) => (
-          <SurveyOption
+        {ACTIVITY_LEVELS.map((item) => (
+          <SingleSelectOption
             key={item}
             label={item}
-            isSelected={selected.includes(item)}
+            isSelected={surveyData.activityLevel === item}
             onPress={() => handleSelect(item)}
           />
         ))}
@@ -86,10 +71,23 @@ export default function Step4_Obstacles({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  title: { fontSize: width * 0.07, color: "#000000", marginBottom: 8 },
-  subtitle: { fontSize: width * 0.04, color: "#656565", marginBottom: 20 },
-  optionsList: { gap: 12 },
+  container: {
+    flex: 1,
+  },
+  title: {
+    fontSize: width * 0.07,
+    color: "#000000",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: width * 0.04,
+    color: "#656565",
+    textAlign: "left",
+    marginBottom: 24,
+  },
+  optionsList: {
+    gap: 12,
+  },
   optionContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -100,12 +98,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "transparent",
   },
-
   optionSelected: {
     borderColor: "transparent",
     backgroundColor: "#EEEEEE",
   },
-  optionText: { fontSize: width * 0.04 },
+  optionText: {
+    fontSize: width * 0.04,
+  },
   checkbox: {
     width: 24,
     height: 24,

@@ -1,30 +1,30 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
-import React, { useState } from "react";
+import React from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
 
 const { width } = Dimensions.get("window");
 
-const OBSTACLES = [
-  "Thiếu thời gian",
-  "Chế độ ăn khó để tuân theo",
-  "Chế độ ăn thiếu sự đa dạng",
-  "Căng thẳng khi lựa chọn",
-  "Kỳ nghỉ / Sự kiện / Xã giao",
-  "Ăn uống theo cảm xúc",
-  "Vấn đề tài chính",
-  "Thiếu sự hỗ trợ",
-  "Thói quen ăn uống",
+const FREQUENCY = [
+  "Không bao giờ",
+  "Hiếm khi",
+  "Thỉnh thoảng",
+  "Thường xuyên",
+  "Luôn luôn",
 ];
 
-interface OptionProps {
+interface SingleSelectOptionProps {
   label: string;
   isSelected: boolean;
   onPress: () => void;
 }
 
-const SurveyOption = ({ label, isSelected, onPress }: OptionProps) => (
+const SingleSelectOption = ({
+  label,
+  isSelected,
+  onPress,
+}: SingleSelectOptionProps) => (
   <Pressable
     onPress={onPress}
     style={[styles.optionContainer, isSelected && styles.optionSelected]}
@@ -41,42 +41,32 @@ interface Props {
   updateSurveyData: React.Dispatch<React.SetStateAction<SurveyData>>;
 }
 
-export default function Step4_Obstacles({
+export default function Step8_PlanningFrequency({
   surveyData,
   updateSurveyData,
 }: Props) {
-  const [selected, setSelected] = useState<string[]>(
-    surveyData.obstacles || []
-  );
+  const selectedFrequency = surveyData.planningFrequency || "";
 
   const handleSelect = (item: string) => {
-    const isCurrentlySelected = selected.includes(item);
+    const newFrequency = selectedFrequency === item ? "" : item;
 
-    let newSelection;
-    if (isCurrentlySelected) {
-      newSelection = selected.filter((i) => i !== item);
-    } else {
-      newSelection = [...selected, item];
-    }
-
-    setSelected(newSelection);
-    updateSurveyData((prev) => ({ ...prev, obstacles: newSelection }));
+    updateSurveyData((prev) => ({
+      ...prev,
+      planningFrequency: newFrequency,
+    }));
   };
 
   return (
     <View style={styles.container}>
       <Text style={[styles.title, globalStyles.extraBold]}>
-        Trong quá khứ, điều gì đã cản trở bạn duy trì cân nặng?
-      </Text>
-      <Text style={[styles.subtitle, globalStyles.semiBold]}>
-        Chọn tất cả những điều áp dụng:
+        Bạn có thường xuyên lên kế hoạch cho bữa ăn?
       </Text>
       <View style={styles.optionsList}>
-        {OBSTACLES.map((item) => (
-          <SurveyOption
+        {FREQUENCY.map((item) => (
+          <SingleSelectOption
             key={item}
             label={item}
-            isSelected={selected.includes(item)}
+            isSelected={selectedFrequency === item}
             onPress={() => handleSelect(item)}
           />
         ))}
@@ -86,10 +76,16 @@ export default function Step4_Obstacles({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  title: { fontSize: width * 0.07, color: "#000000", marginBottom: 8 },
-  subtitle: { fontSize: width * 0.04, color: "#656565", marginBottom: 20 },
-  optionsList: { gap: 12 },
+  container: {
+    flex: 1,
+  },
+  title: {
+    fontSize: width * 0.07,
+    color: "#000000",
+  },
+  optionsList: {
+    gap: 12,
+  },
   optionContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -105,7 +101,9 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
     backgroundColor: "#EEEEEE",
   },
-  optionText: { fontSize: width * 0.04 },
+  optionText: {
+    fontSize: width * 0.04,
+  },
   checkbox: {
     width: 24,
     height: 24,
