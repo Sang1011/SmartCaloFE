@@ -11,6 +11,7 @@ import SCButton from "../components/ui/SCButton";
 import { navigateCustom } from "@utils/navigation";
 import { IS_LOGGED_IN } from "@constants/app";
 import React, { useState } from "react";
+import { Link } from "expo-router";
 export default function LoginScreen() {
   const [keepLogin, setKeepLogin] = useState(false);
   return (
@@ -19,77 +20,20 @@ export default function LoginScreen() {
       edges={["top", "left", "right", "bottom"]}
     >
       <Image
-        source={require("../assets/images/logo.png")}
-        style={styles.logo}
-        contentFit="contain" // giống resizeMode="contain"
-        transition={500} // hiệu ứng fade-in
+        source={require("../assets/images/backgroundLogin.jpeg")}
+        style={styles.background}
+        contentFit="fill"
       />
-      <Text style={[styles.title, globalStyles.semiBold]}>Đăng nhập</Text>
-      <View style={styles.form}>
-        <View style={styles.inputContainer}>
-          <SCInput
-            fontFamily={FONTS.regular}
-            placeholder="Nhập email"
-            variant="email"
-            icon={<Fontisto name="email" size={12} color="black" />}
-          />
-          <SCInput
-            fontFamily={FONTS.regular}
-            placeholder="Nhập mật khẩu"
-            variant="password"
-            icon={<MaterialIcons name="password" size={12} color="black" />}
-          />
-        </View>
-        <View style={styles.checkboxContainer}>
-          <SCCheckBox
-            checked={keepLogin}
-            onChange={(val) => setKeepLogin(val)}
-            fontFamily={FONTS.medium}
-            fontSize={12}
-            label="Duy trì đăng nhập"
-            labelPos="right"
-          />
-          <Pressable onPress={() => console.log("Quên mật khẩu?")}>
-            <Text
-              style={{
-                fontSize: 12,
-                color: color.dark_green,
-                fontFamily: FONTS.semiBold,
-              }}
-            >
-              Quên mật khẩu?
-            </Text>
-          </Pressable>
-        </View>
-        <View style={styles.button}>
-          <SCButton
-            title="Đăng nhập"
-            onPress={() => navigateCustom("/survey")}
-          />
-        </View>
-        {/* <View style={styles.button}>
-          <SCButton
-            title="Đăng nhập"
-            onPress={() => navigateCustom("/tabs", { flagKey: IS_LOGGED_IN })}
-          />
-        </View> */}
+      <View style={styles.textContainer}>
+        <Text style={styles.title}>Bắt đầu hành trình chăm sóc sức khỏe của bạn với SmartCalo</Text>
+        <Text style={styles.subtitle}>Đăng nhập vào SmartCalo thông qua những tài khoản mạng xã hội dưới đây</Text>
       </View>
       <View style={styles.registerContainer}>
-        <Text style={{ fontFamily: FONTS.medium }}>
-          Chưa có tài khoản?{" "}
-          <Text style={{ color: color.dark_green, fontFamily: FONTS.medium }}>
-            Đăng ký ngay
-          </Text>
-        </Text>
-        <View style={styles.ORContainer}>
-          <View style={styles.divider}></View>
-          <Text style={styles.OR}>hoặc</Text>
-          <View style={styles.divider}></View>
-        </View>
         <View style={styles.groupButton}>
           <View style={styles.google}>
             <SCButton
-              variant="outline"
+              variant="primary"
+              bgColor="rgba(255, 255, 255, 0.1)"
               iconPos="left"
               style={styles.buttonCus}
               borderRadius={50}
@@ -100,12 +44,16 @@ export default function LoginScreen() {
                 />
               }
               title="Tiếp tục với google"
-              onPress={() => console.log("Đăng ký")}
+              onPress={() => {
+                console.log("Đăng ký với google");
+                navigateCustom("/tabs");
+              }}
             />
           </View>
           <View style={styles.facebook}>
             <SCButton
-              variant="outline"
+              variant="primary"
+              bgColor="rgba(255, 255, 255, 0.1)"
               iconPos="left"
               style={styles.buttonCus}
               borderRadius={50}
@@ -116,17 +64,17 @@ export default function LoginScreen() {
                 />
               }
               title="Tiếp tục với facebook"
-              onPress={() => console.log("Đăng ký")}
+              onPress={() => console.log("Đăng ký với facebook")}
             />
           </View>
         </View>
         <Text style={styles.text}>
-          Chúng tôi chỉ chia sẻ thông tin khi có sự đồng ý của bạn
+          Bằng việc tiếp tục, bạn đồng ý với các <Link href="/terms" style={styles.link}>Điều khoản sử dụng</Link> và <Link href="/privacy" style={styles.link}>Chính sách bảo mật</Link> của chúng tôi
         </Text>
       </View>
       <View style={styles.groupImageContainer}>
         <Image
-          source={require("../assets/images/logo_group.png")}
+          source={require("../assets/images/logo_group_outline.png")}
           style={styles.logoGroup}
         />
       </View>
@@ -142,61 +90,42 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+    justifyContent: "center",
     position: "relative",
     marginHorizontal: "auto",
   },
-  logo: {
-    marginTop: 40,
-    width: "30%",
-    aspectRatio: 1,
-    resizeMode: "contain",
+  background: {
+    width: "110%",
+    height: "110%",
+    position: "absolute",
+    top: 0,
+    left: 0,
   },
-  title: {
-    fontSize: 24,
-    marginVertical: 8,
-    color: color.dark_green,
-  },
-  form: {
-    width: "100%",
-    paddingHorizontal: 20,
-    marginTop: 16,
-  },
-  inputContainer: {
-    gap: 12,
-  },
-  checkboxContainer: {
-    flexDirection: "row",
+  textContainer: {
+    paddingHorizontal: 25,
+    paddingVertical: 10,
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+    justifyContent: "center",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
   },
-  button: {
-    width: "90%",
-    alignSelf: "center",
-    marginTop: 24,
+  title:{
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: color.white,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: color.white,
+    textAlign: "center",
   },
   registerContainer: {
     marginTop: 8,
     alignItems: "center",
     width: "100%",
-  },
-  ORContainer: {
-    marginHorizontal: "auto",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 24,
-  },
-  divider: {
-    width: "50%",
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: "#aaa",
-  },
-  OR: {
-    marginHorizontal: 8,
-    fontFamily: FONTS.medium,
-    fontSize: 14,
-    textTransform: "uppercase",
   },
   groupButton: {
     width: "100%",
@@ -215,11 +144,17 @@ const styles = StyleSheet.create({
     height: 41,
   },
   text: {
+    marginTop: 10,
+    paddingHorizontal: 25,
     fontFamily: FONTS.medium,
     fontSize: 10,
-    color: color.black,
-    textAlign: "center",
-    marginTop: 5,
+    color: color.white,
+    textAlign: "center"
+  },
+  link: {
+    fontFamily: FONTS.bold,
+    fontSize: 10,
+    color: color.dark_green,
   },
   groupImageContainer: {
     position: "absolute",
