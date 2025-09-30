@@ -1,22 +1,31 @@
 import { router } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   HAS_DONE_SURVEY,
   HAS_OPENED_APP,
-  IS_LOGGED_IN,
 } from "../constants/app";
-import { getBooleanData } from "../stores";
+import { getBooleanData, getToken } from "../stores";
+import { RootState } from "@redux";
+import { useAppSelector } from "@redux/hooks";
 
 export function useRedirect() {
+  const reduxAccessToken = useAppSelector((state: RootState) => state.auth.accessToken);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [hasOpenedApp, setHasOpenedApp] = useState<boolean>(false);
+
   useEffect(() => {
     async function checkFlags() {
-      const hasOpenedApp = await getBooleanData(HAS_OPENED_APP);
-      const isLoggedIn = await getBooleanData(IS_LOGGED_IN);
+      const opened = await getBooleanData(HAS_OPENED_APP);
       const hasDoneSurvey = await getBooleanData(HAS_DONE_SURVEY);
+      setHasOpenedApp(opened);
 
-      if (!hasOpenedApp) {
+      const refreshToken = await getToken();
+      const loggedIn = !!reduxAccessToken || !!refreshToken;
+      setIsLoggedIn(loggedIn);
+      
+      if (!opened) {
         router.replace("/introScreen");
-      } else if (!isLoggedIn) {
+      } else if (!loggedIn) {
         router.replace("/login");
       } else if (!hasDoneSurvey) {
         router.replace("/survey");
@@ -26,5 +35,5 @@ export function useRedirect() {
     }
 
     checkFlags();
-  }, []);
+  }, [reduxAccessToken]);
 }

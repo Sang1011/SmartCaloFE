@@ -74,7 +74,7 @@ export default function RootLayout() {
     "Montserrat-BlackItalic": require("../assets/fonts/Montserrat-BlackItalic.ttf"),
   });
 
-  // useRedirect();
+  useRedirect();
 
   useSystemBars();
   

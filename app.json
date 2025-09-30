@@ -45,14 +45,15 @@
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": true
         }
-      ],
-      "expo-secure-store"
+      ]
     ],
-    "extra": {
-      "API_URL": "https://api.example.com"
-    },
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "GOOGLE_ANDROID_CLIENT_ID": "723818287625-eci24g8031so2phimko68826dofkhhsd.apps.googleusercontent.com",
+      "GOOGLE_IOS_CLIENT_ID": "723818287625-eci24g8031so2phimko68826dofkhhsd.apps.googleusercontent.com",
+      "API_URL": "https://localhost:7152"
     }
   }
 }
