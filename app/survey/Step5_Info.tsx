@@ -14,7 +14,7 @@ export default function Step5_Info({ surveyData }: Props) {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../../assets/images/intro_1.png")}
+        source={require("../../assets/images/survey_2.png")}
         style={styles.image}
         contentFit="cover"
       />
