@@ -9,7 +9,7 @@ export default function Step3_Info() {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../../assets/images/intro_1.png")} // Chưa chèn ảnh
+        source={require("../../assets/images/survey_1.png")}
         style={styles.image}
         contentFit="cover"
       />
