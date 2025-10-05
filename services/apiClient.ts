@@ -4,7 +4,7 @@ import { responseInterceptor } from './interceptors/responseInterceptor';
 import { Config } from '../config/config';
 
 const apiClient = axios.create({
-  baseURL: Config.API_URL,
+  baseURL: Config.API_URL + "/api",
   timeout: 10000,
 });
 

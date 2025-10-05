@@ -8,5 +8,4 @@ export enum AppScreen {
 }
 
 export const HAS_OPENED_APP = "hasOpenedApp";
-export const IS_LOGGED_IN = "isLoggedIn";
 export const HAS_DONE_SURVEY = "hasDoneSurvey";
