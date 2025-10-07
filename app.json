@@ -1,0 +1,86 @@
+{
+  "expo": {
+    "name": "smart-calo-managed",
+    "slug": "smart-calo-managed",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/logo.png",
+    "scheme": "smartcalomanaged",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    
+    // THÊM DEVELOPMENT CONFIG
+    "developmentClient": {
+      "silentLaunch": false
+    },
+    "packagerOpts": {
+      "config": "metro.config.js",
+      "sourceExts": ["js", "jsx", "ts", "tsx", "json"]
+    },
+
+    "android": {
+      "enableHermes": true,
+      "jsEngine": "hermes",
+      "package": "com.penta.smartcalo",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundColor": "#E6F4FE"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/logo.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      "expo-secure-store",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.723818287625-s3l202uu5n18vuc821it5i9ep09jrud0"
+        }
+      ],
+      [
+        "react-native-fbsdk-next",
+        {
+          "appID": "1756016208411923",
+          "clientToken": "25439e137ef72f99f08238acd8c3a34e",
+          "displayName": "smart calo", 
+          "scheme": "fb1756016208411923",
+          "isAutoInitEnabled": true
+        }
+      ]
+    ],
+    "extra": {
+      "API_URL": "http://10.0.2.2:5013/",
+      "GOOGLE_ANDROID_CLIENT_ID": "723818287625-eci24g8031so2phimko68826dofkhhsd.apps.googleusercontent.com",
+      "GOOGLE_WEB_CLIENT_ID": "723818287625-s3l202uu5n18vuc821it5i9ep09jrud0.apps.googleusercontent.com",
+      "FACEBOOK_APP_ID": "1756016208411923",
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "72906baa-f98c-4d52-a2c1-c391fa41905d"
+      }
+    },
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
