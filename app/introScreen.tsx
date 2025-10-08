@@ -2,7 +2,6 @@ import { HAS_OPENED_APP } from "@constants/app";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { navigateCustom } from "@utils/navigation";
 import { Image } from "expo-image";
-import React from "react";
 import {
   Dimensions,
   StyleSheet,
@@ -110,6 +109,6 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   button: {
-    width: width * 0.45, // responsive width
+    width: width * 0.5, // responsive width
   },
 });

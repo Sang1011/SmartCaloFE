@@ -213,6 +213,7 @@ const styles = StyleSheet.create({
   },
   detailLink: {
     fontSize: 15,
+    width: "80%",
     fontFamily: FONTS.medium,
   },
   meal: {

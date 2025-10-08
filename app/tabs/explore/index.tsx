@@ -1,24 +1,22 @@
+import SCButton from "@components/ui/SCButton";
+import CurrentExerciseCard from "@components/ui/currentExcerciseCard";
+import CurrentMenuCard from "@components/ui/currentMenuCard";
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { useRoute } from "@react-navigation/native";
-import { navigateCustom } from "@utils/navigation";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import AntDesign from "@expo/vector-icons/AntDesign";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useRoute } from "@react-navigation/native";
+import { navigateCustom } from "@utils/navigation";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import SCButton from "@components/ui/SCButton";
-import CurrentMenuCard from "@components/ui/currentMenuCard";
-import CurrentExerciseCard from "@components/ui/currentExcerciseCard";
 
 const recipeData = {
   id: 1,
@@ -30,7 +28,18 @@ const recipeData = {
   image: require("../../../assets/images/recipe_1.png"),
 };
 
-const excerciseData = {
+
+type excerciseType = {
+  title: string,
+  day: string,
+  info: string,
+  progress: {
+    current: number,
+    total: number,
+  }
+  image?: string
+}
+const excerciseData: excerciseType = {
   title: "XÂY DỰNG CƠ THỂ MẠNH MẼ & SĂN CHẮC",
   day: "NGÀY 6",
   info: "13 phút - 10 bài tập",
@@ -38,7 +47,6 @@ const excerciseData = {
     current: 6,
     total: 30,
   },
-  image: require("../../../assets/images/dumbbell.png"),
 };
 
 const planData = {
@@ -198,22 +206,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: color.background,
-  },
-  headerContainer: {
-    width: "100%",
-    marginBottom: 20,
-    height: 70,
-    backgroundColor: color.white,
-    borderBottomColor: color.border,
-    borderBottomWidth: 1,
-    justifyContent: "center",
-  },
-  mainTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#000",
-    fontFamily: FONTS.semiBold,
-    textAlign: "center",
   },
   contentContainer: {
     flex: 1,

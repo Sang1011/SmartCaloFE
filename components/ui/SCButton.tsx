@@ -1,16 +1,16 @@
 import React from "react";
 import {
+  GestureResponderEvent,
   Pressable,
+  PressableProps,
+  StyleProp,
   StyleSheet,
   Text,
   View,
-  GestureResponderEvent,
-  PressableProps,
-  StyleProp,
   ViewStyle,
 } from "react-native";
-import { FONTS, globalStyles } from "../../constants/fonts";
 import Color from "../../constants/color";
+import { FONTS, globalStyles } from "../../constants/fonts";
 
 interface SCButtonProps extends PressableProps {
   title?: string;
@@ -115,6 +115,7 @@ export default function SCButton({
           style={{
             color: variantStyles.textColor,
             fontFamily: fontFamily || globalStyles.semiBold.fontFamily,
+            width: "80%",
             fontSize,
             textAlign,
           }}
