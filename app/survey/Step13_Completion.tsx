@@ -1,8 +1,8 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React from "react";
 import { Dimensions, StyleSheet, Text, View } from "react-native";
-import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
+import { SurveyData } from "./index";
 
 const { width } = Dimensions.get("window");
 
@@ -21,14 +21,14 @@ export default function Step13_Completion({ surveyData }: Props) {
       </Text>
 
       <View style={styles.optionItem}>
-        <AntDesign name="checkcircle" size={24} color="#2CD9A1" />
+        <AntDesign name="check-circle" size={24} color="#2CD9A1" />
         <Text style={[styles.optionText, globalStyles.regular]}>
           Luôn theo dõi lời nhắc.
         </Text>
       </View>
 
       <View style={styles.optionItem}>
-        <AntDesign name="checkcircle" size={24} color="#2CD9A1" />
+        <AntDesign name="check-circle" size={24} color="#2CD9A1" />
         <Text style={[styles.optionText, globalStyles.regular]}>
           Gửi cho tôi những tin tức, đổi mới và ưu đãi mới nhất từ Smart Calo.
         </Text>

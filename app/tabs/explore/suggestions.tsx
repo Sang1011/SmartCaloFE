@@ -1,18 +1,44 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, FlatList, Image, TouchableOpacity, ScrollView } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useRef, useState } from "react";
+import {
+  Dimensions,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+const { width } = Dimensions.get("window");
 
 export default function SuggestionsScreen() {
   const [activeFilter, setActiveFilter] = useState("Tất Cả");
+  const [currentBanner, setCurrentBanner] = useState(0);
+  const flatListRef = useRef(null);
 
   const filters = ["Tất Cả", "Mới Nhất", "Bán Chạy"];
 
   const categories = [
-    { id: 1, title: "Tập Luyện", image: require("../../../assets/images/workout.png") },
-    { id: 2, title: "Thực Phẩm", image: require("../../../assets/images/food.png") },
-    { id: 3, title: "Sức Khỏe", image: require("../../../assets/images/health.png") },
+    {
+      id: 1,
+      title: "Tập Luyện",
+      image: require("../../../assets/images/workout.png"),
+    },
+    {
+      id: 2,
+      title: "Thực Phẩm",
+      image: require("../../../assets/images/food.png"),
+    },
+    {
+      id: 3,
+      title: "Sức Khỏe",
+      image: require("../../../assets/images/health.png"),
+    },
   ];
 
   const products = [
@@ -34,29 +60,94 @@ export default function SuggestionsScreen() {
     },
   ];
 
+  const banners = [
+    {
+      id: 1,
+      title: "Inulin Powder",
+      desc: "Chất xơ tự nhiên hỗ trợ tiêu hoá, tăng lợi khuẩn đường ruột.",
+      color: "#E2F3E8",
+      image: require("../../../assets/images/powder.png"),
+    },
+    {
+      id: 2,
+      title: "Whey Protein",
+      desc: "Bổ sung protein tinh khiết giúp phục hồi cơ và tăng sức mạnh.",
+      color: "#F8E8E9",
+      image: require("../../../assets/images/whey.png"),
+    },
+    {
+      id: 3,
+      title: "Omega 3",
+      desc: "Dầu cá nguyên chất giúp cải thiện trí nhớ và tim mạch.",
+      color: "#E6F2FF",
+      image: require("../../../assets/images/powder.png"),
+    },
+    {
+      id: 4,
+      title: "Vitamin C+",
+      desc: "Tăng cường đề kháng, giảm mệt mỏi, đẹp da mỗi ngày.",
+      color: "#FFF6E5",
+      image: require("../../../assets/images/powder.png"),
+    },
+  ];
+
+  const handleScroll = (event: any) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / 350); // vì bannerCard width = 350
+    setCurrentBanner(index);
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Search */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color={color.light_gray} style={{ marginLeft: 8 }} />
+        <Ionicons
+          name="search"
+          size={20}
+          color={color.light_gray}
+          style={{ marginLeft: 8 }}
+        />
         <TextInput placeholder="Tìm sản phẩm" style={styles.searchInput} />
-        <TouchableOpacity style={styles.filterButton}>
-          <Ionicons name="options" size={20} color={color.white} />
-        </TouchableOpacity>
       </View>
 
-      {/* Banner */}
-      <View style={styles.banner}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.bannerTitle}>Inulin Powder</Text>
-          <Text style={styles.bannerDesc}>
-            Inulin Powder là một loại chất xơ hòa tan tự nhiên, thường chiết xuất từ rễ rau diếp xoăn.
-          </Text>
-          <TouchableOpacity style={styles.bannerButton}>
-            <Text style={styles.bannerButtonText}>Xem Chi Tiết</Text>
-          </TouchableOpacity>
+      {/* Banner Carousel */}
+      <View>
+        <FlatList
+          ref={flatListRef}
+          data={banners}
+          keyExtractor={(item) => item.id.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          pagingEnabled
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          renderItem={({ item }) => (
+            <View style={[styles.bannerCard, { backgroundColor: item.color }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.bannerTitle}>{item.title}</Text>
+                <Text style={styles.bannerDesc}>{item.desc}</Text>
+                <TouchableOpacity style={styles.bannerButton}>
+                  <Text style={styles.bannerButtonText}>Xem Chi Tiết</Text>
+                </TouchableOpacity>
+              </View>
+              <Image
+                source={item.image}
+                style={styles.bannerImage}
+                resizeMode="contain"
+              />
+            </View>
+          )}
+        />
+
+        {/* Dot Indicator */}
+        <View style={styles.dotContainer}>
+          {banners.map((_, index) => (
+            <View
+              key={index}
+              style={[styles.dot, currentBanner === index && styles.activeDot]}
+            />
+          ))}
         </View>
-        <Image source={require("../../../assets/images/powder.png")} style={styles.bannerImage} resizeMode="contain" />
       </View>
 
       {/* Danh Mục */}
@@ -65,8 +156,16 @@ export default function SuggestionsScreen() {
         {categories.map((cat) => (
           <TouchableOpacity key={cat.id} style={styles.categoryCard}>
             <Image source={cat.image} style={styles.categoryImage} />
-            <View style={cat.id % 2 ? styles.overlayLeft : styles.overlayRight} />
-            <Text style={cat.id % 2 ? styles.categoryTextLeft : styles.categoryTextRight}>{cat.title}</Text>
+            <View
+              style={cat.id % 2 ? styles.overlayLeft : styles.overlayRight}
+            />
+            <Text
+              style={
+                cat.id % 2 ? styles.categoryTextLeft : styles.categoryTextRight
+              }
+            >
+              {cat.title}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -76,32 +175,59 @@ export default function SuggestionsScreen() {
         {filters.map((f) => (
           <TouchableOpacity
             key={f}
-            style={[styles.filterChip, activeFilter === f && styles.activeFilter]}
+            style={[
+              styles.filterChip,
+              activeFilter === f && styles.activeFilter,
+            ]}
             onPress={() => setActiveFilter(f)}
           >
-            <Text style={[styles.filterText, activeFilter === f && { color: color.white }]}>{f}</Text>
+            <Text
+              style={[
+                styles.filterText,
+                activeFilter === f && { color: color.white },
+              ]}
+            >
+              {f}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {/* Danh sách sản phẩm */}
+      <Text style={styles.sectionTitle}>Gợi ý cho bạn</Text>
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingVertical: 10, marginBottom: 30, display: "flex", justifyContent: "center", flexDirection: "row", alignItems: "center" }}
         renderItem={({ item }) => (
-          <View style={styles.productCard}>
-            <Image source={item.image} style={styles.productImage} />
-            <Text style={styles.productTitle}>{item.title}</Text>
-            <Text style={styles.productSold}>{item.sold} đã bán</Text>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>{item.category}</Text>
+          <TouchableOpacity activeOpacity={0.8} style={styles.productCardNew}>
+            <View style={styles.imageWrapper}>
+              <Image
+                source={item.image}
+                style={styles.productImageNew}
+                resizeMode="contain"
+              />
+              <View style={styles.categoryTag}>
+                <Text style={styles.categoryTagText}>{item.category}</Text>
+              </View>
             </View>
-            <Text style={styles.productDesc} numberOfLines={2}>
-              {item.desc}
-            </Text>
-          </View>
+            <View style={styles.productInfo}>
+              <Text style={styles.productTitleNew} numberOfLines={1}>
+                {item.title}
+              </Text>
+              <Text style={styles.productDescNew} numberOfLines={2}>
+                {item.desc}
+              </Text>
+              <View style={styles.productFooter}>
+                <Text style={styles.productSoldNew}>{item.sold} đã bán</Text>
+                <TouchableOpacity style={styles.buyButton}>
+                  <Text style={styles.buyButtonText}>Mua</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
         )}
       />
     </ScrollView>
@@ -136,24 +262,32 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
   },
-  banner: {
+  bannerCard: {
+    width: 350,
     flexDirection: "row",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 16,
+    borderRadius: 20,
+    marginVertical: 15,
+    marginHorizontal: 15,
     padding: 16,
     alignItems: "center",
-    marginBottom: 16,
+    marginRight: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   bannerTitle: {
     fontFamily: FONTS.bold,
-    fontSize: 16,
-    marginBottom: 4,
+    fontSize: 18,
+    marginBottom: 6,
+    color: color.dark_green,
   },
   bannerDesc: {
     fontFamily: FONTS.regular,
-    fontSize: 12,
-    color: color.light_gray,
+    fontSize: 13,
+    color: "#444",
     marginBottom: 8,
+    maxWidth: 160,
   },
   bannerButton: {
     backgroundColor: color.dark_green,
@@ -165,11 +299,30 @@ const styles = StyleSheet.create({
   bannerButtonText: {
     color: color.white,
     fontFamily: FONTS.medium,
+    fontSize: 13,
   },
   bannerImage: {
-    width: 100,
-    height: 100,
-    marginLeft: 12,
+    width: 110,
+    height: 110,
+    marginLeft: 8,
+  },
+  dotContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#ccc",
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: color.dark_green,
+    width: 10,
+    height: 10,
   },
   sectionTitle: {
     fontFamily: FONTS.bold,
@@ -200,16 +353,17 @@ const styles = StyleSheet.create({
     width: 120,
     height: 135,
     zIndex: 1,
-    borderColor: color.white, borderWidth: 2.5,
-    transform: [{ rotate: "-28.22deg" }, { translateY: -20 }] ,
+    borderColor: color.white,
+    borderWidth: 2.5,
+    transform: [{ rotate: "-28.22deg" }, { translateY: -20 }],
   },
   overlayRight: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(66, 99, 66, 0.41)",
     zIndex: 1,
     position: "relative",
-    left: 248, 
-    borderColor: color.white, 
+    left: 248,
+    borderColor: color.white,
     borderWidth: 2.5,
     width: 120,
     height: 135,
@@ -254,48 +408,88 @@ const styles = StyleSheet.create({
     color: color.dark_green,
     fontSize: 12,
   },
-  productCard: {
+  productCardNew: {
     width: 180,
     backgroundColor: color.white,
-    borderRadius: 16,
-    padding: 12,
-    marginRight: 12,
+    borderRadius: 20,
+    marginRight: 16,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+    overflow: "hidden",
   },
-  productImage: {
+
+  imageWrapper: {
     width: "100%",
+    height: 120,
+    backgroundColor: "#f5faf7",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  productImageNew: {
+    width: 100,
     height: 100,
-    borderRadius: 12,
-    marginBottom: 8,
   },
-  productTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 14,
-  },
-  productSold: {
-    fontFamily: FONTS.regular,
-    fontSize: 12,
-    color: color.light_gray,
-  },
-  tag: {
-    backgroundColor: "#e6f5ec",
+
+  categoryTag: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    backgroundColor: color.dark_green,
+    borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 8,
-    alignSelf: "flex-start",
-    marginVertical: 4,
   },
-  tagText: {
-    color: color.dark_green,
-    fontSize: 12,
+
+  categoryTagText: {
+    color: color.white,
     fontFamily: FONTS.medium,
+    fontSize: 11,
   },
-  productDesc: {
-    fontSize: 12,
+
+  productInfo: {
+    padding: 12,
+  },
+
+  productTitleNew: {
+    fontFamily: FONTS.bold,
+    fontSize: 15,
+    color: "#2b2b2b",
+    marginBottom: 4,
+  },
+
+  productDescNew: {
     fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: "#666",
+    lineHeight: 16,
+    marginBottom: 8,
+  },
+
+  productFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  productSoldNew: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
     color: color.light_gray,
+  },
+
+  buyButton: {
+    backgroundColor: color.dark_green,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+
+  buyButtonText: {
+    color: color.white,
+    fontFamily: FONTS.medium,
+    fontSize: 12,
   },
 });

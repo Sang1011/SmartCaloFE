@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
+import { Ionicons } from "@expo/vector-icons";
+import { navigateCustom } from "@utils/navigation";
+import { LinearGradient } from "expo-linear-gradient";
+import { Image, StyleSheet, Text, View } from "react-native";
 import SCButton from "./SCButton";
 
 interface Props {
@@ -13,7 +14,7 @@ interface Props {
     current: number;
     total: number;
   };
-  image?: any;
+  image?: string;
 }
 
 export default function CurrentExerciseCard({
@@ -23,6 +24,7 @@ export default function CurrentExerciseCard({
   progress,
   image,
 }: Props) {
+  const progressStr = JSON.stringify(progress);
   return (
     <LinearGradient
       colors={[color.scan_button_inner_left, color.scan_button_inner_right]}
@@ -30,7 +32,7 @@ export default function CurrentExerciseCard({
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
-      <View style={{ flex: 1, flexDirection: "row"}}>
+      <View style={{ flex: 1, flexDirection: "row" }}>
         {/* Left content */}
         <View style={styles.leftContent}>
           <Text style={styles.title}>{title}</Text>
@@ -55,14 +57,24 @@ export default function CurrentExerciseCard({
 
         {/* Right image */}
         <View style={styles.rightContent}>
-          <Image source={image} style={styles.image} resizeMode="contain" />
+          <Image source={image || require("../../assets/images/dumbbell.png")} style={styles.image} resizeMode="contain" />
         </View>
       </View>
 
       <View style={{ width: "100%" }}>
         <SCButton
           title={progress.current === 1 ? "Bắt đầu" : "Tiếp tục"}
-          onPress={() => console.log("Bắt đầu bài tập")}
+          onPress={() =>
+            navigateCustom("/schedule", {
+              params: {
+                title: title,
+                day: day,
+                info: info,
+                progress: progressStr,
+                image: image,
+              },
+            })
+          }
           bgColor={color.white}
           color={color.dark_green}
           fontSize={16}

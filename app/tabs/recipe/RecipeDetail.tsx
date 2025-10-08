@@ -7,13 +7,13 @@ import {
   Image,
   ImageBackground,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // Dữ liệu đã được cập nhật để khớp với hình ảnh mới
 const recipeDetails = {

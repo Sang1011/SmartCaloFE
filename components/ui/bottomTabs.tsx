@@ -4,6 +4,8 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Octicons from '@expo/vector-icons/Octicons';
+import { navigateCustom } from "@utils/navigation";
+import { Href, useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   Animated,
@@ -15,8 +17,6 @@ import {
 import { TabType } from "../../types/tabs";
 import SCButton from "./SCButton";
 import { BetweenTab, ExploreTab, LogTab, MenuTab, UserTab } from "./tabIcons";
-import { navigateCustom } from "@utils/navigation";
-import { Href, useRouter } from "expo-router";
 
 interface IBottomTabsProps {
   name?: TabType;
@@ -115,7 +115,7 @@ const router = useRouter();
           width={77}
           height={77}
           textAlign="center"
-          onPress={() => {}}
+          onPress={() => { navigateCustom("/tabs/workouts")}}
         />
         <SCButton
           title="Chỉ số cơ thể"
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   tabItem: {
     alignItems: "center",
     marginTop: 15,
-    width: "20%",
+    width: "21%",
   },
   centerTabOuter: {
     backgroundColor: Color.white,
