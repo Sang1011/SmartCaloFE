@@ -18,11 +18,12 @@ interface ExerciseCardProps {
   border?: number;
   paddingTop?: number;
   marginBottom?: number;
+  day?: number;
 }
 
 export default function ExerciseCard({
   title,
-  progress = {current: 0, total: 100 },
+  progress = { current: 0, total: 100 },
   image,
   haveButton = true,
   onPress,
@@ -31,6 +32,7 @@ export default function ExerciseCard({
   paddingTop,
   marginBottom = 16,
   totalProgress,
+  day,
 }: ExerciseCardProps) {
   const progressPercent = Math.min(
     (progress.current / progress.total) * 100,
@@ -57,7 +59,11 @@ export default function ExerciseCard({
           <View style={styles.leftContent}>
             <Text style={styles.title}>{title}</Text>
 
+            {/* Day */}
+            {day && <Text style={styles.day}>Ngày {day}</Text>}
+
             {/* Progress */}
+            {! day && (
             <View style={styles.progressWrapper}>
               {totalProgress ? (
                 <Text style={styles.progressText}>{totalProgress} ngày</Text>
@@ -76,6 +82,7 @@ export default function ExerciseCard({
                 />
               </View>
             </View>
+            )}
           </View>
 
           {/* Right image */}

@@ -1,126 +1,153 @@
 import ButtonGoBack from "@components/ui/buttonGoBack";
 import ExerciseCard from "@components/ui/excerciseCard";
+import SCButton from "@components/ui/SCButton";
+import ScheduleBody from "@components/ui/scheduleBody";
 import color from "@constants/color";
+import { FONTS } from "@constants/fonts";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { navigateCustom } from "@utils/navigation";
 import { useLocalSearchParams } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function ScheduleScreen() {
-  const fakeScheduleData = Array.from({ length: 30 }, (_, i) => ({
-    day: i + 1,
-    isCompleted: i < 5,
-    exerciseCount: Math.floor(Math.random() * 5) + 5,
-  }));
+export default function ScheduleDetailScreen() {
+  const fakeSlotItems = [
+    { name: "Đứng xoay tay chạm mũi chân", duration: "20 giây" },
+    { name: "Đứng Tấn", duration: "x 16 lần" },
+    { name: "Chạy tại chỗ nâng cao gối", duration: "30 giây" },
+    { name: "Plank cơ bản", duration: "45 giây" },
+    { name: "Squat bật nhảy", duration: "x 12 lần" },
+    { name: "Gập bụng chéo", duration: "x 20 lần" },
+    { name: "Gập bụng chéo", duration: "x 15 lần" },
+  ];
 
-  const params = useLocalSearchParams<{
-    title?: string;
-    day?: string;
-    info?: string;
-    progress?: string;
-    image?: string;
-  }>();
+  const params = useLocalSearchParams();
 
   const title = params.title ?? "Bài tập";
-  const day = params.day ?? "Ngày 1";
-  const info = params.info ?? "";
   const image = params.image ?? "";
-  const progress = params.progress
-    ? JSON.parse(params.progress)
-    : { current: 0, total: 1 };
+  const day = parseInt(params.day as string, 10) ?? 1;
 
   return (
     <SafeAreaView edges={["top"]} style={styles.container}>
       <View style={styles.goback}>
-        <ButtonGoBack bgColor={color.transparent} link="/tabs" />
+        <ButtonGoBack bgColor={color.transparent} handleLogic={() => {
+          navigateCustom("/schedule", {
+            params: {
+              scheduleId: 1,
+              day: day,
+              title: title,
+              image: image
+            }
+          });
+        }}/>
       </View>
+
       <ExerciseCard
-        title={title}
-        progress={progress}
+        title={title as string}
         image={image ? image : require("../../assets/images/dumbbell.png")}
         haveButton={false}
+        day={day}
         width={"100%"}
         border={0}
         marginBottom={0}
       />
+
       <View style={styles.scheduleList}>
-        
+        <View style={styles.scheduleHeader}>
+          <View style={styles.item}>
+            <Text style={styles.title}>Cấp độ</Text>
+            <Text style={styles.value}>Nâng cao</Text>
+          </View>
+          <View style={styles.divider}></View>
+          <View style={styles.item}>
+            <Text style={styles.title}>Kcal</Text>
+            <Text style={styles.value}>≈ 152.2</Text>
+          </View>
+          <View style={styles.divider}></View>
+          <View style={styles.item}>
+            <Text style={styles.title}>Thời lượng</Text>
+            <Text style={styles.value}>13 phút</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.option} onPress={() => {
+          console.log("Go to setting");
+          navigateCustom("/schedule/scheduleSettings", {
+            params: {
+                scheduleId: 1,
+                day: day,
+                title: title,
+                image: image
+              }
+          });
+        }}>
+          <Text style={styles.optionText}>Cài đặt tập luyện</Text>
+          <MaterialIcons name="navigate-next" size={24} color="black" />
+        </TouchableOpacity>
+        <ScheduleBody data={fakeSlotItems} />
+      </View>
+
+      <View style={styles.buttonHolder}>
+        <SCButton
+          bgColor={color.dark_green}
+          title="Tiếp tục"
+          width={"75%"}
+          onPress={() => {
+            navigateCustom("/schedule/workout");
+          }}
+        />
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    flexDirection: "column",
-    position: "relative",
-  },
-  goback: {
-    position: "absolute",
-    top: 50,
-    left: 10,
-    zIndex: 5,
-  },
+  container: { flex: 1, alignItems: "center", backgroundColor: color.white },
+  goback: { position: "absolute", top: 50, left: 10, zIndex: 5 },
   scheduleList: {
+    flex: 1,
     width: "100%",
-    height: "78%",
-    backgroundColor: color.background,
-    position: "absolute",
-    bottom: 0,
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "column",
-  },
-  scheduleContent: {
-    width: "100%",
-    height: "100%",
-    marginVertical: 25,
-  },
-  slotItem: {
-    padding: 20,
-    height: 75,
+    transform: [{ translateY: -25 }],
     backgroundColor: color.white,
-    borderRadius: 15,
-    display: "flex",
+    alignItems: "center",
+    paddingTop: 10,
+    paddingBottom: 60,
+  },
+  scheduleHeader: {
+    width: "98%",
     flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  item: {
+    width: "32%",
+    height: 75,
     justifyContent: "center",
     alignItems: "center",
   },
-  dayItem: {
-    flex: 0.3,
-    height: "100%",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  completed: {
-    flex: 0.2,
-    height: "100%",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  marked: {
-    flex: 0.5,
-    height: "100%",
-    display: "flex",
-    justifyContent: "flex-end",
+  title: { fontSize: 14, fontFamily: FONTS.regular },
+  value: { fontSize: 16, fontFamily: FONTS.bold },
+  divider: { width: 1, height: "75%", backgroundColor: color.border },
+  option: {
+    width: "98%",
+    height: 50,
+    marginTop: 10,
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    paddingHorizontal: 15,
   },
-  buttonCheck: {
-    width: 48,
-    height: 48,
-    display: "flex",
-    flexDirection: "row",
+  optionText: { fontSize: 18, fontFamily: FONTS.bold },
+  buttonHolder: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    height: 84,
+    width: "100%",
     justifyContent: "center",
     alignItems: "center",
+    borderTopColor: color.border,
+    backgroundColor: color.white,
   },
 });

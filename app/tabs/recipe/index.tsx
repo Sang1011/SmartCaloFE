@@ -1,17 +1,15 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import {
   Image,
   Pressable,
-  SafeAreaView,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
-  View,
+  View
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const recipes = [
   {
@@ -45,15 +43,7 @@ const recipes = [
 
 export default function RecipeScreen() {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor={color.white} />
-
-      <View style={styles.headerContainer}>
-        <Text style={styles.mainTitle}>Thực đơn gợi ý</Text>
-        <Pressable style={styles.menuIconContainer}>
-          <Ionicons name="filter" size={24} color={color.black} />
-        </Pressable>
-      </View>
+    <SafeAreaView edges={["top"]} style={styles.safeArea}>
 
       <ScrollView
         style={styles.container}
@@ -108,26 +98,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: color.white,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    height: 60,
-    backgroundColor: color.white,
-    borderBottomWidth: 1,
-    borderBottomColor: color.white_40,
-    shadowColor: color.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  mainTitle: {
-    fontSize: 20,
-    fontFamily: FONTS.semiBold,
-    color: color.black,
+
   },
   menuIconContainer: {
     position: "absolute",
@@ -136,7 +107,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: "#EDEDED",
+    marginTop: -45,
+    backgroundColor: color.white,
   },
   contentContainer: {
     paddingHorizontal: 16,

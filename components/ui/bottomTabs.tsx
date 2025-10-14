@@ -1,12 +1,12 @@
 import Color from "@constants/color";
 import { FONTS } from "@constants/fonts";
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import Octicons from '@expo/vector-icons/Octicons';
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import Octicons from "@expo/vector-icons/Octicons";
 import { navigateCustom } from "@utils/navigation";
-import { Href, useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import { Href, usePathname, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   StyleSheet,
@@ -23,75 +23,111 @@ interface IBottomTabsProps {
 }
 
 export default function BottomTabs({ name = "log" }: IBottomTabsProps) {
-  const [activeTab, setActiveTab] = useState(name);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // ✅ Xác định tab hiện tại dựa vào pathname
+  const getTabFromPath = (): TabType => {
+    if (pathname.includes("/explore")) return "explore";
+    if (pathname.includes("/recipe")) return "menu";
+    if (pathname.includes("/profile")) return "profile";
+    return "log";
+  };
+
+  const [activeTab, setActiveTab] = useState<TabType>(getTabFromPath());
   const [isCenterOpen, setIsCenterOpen] = useState(false);
 
   const animation = useRef(new Animated.Value(88)).current; // start height
 
   const groupOpacity = useRef(new Animated.Value(0)).current;
-const groupTranslate = useRef(new Animated.Value(20)).current;
+  const groupTranslate = useRef(new Animated.Value(20)).current;
 
-const toggleCenter = () => {
-  const toHeight = isCenterOpen ? 88 : 207;
-  setIsCenterOpen(!isCenterOpen);
+  const toggleCenter = () => {
+    const toHeight = isCenterOpen ? 88 : 207;
+    setIsCenterOpen(!isCenterOpen);
 
-  Animated.parallel([
-    Animated.timing(animation, {
-      toValue: toHeight,
-      duration: 250,
-      useNativeDriver: false,
-    }),
-    Animated.timing(groupOpacity, {
-      toValue: isCenterOpen ? 0 : 1,
-      duration: 250,
-      useNativeDriver: true,
-    }),
-    Animated.timing(groupTranslate, {
-      toValue: isCenterOpen ? 20 : 0,
-      duration: 250,
-      useNativeDriver: true,
-    }),
-  ]).start();
-};
-const router = useRouter();
+    Animated.parallel([
+      Animated.timing(animation, {
+        toValue: toHeight,
+        duration: 250,
+        useNativeDriver: false,
+      }),
+      Animated.timing(groupOpacity, {
+        toValue: isCenterOpen ? 0 : 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(groupTranslate, {
+        toValue: isCenterOpen ? 20 : 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
-   const tabs: {
+  useEffect(() => {
+    setActiveTab(getTabFromPath());
+  }, [pathname]);
+
+  const tabs: {
     key: TabType;
     label: string;
     component: React.FC<{ isActive: boolean }>;
-    route?: string; 
+    route?: string;
   }[] = [
     { key: "log", label: "Nhật ký", component: LogTab, route: "/tabs" },
-    { key: "explore", label: "Khám phá", component: ExploreTab, route: "/tabs/explore" },
-    { key: "center", label: "", component: BetweenTab }, 
-    { key: "menu", label: "Thực đơn", component: MenuTab, route: "/tabs/recipe" },
-    { key: "profile", label: "Hồ sơ", component: UserTab, route: "/tabs/profile" },
+    {
+      key: "explore",
+      label: "Khám phá",
+      component: ExploreTab,
+      route: "/tabs/explore",
+    },
+    { key: "center", label: "", component: BetweenTab },
+    {
+      key: "menu",
+      label: "Thực đơn",
+      component: MenuTab,
+      route: "/tabs/recipe",
+    },
+    {
+      key: "profile",
+      label: "Hồ sơ",
+      component: UserTab,
+      route: "/tabs/profile",
+    },
   ];
 
   return (
     <Animated.View style={[styles.container, { height: animation }]}>
-     <Animated.View
-  style={[
-    styles.groupButtons,
-    {
-      opacity: groupOpacity,
-      transform: [{ translateY: groupTranslate }],
-    },
-  ]}
-  pointerEvents={isCenterOpen ? "auto" : "none"}
->
-
+      <Animated.View
+        style={[
+          styles.groupButtons,
+          {
+            opacity: groupOpacity,
+            transform: [{ translateY: groupTranslate }],
+          },
+        ]}
+        pointerEvents={isCenterOpen ? "auto" : "none"}
+      >
         <SCButton
           title="Thư viện món ăn"
           bgColor={Color.fast_button}
           color={Color.black}
           iconPos="top"
-          icon={<MaterialIcons name="collections-bookmark" size={18} color="black" />}
+          icon={
+            <MaterialIcons
+              name="collections-bookmark"
+              size={18}
+              color="black"
+            />
+          }
           fontSize={8}
           width={77}
           height={77}
           textAlign="center"
-          onPress={() => {}}
+          onPress={() => {
+            navigateCustom("/library");
+          }}
         />
         <SCButton
           title="Chụp ảnh"
@@ -103,7 +139,9 @@ const router = useRouter();
           width={77}
           height={77}
           textAlign="center"
-          onPress={() => { navigateCustom("/scan") }}
+          onPress={() => {
+            navigateCustom("/scan");
+          }}
         />
         <SCButton
           title="Thể dục"
@@ -115,7 +153,9 @@ const router = useRouter();
           width={77}
           height={77}
           textAlign="center"
-          onPress={() => { navigateCustom("/tabs/workouts")}}
+          onPress={() => {
+            navigateCustom("/tabs/workouts");
+          }}
         />
         <SCButton
           title="Chỉ số cơ thể"
@@ -127,7 +167,9 @@ const router = useRouter();
           width={77}
           height={77}
           textAlign="center"
-          onPress={() => {}}
+          onPress={() => {
+            navigateCustom("/bodyInfo");
+          }}
         />
       </Animated.View>
 
@@ -212,7 +254,7 @@ const styles = StyleSheet.create({
   tabItem: {
     alignItems: "center",
     marginTop: 15,
-    width: "21%",
+    width: "20%",
   },
   centerTabOuter: {
     backgroundColor: Color.white,
@@ -251,6 +293,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
+    width: "100%",
+    textAlign: "center",
     marginTop: 4,
     color: Color.grey,
     fontFamily: FONTS.medium,

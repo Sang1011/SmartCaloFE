@@ -6,12 +6,13 @@ import {
   HAS_LOGGED_IN,
   HAS_OPENED_APP,
 } from "../constants/app";
-import { getBooleanData, saveBooleanData } from "../stores";
+import { getBooleanData } from "../stores";
 
-export function useRedirect() {
+export function useRedirect(ready?: boolean) {
   useEffect(() => {
-    let isMounted = true;
+    if (!ready) return; 
 
+    let isMounted = true;
     async function checkFlags() {
       if (!isMounted) return;
       
@@ -20,41 +21,23 @@ export function useRedirect() {
         const hasDoneSurvey = await getBooleanData(HAS_DONE_SURVEY);
         const hasloggedIn = await getBooleanData(HAS_LOGGED_IN);
         
-        console.log(' useRedirect values:', { 
-          opened, 
-          hasDoneSurvey, 
-          hasloggedIn 
-        });
+        console.log('useRedirect values:', { opened, hasDoneSurvey, hasloggedIn });
 
         setTimeout(() => {
           if (!isMounted) return;
-          
-          if (!opened) {
-            console.log('Redirecting to introScreen');
-            router.replace("/introScreen");
-          } else if (!hasloggedIn) {
-            console.log('Redirecting to login');
-            router.replace("/login");
-          } else if (!hasDoneSurvey) {
-            console.log('Redirecting to survey');
-            router.replace("/survey/surveyScreen");
-          } else {
-            console.log('Redirecting to tabs');
-            router.replace("/tabs");
-          }
+
+          if (!opened) router.replace("/introScreen");
+          else if (!hasloggedIn) router.replace("/login");
+          else if (!hasDoneSurvey) router.replace("/survey/index");
+          else router.replace("/tabs");
         }, 500);
       } catch (error) {
         console.error('Error in useRedirect:', error);
-        if (isMounted) {
-          router.replace("/tabs");
-        }
+        if (isMounted) router.replace("/tabs");
       }
     }
 
     checkFlags();
-
-    return () => {
-      isMounted = false; 
-    };
-  }, []);
+    return () => { isMounted = false; };
+  }, [ready]); // 👈 chạy lại khi ready = true
 }

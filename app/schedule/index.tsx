@@ -33,7 +33,7 @@ export default function ScheduleScreen() {
   return (
     <SafeAreaView edges={["top"]} style={styles.container}>
       <View style={styles.goback}>
-        <ButtonGoBack bgColor={color.transparent} link="/tabs" />
+        <ButtonGoBack bgColor={color.transparent} />
       </View>
       <ExerciseCard
         title={title}
@@ -46,14 +46,16 @@ export default function ScheduleScreen() {
       />
       <View style={styles.scheduleList}>
         <ScrollView style={styles.scheduleContent}>
-          {fakeScheduleData.map((item) => (
-            <Pressable onPress={() => navigateCustom("/schedule/scheduleDetail", {
+          {fakeScheduleData.map((item, index) => (
+            <Pressable key={index} onPress={() => navigateCustom("/schedule/scheduleDetail", {
               params: {
-                scheduleId: "1"
+                scheduleId: index,
+                day: item.day,
+                title: title
               }
             })} >
               <ScheduleSlotItem
-                key={item.day}
+                key={index}
                 day={item.day}
                 isCompleted={item.isCompleted}
                 exerciseCount={item.exerciseCount}

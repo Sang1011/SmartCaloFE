@@ -1,15 +1,16 @@
-import { Text, View, StyleSheet } from "react-native";
-import SCCheckBox from "./SCCheckBox";
 import color from "@constants/color";
-import { useEffect, useState } from "react";
 import { FONTS } from "@constants/fonts";
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import SCCheckBox from "./SCCheckBox";
 
 interface ISCTaskProps {
   title: string;
   completed: boolean;
+  onToggle?: () => void; 
 }
 
-export function SCTask({ title, completed: initialCompleted }: ISCTaskProps) {
+export function SCTask({ title, completed: initialCompleted, onToggle }: ISCTaskProps) {
   const [completed, setCompleted] = useState(initialCompleted);
 
   useEffect(() => {
@@ -29,7 +30,10 @@ export function SCTask({ title, completed: initialCompleted }: ISCTaskProps) {
       <View style={styles.checkboxWrapper}>
         <SCCheckBox
           checked={completed} // 👈 dùng controlled prop
-          onChange={setCompleted} // 👈 callback để thay đổi state
+          onChange={() => {
+            setCompleted((prev) => !prev);
+            onToggle?.();
+          }} // 👈 callback để thay đổi state
         />
       </View>
     </View>

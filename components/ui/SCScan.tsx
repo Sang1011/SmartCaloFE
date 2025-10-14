@@ -1,22 +1,26 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
-import AntDesign from '@expo/vector-icons/AntDesign';
+import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import Octicons from '@expo/vector-icons/Octicons';
-import { Camera, CameraView } from "expo-camera";
+import Octicons from "@expo/vector-icons/Octicons";
+import {
+  ensureCameraPermission,
+  ensureLibraryPermission,
+} from "@utils/permissions";
+import { CameraView } from "expo-camera";
 import type { CameraType, FlashMode } from "expo-camera/build/Camera.types";
-import * as MediaLibrary from "expo-media-library";
+import * as ImagePicker from "expo-image-picker";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import ButtonGoBack from "./buttonGoBack";
 import ButtonScan from "./buttonScan";
 import SCButton from "./SCButton";
-// import * as ImagePicker from "expo-image-picker";
+
 export default function SCScan() {
-  const [hasCameraPermission, setHasCameraPermission] = useState<
-    boolean | null
-  >(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(
+    null
+  );
   const [image, setImage] = useState<string | null>(null);
   const [type, setType] = useState<CameraType>("back");
   const [isFlashOn, setIsFlashOn] = useState<FlashMode>("off");
@@ -25,59 +29,51 @@ export default function SCScan() {
 
   useEffect(() => {
     (async () => {
-      MediaLibrary.requestPermissionsAsync();
-      const cameraStatus = await Camera.requestCameraPermissionsAsync();
-      setHasCameraPermission(cameraStatus.status === "granted");
+      const granted = await ensureCameraPermission();
+      setHasCameraPermission(granted);
     })();
   }, []);
 
   const takePicture = async () => {
-  if (cameraRef.current) {
-    try {
-      console.log(hasCameraPermission);
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 1,
-        base64: true, // dùng để gửi xuống backend
-      });
-      console.log(image);
-      setImage(photo.uri); // lưu URI hoặc bạn có thể lưu photo.base64
-setIsFlashOn("off");
-console.log(isFlashOn);
-      // Gửi xuống backend
-      // const formData = new FormData();
-      // formData.append("file", {
-      //   uri: photo.uri,
-      //   type: "image/jpeg",
-      //   name: "photo.jpg",
-      // });
-
-      // await fetch("https://your-backend.com/upload", {
-      //   method: "POST",
-      //   body: formData,
-      //   headers: {
-      //     "Content-Type": "multipart/form-data",
-      //   },
-      // });
-      setAlreadyTaken(true);
-    } catch (error) {
-      console.log("Error taking/uploading picture:", error);
+    if (cameraRef.current) {
+      try {
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 1,
+          base64: true,
+        });
+        setImage(photo.uri);
+        setIsFlashOn("off");
+        setAlreadyTaken(true);
+      } catch (error) {
+        console.log("Error taking/uploading picture:", error);
+      }
     }
-  }
-};
-
+  };
 
   const pickImage = async () => {
-//   const result = await ImagePicker.launchImageLibraryAsync({
-//     mediaTypes: ImagePicker.MediaTypeOptions.Images,
-//     allowsEditing: true,
-//     quality: 1,
-//   });
+    try {
+      const hasPermission = await ensureLibraryPermission();
+      if (!hasPermission) {
+        alert("Vui lòng cấp quyền truy cập thư viện để chọn ảnh!");
+        return;
+      }
 
-//   if (!result.canceled) {
-//     setImage(result.assets[0].uri); // lưu URI của ảnh chọn
-//   }
-// }
-}
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        const uri = result.assets[0].uri;
+        setImage(uri);
+        setAlreadyTaken(true);
+      }
+    } catch (error) {
+      console.error("Lỗi khi chọn ảnh:", error);
+      alert("Đã xảy ra lỗi khi chọn ảnh. Vui lòng thử lại!");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -89,53 +85,46 @@ console.log(isFlashOn);
             height={50}
             borderRadius={10}
             onPress={() => setAlreadyTaken(false)}
-            icon={
-              <AntDesign name="close" size={24} color={color.white} />
-            }
+            icon={<AntDesign name="close" size={24} color={color.white} />}
           />
         ) : (
           <ButtonGoBack />
         )}
-        
       </View>
+
       <CameraView style={styles.camera} ref={cameraRef} facing={type} />
+
       <View style={styles.takePictureContainer}>
         {!alreadyTaken ? (
           <>
-        <View style={styles.flipButton}>
-          <SCButton
-            bgColor={color.dark_green}
-            width={50}
-            height={50}
-            borderRadius={9999}
-            onPress={() => {
-              setType((prev) => (prev === "back" ? "front" : "back"));
-            }}
-            icon={
-              <MaterialIcons
-                name="flip-camera-ios"
-                size={24}
-                color={color.white}
-              />
-            }
-          />
-        </View>
-        <View style={styles.takePictureButton}>
-          <ButtonScan onPress={takePicture} />
-        </View>
-        <View style={styles.imageLibraryButton}>
-          <SCButton
-            bgColor={color.dark_green}
-            width={50}
-            height={50}
-            borderRadius={9999}
-            onPress={() => pickImage()}
-            icon={
-              <Ionicons name="image-outline" size={24} color={color.white} />
-            }
-          />
-        </View>
-        </>
+            <SCButton
+              bgColor={color.dark_green}
+              width={50}
+              height={50}
+              borderRadius={9999}
+              onPress={() =>
+                setType((prev) => (prev === "back" ? "front" : "back"))
+              }
+              icon={
+                <MaterialIcons
+                  name="flip-camera-ios"
+                  size={24}
+                  color={color.white}
+                />
+              }
+            />
+
+            <ButtonScan onPress={takePicture} />
+
+            <SCButton
+              bgColor={color.dark_green}
+              width={50}
+              height={50}
+              borderRadius={9999}
+              onPress={pickImage}
+              icon={<Ionicons name="image-outline" size={24} color={color.white} />}
+            />
+          </>
         ) : (
           <SCButton
             bgColor={color.dark_green}
@@ -146,9 +135,7 @@ console.log(isFlashOn);
             title="Xác nhận"
             onPress={() => setAlreadyTaken(false)}
             iconPos="left"
-            icon={
-              <Octicons name="verified" size={24} color={color.white} />
-            }
+            icon={<Octicons name="verified" size={24} color={color.white} />}
           />
         )}
       </View>
@@ -183,9 +170,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: "100%",
     bottom: 0,
-    left: 0
+    left: 0,
   },
-  flipButton: {},
-  takePictureButton: {},
-  imageLibraryButton: {},
 });

@@ -1,11 +1,11 @@
+import { HAS_LOGGED_IN } from "@constants/app";
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from "react-native";
-import { Ionicons, MaterialIcons, Feather, FontAwesome5 } from '@expo/vector-icons';
-import { Link } from "expo-router";
 import { useAuth } from "@contexts/AuthContext";
+import { Feather, FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { navigateCustom } from "@utils/navigation";
-import { HAS_LOGGED_IN } from "@constants/app";
+import { Link } from "expo-router";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ProfileScreen() {
   const { logout } = useAuth();
@@ -54,16 +54,6 @@ export default function ProfileScreen() {
               <Text style={styles.goalValue}>85 kg</Text>
             </View>
           </View>
-
-          <TouchableOpacity style={styles.trackingButton}>
-            <View style={styles.goalIcon}>
-              <Feather name="trending-up" size={20} color={color.icon} />
-            </View>
-            <View style={styles.goalContent}>
-              <Text style={styles.goalLabel}>Theo dõi cân nặng</Text>
-            </View>
-            <MaterialIcons name="keyboard-arrow-right" size={24} color={color.icon} />
-          </TouchableOpacity>
         </View>
 
         {/* Pháp lý Section */}
@@ -113,7 +103,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Nâng cấp tài khoản Button */}
-        <TouchableOpacity style={styles.upgradeButton}>
+        <TouchableOpacity style={styles.upgradeButton} onPress={() => navigateCustom("/subscription")}>
           <MaterialIcons name="star" size={24} color="#fff" />
           <Text style={styles.upgradeText}>Nâng cấp tài khoản</Text>
         </TouchableOpacity>
@@ -239,7 +229,7 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,

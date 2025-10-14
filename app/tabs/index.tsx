@@ -5,93 +5,114 @@ import { SCTask } from "@components/ui/SCTask";
 import Color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
+import { useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 export default function DefaultScreen() {
+  const [tasks, setTasks] = useState([
+    { id: 1, title: "Kiểm tra cân nặng trước khi ăn sáng", completed: false },
+    { id: 2, title: "Uống 1 ly nước", completed: false },
+    {
+      id: 3,
+      title: "Ăn theo thực đơn & Ghi lại nhật ký ăn uống",
+      completed: true,
+    },
+    { id: 4, title: "Không ăn sau 20h", completed: true },
+    { id: 5, title: "Không ăn đồ ngoài thực đơn", completed: true },
+    { id: 6, title: "Thực hiện các bài tập hôm nay", completed: true },
+  ]);
+
+  const handleTaskToggle = (id: number) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task
+      )
+    );
+  };
+
   return (
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.layoutView}>
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.headerTextName}>Hello, User</Text>
-              <Text style={styles.headerTextHour}>Thứ 3, 12 tháng 4</Text>
-            </View>
-            <View style={styles.headerRight}>
-              <Ionicons name="notifications-outline" size={24} color="black" />
-              <View style={styles.badge}></View>
-            </View>
+    <ScrollView style={styles.scrollView}>
+      <View style={styles.layoutView}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTextName}>Hello, User</Text>
+            <Text style={styles.headerTextHour}>Thứ 3, 12 tháng 4</Text>
           </View>
-          <View style={styles.bodyView}>
-            <View style={styles.caloContainer}>
-              <View style={styles.caloView}>
-                <View style={styles.caloContent}>
-                  <Text style={styles.caloTextView}>1700 calo</Text>
-                  <Text style={styles.caloDescription}>còn lại hôm nay</Text>
-                </View>
-                <View style={styles.caloChart}>
-                  <SCDonutChart
-                    segments={[300]}
-                    size={110}
-                    strokeWidth={14}
-                    maxValue={2000}
-                    centerText="15%"
-                  />
+          <View style={styles.headerRight}>
+            <Ionicons name="notifications-outline" size={24} color="black" />
+            <View style={styles.badge}></View>
+          </View>
+        </View>
+        <View style={styles.bodyView}>
+          <View style={styles.caloContainer}>
+            <View style={styles.caloView}>
+              <View style={styles.caloContent}>
+                <Text style={styles.caloTextView}>1700 calo</Text>
+                <Text style={styles.caloDescription}>còn lại hôm nay</Text>
+              </View>
+              <View style={styles.caloChart}>
+                <SCDonutChart
+                  segments={[300]}
+                  size={110}
+                  strokeWidth={14}
+                  maxValue={2000}
+                  centerText="15%"
+                />
+              </View>
+            </View>
+            <View style={styles.nutrions}>
+              <View style={styles.nutrionfield}>
+                <Text style={styles.nutritionValue}>300g</Text>
+                <Text style={styles.nutritionText}>Carb</Text>
+                <View style={styles.progressBarContainer}>
+                  <SCProgressBar progress={45} color={Color.progress_carb} />
                 </View>
               </View>
-              <View style={styles.nutrions}>
-                <View style={styles.nutrionfield}>
-                  <Text style={styles.nutritionValue}>300g</Text>
-                  <Text style={styles.nutritionText}>Carb</Text>
-                  <View style={styles.progressBarContainer}>
-                    <SCProgressBar progress={45} color={Color.progress_carb} />
-                  </View>
-                </View>
-                <View style={styles.nutrionfield}>
-                  <Text style={styles.nutritionValue}>50g</Text>
-                  <Text style={styles.nutritionText}>Protein</Text>
-                  <View style={styles.progressBarContainer}>
-                    <SCProgressBar
-                      progress={20}
-                      color={Color.progress_protein}
-                    />
-                  </View>
-                </View>
-                <View style={styles.nutrionfield}>
-                  <Text style={styles.nutritionValue}>400g</Text>
-                  <Text style={styles.nutritionText}>Fat</Text>
-                  <View style={styles.progressBarContainer}>
-                    <SCProgressBar progress={60} />
-                  </View>
+              <View style={styles.nutrionfield}>
+                <Text style={styles.nutritionValue}>50g</Text>
+                <Text style={styles.nutritionText}>Protein</Text>
+                <View style={styles.progressBarContainer}>
+                  <SCProgressBar progress={20} color={Color.progress_protein} />
                 </View>
               </View>
-              <View style={styles.dailySection}>
-                <View style={styles.checklist}>
-                  <Text style={styles.checklistTitle}>Nhiệm vụ hàng ngày</Text>
-                  <View style={styles.checklistItems}>
+              <View style={styles.nutrionfield}>
+                <Text style={styles.nutritionValue}>400g</Text>
+                <Text style={styles.nutritionText}>Fat</Text>
+                <View style={styles.progressBarContainer}>
+                  <SCProgressBar progress={60} />
+                </View>
+              </View>
+            </View>
+            <View style={styles.dailySection}>
+              <View style={styles.checklist}>
+                <Text style={styles.checklistTitle}>Nhiệm vụ hàng ngày</Text>
+                <View style={styles.checklistItems}>
+                  {tasks.map((task) => (
                     <SCTask
-                      title="Kiểm tra cân nặng trước khi ăn sáng"
-                      completed={false}
+                      key={task.id}
+                      title={task.title}
+                      completed={task.completed}
+                      onToggle={() => handleTaskToggle(task.id)}
                     />
-                    <SCTask title="Uống 1 ly nước" completed={false} />
-                    <SCTask title="Ăn theo thực đơn & Ghi lại nhật ký ăn uống" completed={true} />
-                    <SCTask title="Không ăn sau 20h" completed={true} />
-                    <SCTask title="Không ăn đồ ngoài thực đơn" completed={true} />
-                    <SCTask title="Thực hiện các bài tập hôm nay" completed={true} />
-                  </View>
+                  ))}
                 </View>
               </View>
-              <Text style={[globalStyles.medium, styles.warningText]}>Bạn chưa hoàn thành tất cả nhiệm vụ hôm nay!</Text>
-              <View> 
-                  <SCNutritionThisWeek/>
-              </View>
+            </View>
+            {tasks.filter((task) => !task.completed).length === 0 ? (
+              <Text style={[globalStyles.medium, styles.successText]}>
+                Chúc mừng bạn đã hoàn thành tất cả nhiệm vụ hôm nay!
+              </Text>
+            ) : (
+              <Text style={[globalStyles.medium, styles.warningText]}>
+                Bạn chưa hoàn thành tất cả nhiệm vụ hôm nay!
+              </Text>
+            )}
+            <View>
+              <SCNutritionThisWeek />
             </View>
           </View>
         </View>
-      </ScrollView>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -105,7 +126,7 @@ const styles = StyleSheet.create({
     marginHorizontal: "auto",
     width: "92%",
     justifyContent: "center",
-    marginTop: 20
+    marginTop: 20,
   },
   header: {
     flexDirection: "row",
@@ -223,5 +244,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     color: "red",
-  }
+  },
+  successText: {
+    textAlign: "center",
+    fontSize: 12,
+    color: "green",
+  },
 });

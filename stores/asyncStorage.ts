@@ -48,3 +48,26 @@ export const deleteLongTermData = async (key: string) => {
     console.error('Error deleting data', error);
   }
 };
+
+// Lưu Number
+export const saveNumberData = async (key: string, value: number) => {
+  try {
+    await AsyncStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error('Error saving number data', error);
+  }
+};
+
+// Lấy Number (nếu chưa tồn tại → defaultValue)
+export const getNumberData = async (
+  key: string,  
+  defaultValue: number
+): Promise<number> => {
+  try {
+    const value = await AsyncStorage.getItem(key);
+    return value !== null ? JSON.parse(value) : defaultValue;
+  } catch (error) {
+    console.error('Error getting number data', error);
+    return defaultValue;
+  }
+};

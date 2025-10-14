@@ -29,6 +29,9 @@ interface SCButtonProps extends PressableProps {
   fontSize?: number;
   textAlign?: "left" | "center" | "right";
   gap?: number;
+  textWidth?: number | string;
+  style?: StyleProp<ViewStyle>;
+  borderColor?: string;
 }
 
 export default function SCButton({
@@ -49,6 +52,7 @@ export default function SCButton({
   textAlign = "left",
   gradientMode = "horizontal",
   gradient,
+  borderColor,
   ...rest
 }: SCButtonProps) {
   // styles theo variant
@@ -63,13 +67,14 @@ export default function SCButton({
           backgroundColor: bgColor || Color.transparent,
           textColor: color || Color.dark_green,
           borderWidth: 1,
+          borderColor: borderColor || Color.dark_green,
         };
 
   const getButtonStyle = (pressed: boolean): StyleProp<ViewStyle> => [
     styles.button,
     {
       backgroundColor: variantStyles.backgroundColor,
-      borderColor: Color.dark_green,
+      borderColor: variantStyles.borderColor,
       borderWidth: variantStyles.borderWidth,
       borderRadius,
       opacity: pressed ? 0.8 : 1,
@@ -81,13 +86,11 @@ export default function SCButton({
       justifyContent: "center", // icon + text hay chỉ icon
       alignItems: "center",
     } as ViewStyle,
-    ...(
-      Array.isArray(style)
-        ? style.filter((s) => typeof s !== "function")
-        : style && typeof style !== "function"
-        ? [style]
-        : []
-    ),
+    ...(Array.isArray(style)
+      ? style.filter((s) => typeof s !== "function")
+      : style && typeof style !== "function"
+      ? [style]
+      : []),
   ];
 
   return (
@@ -115,7 +118,6 @@ export default function SCButton({
           style={{
             color: variantStyles.textColor,
             fontFamily: fontFamily || globalStyles.semiBold.fontFamily,
-            width: "80%",
             fontSize,
             textAlign,
           }}
@@ -146,7 +148,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     height: 48,
-    paddingHorizontal: 12
+    paddingHorizontal: 12,
   },
   text: {
     maxWidth: "100%",

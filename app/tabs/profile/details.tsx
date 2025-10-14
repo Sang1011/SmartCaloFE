@@ -1,7 +1,6 @@
 import SCButton from "@components/ui/SCButton";
 import color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
-import { useAuth } from "@contexts/AuthContext";
 import { RootState } from "@redux";
 import {
   ScrollView,
@@ -116,11 +115,6 @@ export default function ProfileDetailsScreen() {
           <SCButton
             variant="outline"
             title="Điều chỉnh mục tiêu"
-            onPress={() => {}}
-            fontFamily={FONTS.semiBold}
-          />
-          <SCButton
-            title="Xem lịch sử"
             onPress={() => {}}
             fontFamily={FONTS.semiBold}
           />

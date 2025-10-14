@@ -11,12 +11,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRoute } from "@react-navigation/native";
 import { navigateCustom } from "@utils/navigation";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 const recipeData = {
   id: 1,
@@ -28,18 +23,17 @@ const recipeData = {
   image: require("../../../assets/images/recipe_1.png"),
 };
 
-
-type excerciseType = {
-  title: string,
-  day: string,
-  info: string,
+type ExerciseType = {
+  title: string;
+  day: string;
+  info: string;
   progress: {
-    current: number,
-    total: number,
-  }
-  image?: string
-}
-const excerciseData: excerciseType = {
+    current: number;
+    total: number;
+  };
+  image?: string;
+};
+const exerciseData: ExerciseType = {
   title: "XÂY DỰNG CƠ THỂ MẠNH MẼ & SĂN CHẮC",
   day: "NGÀY 6",
   info: "13 phút - 10 bài tập",
@@ -60,10 +54,14 @@ const planData = {
   daysCompleted: 30,
   totalDays: 92,
   streakDays: 30,
-}
+};
 
 export default function ExploreScreen() {
   const route = useRoute();
+
+  // 🔹 Biến tạm test UI
+  const hasCurrentMenu = false;
+  const hasCurrentExercise = false;
 
   const handleRedirect = (url: string) => {
     if (route.name === url) return;
@@ -73,15 +71,14 @@ export default function ExploreScreen() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.contentContainer}>
-        {/* Current Plan Section */}
+        {/* --- Current Plan --- */}
         <View style={styles.sectionPlan}>
           <View style={styles.sectionHeader}>
             <Feather name="target" size={24} color={color.dark_green} />
             <Text style={styles.sectionSubtitle}>Kế hoạch đang thực hiện</Text>
           </View>
-          <Text style={styles.planTitle}>
-            {planData.title}
-          </Text>
+
+          <Text style={styles.planTitle}>{planData.title}</Text>
 
           <View style={styles.dateContainer}>
             <View style={[styles.dateItem, { paddingLeft: 3 }]}>
@@ -91,11 +88,15 @@ export default function ExploreScreen() {
                 size={16}
                 color={color.dark_green}
               />
-              <Text style={styles.dateText}>{planData.startDate} - {planData.endDate}</Text>
+              <Text style={styles.dateText}>
+                {planData.startDate} - {planData.endDate}
+              </Text>
             </View>
             <View style={styles.dateItem}>
               <Ionicons name="timer" size={20} color={color.dark_green} />
-              <Text style={styles.durationText}>Thời gian {planData.duration}</Text>
+              <Text style={styles.durationText}>
+                Thời gian {planData.duration}
+              </Text>
             </View>
           </View>
 
@@ -131,15 +132,24 @@ export default function ExploreScreen() {
               }}
             >
               <Text style={styles.progressLabel}>Tiến độ</Text>
-              <Text style={styles.labelHundred}>{planData.progressPercent}%</Text>
+              <Text style={styles.labelHundred}>
+                {planData.progressPercent}%
+              </Text>
             </View>
 
             <View style={styles.progressBarContainer}>
               <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${planData.progressPercent}%` }]} />
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${planData.progressPercent}%` },
+                  ]}
+                />
               </View>
             </View>
-            <Text style={styles.progressText}>Ngày {planData.daysCompleted} / {planData.totalDays}</Text>
+            <Text style={styles.progressText}>
+              Ngày {planData.daysCompleted} / {planData.totalDays}
+            </Text>
           </View>
 
           {/* Streak Section */}
@@ -180,38 +190,93 @@ export default function ExploreScreen() {
           />
         </View>
 
-        <CurrentMenuCard
-          title={recipeData.title}
-          calorie={recipeData.calorie}
-          meals={recipeData.meals}
-          duration={recipeData.duration}
-          image={recipeData.image}
-          onChange={() => console.log("Thay đổi thực đơn")}
-        />
+        {/* --- Current Menu Section --- */}
+        <Text style={styles.sectionTitle}>Thực đơn hiện tại</Text>
+        {hasCurrentMenu ? (
+          <CurrentMenuCard
+            title={recipeData.title}
+            calorie={recipeData.calorie}
+            meals={recipeData.meals}
+            duration={recipeData.duration}
+            image={recipeData.image}
+            onChange={() => console.log("Thay đổi thực đơn")}
+          />
+        ) : (
+          <View style={styles.emptyBox}>
+            <Ionicons
+              name="restaurant-outline"
+              size={36}
+              color={color.dark_green}
+            />
+            <Text style={styles.emptyText}>Bạn chưa chọn thực đơn</Text>
+            <SCButton
+              title="Chọn thực đơn ngay"
+              bgColor={color.dark_green}
+              color={color.white}
+              borderRadius={20}
+              width={200}
+              height={45}
+              fontSize={14}
+              fontFamily={FONTS.semiBold}
+              onPress={() => handleRedirect("/tabs/recipe")}
+            />
+          </View>
+        )}
 
+        {/* --- Exercise Section --- */}
         <Text style={styles.excerciseTitle}>Thể dục</Text>
-        <CurrentExerciseCard
-          title={excerciseData.title}
-          day={excerciseData.day}
-          info={excerciseData.info}
-          progress={excerciseData.progress}
-          image={excerciseData.image}
-        />
+        {hasCurrentExercise ? (
+          <CurrentExerciseCard
+            title={exerciseData.title}
+            day={exerciseData.day}
+            info={exerciseData.info}
+            progress={exerciseData.progress}
+            image={exerciseData.image}
+          />
+        ) : (
+          <View style={[styles.emptyBox, { marginBottom: 28 }]}>
+            <FontAwesome5 name="dumbbell" size={34} color={color.dark_green} />
+            <Text style={styles.emptyText}>Bạn chưa chọn bài tập</Text>
+            <SCButton
+              title="Chọn bài tập"
+              bgColor={color.dark_green}
+              color={color.white}
+              borderRadius={20}
+              width={200}
+              height={45}
+              fontSize={14}
+              fontFamily={FONTS.semiBold}
+              onPress={() => handleRedirect("/tabs/workouts")}
+            />
+          </View>
+        )}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: color.background,
+  container: { flex: 1, backgroundColor: color.background },
+  contentContainer: { flex: 1, paddingTop: 16, paddingHorizontal: 16 },
+
+  // --- EMPTY STATE ---
+  emptyBox: {
+    backgroundColor: color.white,
+    borderRadius: 12,
+    paddingVertical: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: color.border,
   },
-  contentContainer: {
-    flex: 1,
-    paddingTop: 16,
-    paddingHorizontal: 16,
+  emptyText: {
+    fontSize: 14,
+    fontFamily: FONTS.medium,
+    color: color.dark_green,
+    marginVertical: 12,
   },
+
   sectionPlan: {
     backgroundColor: color.white,
     borderRadius: 12,
@@ -225,18 +290,6 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     marginBottom: 8,
     gap: 8,
-    justifyContent: "flex-start",
-  },
-  section: {
-    backgroundColor: color.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
   },
   sectionSubtitle: {
     fontSize: 14,
@@ -245,14 +298,11 @@ const styles = StyleSheet.create({
   },
   planTitle: {
     fontSize: 18,
-    fontWeight: "bold",
     color: color.dark_green,
     fontFamily: FONTS.semiBold,
     marginBottom: 12,
   },
-  dateContainer: {
-    marginBottom: 16,
-  },
+  dateContainer: { marginBottom: 16 },
   dateItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -282,20 +332,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: 4,
   },
-  weightLabel: {
-    fontSize: 12,
-    color: color.white,
-    fontFamily: FONTS.regular,
-  },
+  weightLabel: { fontSize: 12, color: color.white, fontFamily: FONTS.regular },
   weightValue: {
     paddingTop: 4,
     fontSize: 20,
     color: color.white,
     fontFamily: FONTS.semiBold,
   },
-  progressSection: {
-    marginBottom: 16,
-  },
+  progressSection: { marginBottom: 16 },
   progressLabel: {
     fontSize: 14,
     color: color.dark_green,
@@ -313,9 +357,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     marginVertical: 8,
   },
-  progressBarContainer: {
-    width: "100%",
-  },
+  progressBarContainer: { width: "100%" },
   progressBar: {
     height: 6,
     backgroundColor: "#f0f0f0",
@@ -335,84 +377,27 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
   },
-  streakIcon: {
-    marginRight: 12,
-  },
-  streakContent: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  streakIcon: { marginRight: 12 },
+  streakContent: { flex: 1, alignItems: "center", justifyContent: "center" },
   streakLabel: {
     fontSize: 12,
     color: color.white,
     fontFamily: FONTS.black,
     marginBottom: 4,
   },
-  streakValueContainer: {
-    flexDirection: "column",
-  },
-  streakValue: {
-    fontSize: 24,
-    color: color.white,
-    fontFamily: FONTS.bold,
-  },
-  streakUnit: {
-    fontSize: 12,
-    color: color.white,
-    fontFamily: FONTS.medium,
-  },
-  changePlanButton: {
-    backgroundColor: "#f8f9fa",
-    borderRadius: 8,
-    padding: 12,
-    alignItems: "center",
-  },
-  changePlanText: {
-    fontSize: 14,
-    color: color.black,
-    fontFamily: FONTS.semiBold,
-  },
-  menuHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: color.black,
-    fontFamily: FONTS.semiBold,
-  },
-  changeMenuText: {
-    fontSize: 14,
-    color: color.dark_green,
-    fontFamily: FONTS.regular,
-  },
+  streakValueContainer: { flexDirection: "column" },
+  streakValue: { fontSize: 24, color: color.white, fontFamily: FONTS.bold },
+  streakUnit: { fontSize: 12, color: color.white, fontFamily: FONTS.medium },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: FONTS.bold,
     color: color.black,
-    fontFamily: FONTS.semiBold,
     marginBottom: 12,
   },
   excerciseTitle: {
     fontSize: 16,
-    fontFamily: FONTS.semiBold,
+    fontFamily: FONTS.bold,
     color: color.black,
     marginBottom: 12,
-  },
-  continueButton: {
-    backgroundColor: color.dark_green,
-    borderRadius: 8,
-    padding: 16,
-    alignItems: "center",
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: color.white,
-    fontFamily: FONTS.semiBold,
   },
 });

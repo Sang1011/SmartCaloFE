@@ -1,6 +1,7 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { Feather, Ionicons } from "@expo/vector-icons";
+import { navigateCustom } from "@utils/navigation";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -8,7 +9,6 @@ import {
   ImageBackground,
   Pressable,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -19,7 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const recipeDetails = {
   id: 1,
   title: "Meal plan chuẩn gym: Tăng cơ, Giảm mỡ, Sống khỏe",
-  image: require("../../../assets/images/recipeDetail/dish_chicken.png"), // Giữ hoặc thay bằng ảnh banner của bạn
+  image: require("../../../assets/images/recipe_1.png"), // Giữ hoặc thay bằng ảnh banner của bạn
   totalCalories: 1290,
   nutrition: {
     protein: "903g",
@@ -38,7 +38,7 @@ const recipeDetails = {
           carb: "0.9g",
           protein: "6.4g",
           fat: "6.1g",
-          image: require("../../../assets/images/recipeDetail/dish_chicken.png"),
+          image: require("../../../assets/images/recipe_1.png"),
         },
         {
           id: "b2",
@@ -47,7 +47,7 @@ const recipeDetails = {
           carb: "25.5g",
           protein: "5g",
           fat: "2.5g",
-          image: require("../../../assets/images/recipeDetail/dish_chicken.png"),
+          image: require("../../../assets/images/recipe_1.png"),
         },
         {
           id: "b3",
@@ -56,7 +56,7 @@ const recipeDetails = {
           carb: "1.5g",
           protein: "1g",
           fat: "0.1g",
-          image: require("../../../assets/images/recipeDetail/dish_chicken.png"),
+          image: require("../../../assets/images/recipe_1.png"),
         },
       ],
     },
@@ -71,7 +71,7 @@ const recipeDetails = {
           carb: "6.1g",
           protein: "3.1g",
           fat: "0.3g",
-          image: require("../../../assets/images/recipeDetail/dish_chicken.png"),
+          image: require("../../../assets/images/recipe_1.png"),
         },
         {
           id: "l2",
@@ -80,7 +80,7 @@ const recipeDetails = {
           carb: "35.8g",
           protein: "3.5g",
           fat: "1.3g",
-          image: require("../../../assets/images/recipeDetail/dish_chicken.png"), // Cần ảnh cơm gạo lứt
+          image: require("../../../assets/images/recipe_1.png"), // Cần ảnh cơm gạo lứt
         },
         {
           id: "l3",
@@ -89,7 +89,7 @@ const recipeDetails = {
           carb: "7.8g",
           protein: "24.7g",
           fat: "9.9g",
-          image: require("../../../assets/images/recipeDetail/dish_chicken.png"),
+          image: require("../../../assets/images/recipe_1.png"),
         },
       ],
     },
@@ -104,7 +104,7 @@ const recipeDetails = {
           carb: "5.1g",
           protein: "0.9g",
           fat: "0.1g",
-          image: require("../../../assets/images/recipeDetail/dish_chicken.png"),
+          image: require("../../../assets/images/recipe_1.png"),
         },
         {
           id: "d2",
@@ -113,7 +113,7 @@ const recipeDetails = {
           carb: "1.2g",
           protein: "57.4g",
           fat: "8g",
-          image: require("../../../assets/images/recipeDetail/dish_chicken.png"),
+          image: require("../../../assets/images/recipe_2.png"),
         },
         {
           id: "d3",
@@ -143,17 +143,25 @@ const MealItem = ({ item }) => (
   <Pressable style={styles.mealItemContainer}>
     <Image source={item.image} style={styles.mealItemImage} />
     <View style={styles.mealItemDetails}>
-      <Text style={styles.mealItemName}>{item.name}</Text>
-      <Text style={styles.mealItemCalories}>Calo: {item.calories}</Text>
-      <View style={styles.mealItemMacros}>
-        <Text style={styles.macroText}>{item.carb} Carb</Text>
-        <Text style={styles.macroText}>{item.protein} Protein</Text>
-        <Text style={styles.macroText}>{item.fat} Fat</Text>
+      <View style={styles.mealItemDetailsUpper}>
+        <View style={{ flexDirection: "column", justifyContent: "center" }}>
+          <Text style={styles.mealItemName} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text style={styles.mealItemCalories}>Calo: {item.calories}</Text>
+        </View>
+        <Pressable style={styles.viewDetailContainer} onPress={() => navigateCustom("/dishes")}>
+          <Text style={styles.viewDetailText}>Xem chi tiết</Text>
+          <Ionicons name="chevron-forward" size={16} color={color.light_gray} />
+        </Pressable>
       </View>
-    </View>
-    <View style={styles.viewDetailContainer}>
-      <Text style={styles.viewDetailText}>Xem chi tiết</Text>
-      <Ionicons name="chevron-forward" size={16} color={color.light_gray} />
+      <View style={styles.mealItemMacros}>
+        <Text style={[styles.macroText, styles.carb]}>{item.carb} Carb</Text>
+        <Text style={[styles.macroText, styles.protein]}>
+          {item.protein} Protein
+        </Text>
+        <Text style={[styles.macroText, styles.fat]}>{item.fat} Fat</Text>
+      </View>
     </View>
   </Pressable>
 );
@@ -171,13 +179,30 @@ const MealSection = ({ meal }) => (
 );
 
 export default function RecipeDetail() {
-  const [activeDay, setActiveDay] = useState(1);
-  const days = [1, 2, 3, 4, 5, 6, 7];
+  const [activeDay, setActiveDay] = useState(25);
+  const [currentWeek, setCurrentWeek] = useState(Math.ceil(25 / 7)); // ✅ tuần hiện tại dựa theo ngày
+
+  const days = Array.from({ length: 30 }, (_, i) => i + 1);
+  const totalWeeks = Math.ceil(days.length / 7);
+
+  // Lấy ra 7 ngày tương ứng của tuần hiện tại
+  const start = (currentWeek - 1) * 7;
+  const visibleDays = days.slice(start, start + 7);
+
+  const handlePrev = () => {
+    setCurrentWeek((prev) => (prev > 1 ? prev - 1 : 1));
+  };
+
+  const handleNext = () => {
+    setCurrentWeek((prev) => (prev < totalWeeks ? prev + 1 : totalWeeks));
+  };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" />
-      <ScrollView showsVerticalScrollIndicator={false}>
+    <SafeAreaView edges={["top"]} style={styles.safeArea}>
+      <ScrollView
+        style={{ marginTop: -50 }}
+        showsVerticalScrollIndicator={false}
+      >
         <ImageBackground
           source={recipeDetails.image}
           style={styles.bannerImage}
@@ -191,31 +216,51 @@ export default function RecipeDetail() {
           <Text style={styles.mainTitle}>{recipeDetails.title}</Text>
 
           <Text style={styles.subTitle}>Thực đơn theo ngày</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingVertical: 5 }}
-          >
-            {days.map((day) => (
-              <Pressable
-                key={day}
-                style={[
-                  styles.dayButton,
-                  activeDay === day && styles.activeDayButton,
-                ]}
-                onPress={() => setActiveDay(day)}
+          <View style={styles.dayRow}>
+            {currentWeek !== 1 && (
+              <Pressable onPress={handlePrev} style={styles.navButton}>
+              <Ionicons
+                name="chevron-back"
+                size={22}
+                color={color.dark_green}
+              />
+            </Pressable>
+            )}
+            
+            <View style={{ flex: 1, margin: "auto" }}>
+              <View style={styles.dayScroll}
               >
-                <Text
-                  style={[
-                    styles.dayText,
-                    activeDay === day && styles.activeDayText,
-                  ]}
-                >
-                  {day}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+                {visibleDays.map((day) => (
+                  <Pressable
+                    key={day}
+                    style={[
+                      styles.dayButton,
+                      activeDay === day && styles.activeDayButton,
+                    ]}
+                    onPress={() => setActiveDay(day)}
+                  >
+                    <Text
+                      style={[
+                        styles.dayText,
+                        activeDay === day && styles.activeDayText,
+                      ]}
+                    >
+                      {day}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+            {currentWeek !== totalWeeks && (
+            <Pressable onPress={handleNext} style={styles.navButton}>
+              <Ionicons
+                name="chevron-forward"
+                size={22}
+                color={color.dark_green}
+              />
+            </Pressable>
+            )}
+          </View>
 
           <Text style={styles.totalCaloText}>Tổng calo trong tuần</Text>
           <Text style={styles.totalCaloValue}>
@@ -261,7 +306,7 @@ export default function RecipeDetail() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: color.white,
   },
   bannerImage: {
     width: "100%",
@@ -296,6 +341,26 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 8,
   },
+  dayRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 10,
+  },
+  dayScroll: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    display: "flex",
+    justifyContent: "center",
+  },
+  navButton: {
+    backgroundColor: color.transparent,
+    padding: 0,
+    borderRadius: 10,
+  },
   dayButton: {
     width: 40,
     height: 40,
@@ -303,7 +368,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: color.white_40,
-    marginRight: 12,
     borderWidth: 1,
     borderColor: color.black,
   },
@@ -383,12 +447,17 @@ const styles = StyleSheet.create({
   mealItemContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F7F8F8",
+    backgroundColor: color.white,
     borderRadius: 12,
     padding: 10,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: "#E8E8E8",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   mealItemImage: {
     width: 60,
@@ -399,15 +468,22 @@ const styles = StyleSheet.create({
   mealItemDetails: {
     flex: 1,
   },
+  mealItemDetailsUpper: {
+    flexDirection: "row",
+    display: "flex",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
   mealItemName: {
     fontFamily: FONTS.semiBold,
     fontSize: 15,
     color: color.black,
+    width: 200,
   },
   mealItemCalories: {
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.medium,
     fontSize: 12,
-    color: color.light_gray,
+    color: color.calories,
     marginVertical: 4,
   },
   mealItemMacros: {
@@ -417,16 +493,33 @@ const styles = StyleSheet.create({
   macroText: {
     fontFamily: FONTS.medium,
     fontSize: 11,
-    color: "orange", // Màu cam như trong ảnh
+    borderRadius: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+  },
+  carb: {
+    backgroundColor: color.macro_span_carb_bg,
+    color: color.macro_span_carb_color,
+  },
+  protein: {
+    backgroundColor: color.macro_span_protein_bg,
+    color: color.macro_span_protein_color,
+  },
+  fat: {
+    backgroundColor: color.macro_span_fat_bg,
+    color: color.macro_span_fat_color,
   },
   viewDetailContainer: {
+    width: 80,
     marginLeft: "auto",
-    alignItems: "flex-end",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "center",
   },
   viewDetailText: {
     fontFamily: FONTS.regular,
     fontSize: 12,
-    color: color.light_gray,
+    color: color.gray,
   },
   primaryButton: {
     backgroundColor: color.dark_green,

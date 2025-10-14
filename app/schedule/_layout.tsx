@@ -1,3 +1,4 @@
+import color from "@constants/color";
 import { Stack } from "expo-router";
 
 export default function ScheduleLayout() {
@@ -5,7 +6,7 @@ export default function ScheduleLayout() {
     <Stack
       screenOptions={{
         headerShown: false, // Ẩn header mặc định (vì bạn đang dùng custom header)
-        contentStyle: { backgroundColor: "#fff" }, // màu nền mặc định cho tất cả màn
+        contentStyle: { backgroundColor: color.white }, // màu nền mặc định cho tất cả màn
       }}
     >
       <Stack.Screen
