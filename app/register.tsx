@@ -4,30 +4,59 @@ import color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { registerThunk } from "@features/auth";
+import { useAppDispatch } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
 import { Image } from "expo-image";
 import React, { useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useAppDispatch();
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!email || !password || !confirmPass) {
       Alert.alert("Thông báo", "Vui lòng nhập đầy đủ thông tin");
       return;
     }
+
+    if (password.length < 6) {
+      Alert.alert("Lỗi", "Mật khẩu phải có ít nhất 6 ký tự.");
+      return;
+    }
+
     if (password !== confirmPass) {
       Alert.alert("Lỗi", "Mật khẩu xác nhận không trùng khớp");
       return;
     }
+    
+    setIsLoading(true);
 
-    // TODO: xử lý đăng ký tài khoản
-    Alert.alert("Thành công", "Đăng ký thành công!");
-    navigateCustom("/login");
+    try {
+      const resultAction = await dispatch(registerThunk({ email, password, name: "Sang" })); 
+      
+      if (registerThunk.rejected.match(resultAction)) {
+        const errorMessage = resultAction.payload as string || "Đăng ký thất bại không rõ lý do.";
+        Alert.alert("Lỗi Đăng Ký", errorMessage);
+        return;
+      }
+      
+      Alert.alert("Thành công", "Đăng ký thành công!");
+      navigateCustom("/login");
+
+    } catch (e) {
+      console.error("Async Register Error:", e);
+      Alert.alert("Lỗi hệ thống", "Đã xảy ra lỗi không mong muốn.");
+    } finally {
+      setIsLoading(false); 
+    }
   };
 
   return (
@@ -47,7 +76,7 @@ export default function RegisterScreen() {
             placeholder="Nhập email"
             variant="email"
             icon={<Fontisto name="email" size={12} color="black" />}
-            onChangeText={setEmail}
+            onChangeText={(text) => setEmail(text)}
             value={email}
           />
           <SCInput
@@ -55,8 +84,8 @@ export default function RegisterScreen() {
             placeholder="Nhập mật khẩu"
             variant="password"
             icon={<MaterialIcons name="password" size={12} color="black" />}
-            secureTextEntry
-            onChangeText={setPassword}
+            secureTextEntry={true}
+            onChangeText={(text) => setPassword(text)}
             value={password}
           />
           <SCInput
@@ -64,14 +93,28 @@ export default function RegisterScreen() {
             placeholder="Xác nhận mật khẩu"
             variant="password"
             icon={<MaterialIcons name="lock-outline" size={12} color="black" />}
-            secureTextEntry
-            onChangeText={setConfirmPass}
+            secureTextEntry={true}
+            onChangeText={(text) => setConfirmPass(text)}
             value={confirmPass}
           />
         </View>
 
         <View style={styles.button}>
-          <SCButton title="Đăng ký" onPress={handleRegister} />
+          {isLoading ? (
+            <SCButton 
+            title="Đăng ký" 
+            onPress={handleRegister} 
+            icon={<ActivityIndicator color={color.white} size="small" />}
+            disabled={isLoading}
+          />
+          ) : (
+            <SCButton 
+            title="Đăng ký" 
+            onPress={handleRegister}
+            disabled={isLoading}
+            />
+          )}
+          
         </View>
       </View>
 

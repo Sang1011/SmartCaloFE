@@ -2,10 +2,14 @@ import { Config } from "@config/config";
 import {
   googleLoginThunk,
   loginThunk,
-  logout,
-  registerThunk,
+  logout
 } from "@features/auth";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
+
+// Imports cho Expo AuthSession
+import { makeRedirectUri, ResponseType } from 'expo-auth-session';
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+
 import React, {
   createContext,
   useCallback,
@@ -14,21 +18,17 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { LoginManager } from "react-native-fbsdk-next";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../redux";
 
-// ⚙️ Cấu hình Google Sign-In
-GoogleSignin.configure({
-  webClientId: Config.GOOGLE_WEB_CLIENT_ID,
-});
+// ⚙️ Hoàn tất phiên xác thực (bắt buộc cho AuthSession)
+WebBrowser.maybeCompleteAuthSession();
 
 interface AuthContextType {
   authError: string | null;
   isLoading: boolean;
   loginWithGoogle: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
 }
@@ -46,8 +46,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authError, setAuthError] = useState<string | null>(null);
   const isMounted = useRef(true);
 
+  // 1. Cấu hình và hook cho Google Sign-In (OAuth)
+  const redirectUri = makeRedirectUri({
+    native: 'smartcalomanaged://redirect' 
+  });
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: Config.GOOGLE_ANDROID_CLIENT_ID,
+    webClientId: Config.GOOGLE_WEB_CLIENT_ID,
+    iosClientId: Config.GOOGLE_ANDROID_CLIENT_ID, // Thay bằng client ID iOS riêng nếu có
+    redirectUri: redirectUri,
+    scopes: ['profile', 'email'],
+    responseType: ResponseType.IdToken, 
+  });
+
+
   useEffect(() => {
-    console.log("AuthProvider mounted", isMounted.current); // true
+    console.log("AuthProvider mounted", isMounted.current);
     return () => {
       console.log("AuthProvider unmounting");
       isMounted.current = false;
@@ -58,7 +73,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (isMounted.current) setAuthError(null);
   }, []);
 
-  // Sync error từ Redux
   useEffect(() => {
     if (error && isMounted.current) setAuthError(error);
   }, [error]);
@@ -66,17 +80,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // 🟢 Login thường (email + password)
   const login = useCallback(
     async (email: string, password: string): Promise<void> => {
-      console.log("in callback")
       if (!isMounted.current) return;
-      console.log("in callback 222")
       setIsLoading(true);
       clearError();
 
       try {
-        console.log("Login loading");
         await dispatch(loginThunk({ email, password })).unwrap();
         console.log("✅ Login successful");
-        
       } catch (error: any) {
         console.error("Login error:", error);
         if (isMounted.current)
@@ -88,77 +98,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     [dispatch, clearError]
   );
 
-  // 🟣 Register thường
-  const register = useCallback(
-    async (email: string, password: string, name: string): Promise<void> => {
-      if (!isMounted.current) return;
-      setIsLoading(true);
-      clearError();
-
-      try {
-        await dispatch(registerThunk({ email, password, name })).unwrap();
-        console.log("✅ Register successful");
-      } catch (error: any) {
-        console.error("Register error:", error);
-        if (isMounted.current)
-          setAuthError(error?.message || "Đăng ký thất bại");
-      } finally {
-        if (isMounted.current) setIsLoading(false);
-      }
-    },
-    [dispatch, clearError]
-  );
-
-  // 🟢 Login với Google
+  // 🟢 Login với Google (Sử dụng expo-auth-session)
   const loginWithGoogle = useCallback(async (): Promise<void> => {
-    if (!isMounted.current) return;
+    if (!isMounted.current || !request) {
+      if (isMounted.current && !request) console.warn("Google Auth request chưa sẵn sàng.");
+      return;
+    }
     setIsLoading(true);
     clearError();
 
     try {
-      console.log("Starting Google login...");
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
+      console.log("Starting Google login with Expo AuthSession...");
+      
+      const result = await promptAsync();
 
-      const idToken = userInfo.data?.idToken;
-      if (!idToken) {
-        throw new Error("Không thể lấy token từ Google");
+      if (result.type === 'success' && result.authentication) {
+        const idToken = result.authentication.idToken;
+        
+        if (!idToken) {
+          throw new Error("Không thể lấy token từ Google (idToken is null)");
+        }
+
+        await dispatch(googleLoginThunk({ idToken })).unwrap();
+        console.log("✅ Google login successful (OAuth flow)");
+
+      } else if (result.type === 'cancel') {
+        setAuthError("Đăng nhập Google đã bị hủy");
+      } else if (result.type === 'error') {
+        throw new Error(result.error?.message || "Lỗi đăng nhập OAuth");
       }
-
-      await dispatch(googleLoginThunk({ idToken })).unwrap();
-      console.log("✅ Google login successful");
+      
     } catch (error: any) {
       console.error("Google login error:", error);
-      let message = "Đăng nhập Google thất bại";
-      if (error.code === "SIGN_IN_CANCELLED") message = "Đăng nhập Google đã bị hủy";
-      else if (error.code === "PLAY_SERVICES_NOT_AVAILABLE")
-        message = "Dịch vụ Google Play không khả dụng";
-      else if (error.message) message = error.message;
+      let message = error?.message || "Đăng nhập Google thất bại";
 
       if (isMounted.current) setAuthError(message);
     } finally {
       if (isMounted.current) setIsLoading(false);
     }
-  }, [dispatch, clearError]);
+  }, [dispatch, clearError, promptAsync, request]);
 
 
-  // 🚪 Logout
+  // 🚪 Logout (Đã loại bỏ tất cả logic SDK native)
   const handleLogout = useCallback(async (): Promise<void> => {
     if (!isMounted.current) return;
 
     try {
       console.log("Logging out...");
-      try {
-        await GoogleSignin.signOut();
-      } catch (err) {
-        console.warn("Google sign-out failed:", err);
-      }
-
-      try {
-        await LoginManager.logOut();
-      } catch (err) {
-        console.warn("Facebook sign-out failed:", err);
-      }
+      
+      // Không còn logic logout cho Google hay Facebook SDK
 
       dispatch(logout());
       clearError();
@@ -172,7 +160,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     loginWithGoogle,
     login,
-    register,
     logout: handleLogout,
     clearError,
   };

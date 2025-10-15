@@ -7,7 +7,7 @@ export type LoginGoogleResponse = {
     email: string;
     name: string;
     avatarUrl: string;
-    birthday: string;
+    age: number;
     weight: number;
     height: number;
     gender: string;
@@ -83,7 +83,7 @@ export type RegisterANDLoginResponse = {
     email: string;
     name: string;
     avatarUrl: string;
-    birthday: string;
+    age: number;
     weight: number;
     height: number;
     gender: string;

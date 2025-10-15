@@ -28,7 +28,7 @@ export function useRedirect(ready?: boolean) {
 
           if (!opened) router.replace("/introScreen");
           else if (!hasloggedIn) router.replace("/login");
-          else if (!hasDoneSurvey) router.replace("/survey/index");
+          else if (!hasDoneSurvey) router.replace("/survey");
           else router.replace("/tabs");
         }, 500);
       } catch (error) {

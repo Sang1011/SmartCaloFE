@@ -150,7 +150,7 @@ export default function ViewData() {
 
         {/* 3. Danh sách các món ăn */}
         <View style={styles.itemsList}>
-          <Text style={styles.listTitle}>Các món đã dùng</Text>{" "}
+          <Text style={styles.listTitle}>Các món đã dùng</Text>
           {/* Thêm tiêu đề danh sách */}
           {items.map((item) => (
             <View key={item.id} style={styles.itemRow}>
@@ -363,6 +363,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Color.light_gray,
     paddingBottom: scale(8),
   },
+  actionButton:{},
   macroRow: {
     flexDirection: "row",
     alignItems: "center",

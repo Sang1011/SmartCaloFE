@@ -30,7 +30,7 @@ export default function Step13_Completion({ surveyData }: Props) {
       <View style={styles.optionItem}>
         <AntDesign name="check-circle" size={24} color="#2CD9A1" />
         <Text style={[styles.optionText, globalStyles.regular]}>
-          Gửi cho tôi những tin tức, đổi mới và ưu đãi mới nhất từ Smart Calo.
+          Chúng tôi sẽ gửi cho bạn những tin tức, đổi mới và ưu đãi mới nhất từ Smart Calo.
         </Text>
       </View>
     </View>

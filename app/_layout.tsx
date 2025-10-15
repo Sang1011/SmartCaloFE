@@ -83,7 +83,7 @@ export default function RootLayout() {
     <Provider store={store}>
       <AuthProvider>
         <SafeAreaProvider>
-          <SafeAreaView style={{ flex: 1 }} edges={["bottom", "top"]}>
+          <SafeAreaView edges={["bottom"]} style={{ flex: 1}}>
             <StatusBar barStyle="dark-content" />
             <Stack
               screenOptions={{
@@ -100,7 +100,7 @@ export default function RootLayout() {
               <Stack.Screen name="/schedule/workout/index" />
               <Stack.Screen name="+not-found" />
             </Stack>
-          </SafeAreaView>
+            </SafeAreaView>
         </SafeAreaProvider>
       </AuthProvider>
     </Provider>

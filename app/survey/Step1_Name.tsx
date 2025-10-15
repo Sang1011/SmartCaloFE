@@ -1,7 +1,10 @@
+import { setCredentials } from "@features/auth";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import React from "react";
 import { Dimensions, StyleSheet, Text, TextInput, View } from "react-native";
-import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
+import { SurveyData } from "./index";
 
 const { width } = Dimensions.get("window");
 
@@ -11,8 +14,18 @@ interface Props {
 }
 
 export default function Step1_Name({ surveyData, updateSurveyData }: Props) {
+  const user = useAppSelector((state: RootState) => state.auth.user);
+  const dispatch = useAppDispatch();
   const handleNameChange = (name: string) => {
     updateSurveyData((prev) => ({ ...prev, name }));
+    if (user) {
+      dispatch(
+        setCredentials({
+          ...user,
+          name, 
+        })
+      );
+    }
   };
 
   const showError = surveyData.name !== undefined && !surveyData.name.trim();

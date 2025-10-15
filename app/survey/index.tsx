@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useSelector } from "react-redux";
 
 import { HAS_DONE_SURVEY } from "@constants/app";
+import { RootState } from "@redux";
 import { navigateCustom } from "@utils/navigation";
 import Step10_ActivityLevel from "../survey/Step10_ActivityLevel";
 import Step11_Demographics from "../survey/Step11_Demographics";
@@ -45,41 +47,50 @@ export interface SurveyData {
   willingness?: string;
   activityLevel?: string;
   gender?: "male" | "female" | "other";
-  age?: string;
-  height?: string;
-  weight?: string;
+  age?: number;
+  height?: number;
+  weight?: number;
   targetWeight?: string;
 }
 
 const isNextButtonDisabled = (stepIndex: number, data: SurveyData): boolean => {
   switch (stepIndex) {
-    case 0: // Step1_Name
+    case 0:
       return !data.name?.trim();
-    case 1: // Step2_Goals
+    case 1:
       return !data.goals || data.goals.length === 0;
-    case 3: // Step4_Obstacles
+    case 3:
       return !data.obstacles || data.obstacles.length === 0;
-    case 5: // Step6_Habits
+    case 5:
       return !data.healthyHabits || data.healthyHabits.length === 0;
-    case 7: // Step8_PlanningFrequency
+    case 7:
       return !data.planningFrequency?.trim();
-    case 8: // Step9_Willingness
+    case 8:
       return !data.willingness?.trim();
-    case 9: // Step10_ActivityLevel
+    case 9:
       return !data.activityLevel?.trim();
-    case 10: // Step11_Demographics
-      return !data.age?.trim() || !data.gender;
-    case 11: // Step12_Measurements
-      return !data.height?.trim() || !data.weight?.trim();
+    case 10:
+      return !data.age || !data.gender?.trim();
+    case 11:
+      return !data.height || !data.weight;
     default:
       return false;
   }
 };
 
 export default function SurveyScreen() {
+  const user = useSelector((state: RootState) => state.auth.user);
+
   const [currentStep, setCurrentStep] = useState(0);
-  const [surveyData, setSurveyData] = useState<SurveyData>({});
+  const [surveyData, setSurveyData] = useState<SurveyData>({}); 
   const totalSteps = SURVEY_SCREENS.length;
+
+  useEffect(() => {
+    if (user?.name) {
+      setSurveyData((prev) => ({ ...prev, name: user.name }));
+      setCurrentStep(1);
+    }
+  }, [user]);
 
   const isNextDisabled = isNextButtonDisabled(currentStep, surveyData);
 
@@ -125,6 +136,6 @@ export default function SurveyScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#ffff",
+    backgroundColor: "#fff",
   },
 });

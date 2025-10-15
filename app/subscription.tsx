@@ -4,16 +4,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { navigateCustom } from "@utils/navigation";
 import React, { useState } from "react";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function SubscriptionScreen() {
   const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("yearly");
-
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Nút back */}

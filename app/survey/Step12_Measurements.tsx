@@ -1,3 +1,6 @@
+import { setCredentials } from "@features/auth";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import React from "react";
 import {
   Dimensions,
@@ -7,8 +10,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
+import { SurveyData } from "./index";
 
 const { width } = Dimensions.get("window");
 
@@ -21,22 +24,43 @@ export default function Step12_Measurements({
   surveyData,
   updateSurveyData,
 }: Props) {
-  const handleUpdateHeight = (height: string) => {
-    if (/^\d*\.?\d*$/.test(height)) {
+  const user = useAppSelector((state: RootState) => state.auth.user);
+  const dispatch = useAppDispatch();
+
+  const handleUpdateHeight = (heightStr: string) => {
+    if (/^\d*\.?\d*$/.test(heightStr)) {
+      const height = heightStr ? parseFloat(heightStr) : undefined;
       updateSurveyData((prev) => ({ ...prev, height }));
+
+      if (user && height !== undefined) {
+        dispatch(
+          setCredentials({
+            ...user,
+            height,
+          })
+        );
+      }
     }
   };
 
-  const handleUpdateWeight = (weight: string) => {
-    if (/^\d*\.?\d*$/.test(weight)) {
+  const handleUpdateWeight = (weightStr: string) => {
+    if (/^\d*\.?\d*$/.test(weightStr)) {
+      const weight = weightStr ? parseFloat(weightStr) : undefined;
       updateSurveyData((prev) => ({ ...prev, weight }));
+
+      if (user && weight !== undefined) {
+        dispatch(
+          setCredentials({
+            ...user,
+            weight,
+          })
+        );
+      }
     }
   };
 
-  const showHeightError =
-    surveyData.height !== undefined && !surveyData.height.trim();
-  const showWeightError =
-    surveyData.weight !== undefined && !surveyData.weight.trim();
+  const showHeightError = surveyData.height === undefined;
+  const showWeightError = surveyData.weight === undefined;
 
   return (
     <View style={styles.container}>
@@ -53,9 +77,11 @@ export default function Step12_Measurements({
           <View style={styles.inputRow}>
             <TextInput
               style={[styles.input, globalStyles.semiBold]}
-              value={surveyData.height}
+              value={surveyData.height?.toString() ?? ""}
               onChangeText={handleUpdateHeight}
               keyboardType="numeric"
+              placeholder="Nhập chiều cao"
+              placeholderTextColor="#BDBDBD"
             />
             <Pressable style={styles.unitButton}>
               <Text style={[styles.unitButtonText, globalStyles.bold]}>cm</Text>
@@ -74,9 +100,11 @@ export default function Step12_Measurements({
           <View style={styles.inputRow}>
             <TextInput
               style={[styles.input, globalStyles.semiBold]}
-              value={surveyData.weight}
+              value={surveyData.weight?.toString() ?? ""}
               onChangeText={handleUpdateWeight}
               keyboardType="numeric"
+              placeholder="Nhập cân nặng"
+              placeholderTextColor="#BDBDBD"
             />
             <Pressable style={styles.unitButton}>
               <Text style={[styles.unitButtonText, globalStyles.bold]}>kg</Text>

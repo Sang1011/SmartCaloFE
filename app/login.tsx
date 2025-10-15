@@ -1,9 +1,16 @@
 import SCCheckBox from "@components/ui/SCCheckBox";
 import SCInput from "@components/ui/SCInput";
-import { HAS_LOGGED_IN, REMEMBER_ME, SAVED_EMAIL, SAVED_PASSWORD } from "@constants/app";
+import { REMEMBER_ME, SAVED_EMAIL, SAVED_PASSWORD } from "@constants/app";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { getBooleanData, getStringData, saveBooleanData, saveStringData } from "@stores";
+import { loginThunk } from "@features/auth";
+import { useAppDispatch } from "@redux/hooks";
+import {
+  getBooleanData,
+  getStringData,
+  saveBooleanData,
+  saveStringData,
+} from "@stores";
 import { navigateCustom } from "@utils/navigation";
 import { Image } from "expo-image";
 import React, { useEffect, useState } from "react";
@@ -18,11 +25,13 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const { loginWithGoogle, isLoading, clearError, login } = useAuth();
- 
+  const { loginWithGoogle, clearError } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useAppDispatch();
+
   useEffect(() => {
-    checkRemember()
-  }, [])
+    checkRemember();
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -33,23 +42,21 @@ export default function LoginScreen() {
   const checkRemember = async () => {
     const isRemember = await getBooleanData(REMEMBER_ME);
     console.log("REMEMBER_ME:", isRemember);
-  
+
     if (isRemember) {
       setRememberMe(true);
-      const getEmail:string = await getStringData(SAVED_EMAIL);
+      const getEmail: string = await getStringData(SAVED_EMAIL);
       const getPassword = await getStringData(SAVED_PASSWORD);
       console.log("Email:", getEmail);
       console.log("Password:", getPassword);
       setEmail(getEmail);
-      setPassword(getPassword)
+      setPassword(getPassword);
     }
   };
-  
-  
 
   const handleRememberAccount = async () => {
     await saveBooleanData(REMEMBER_ME, rememberMe);
-  
+
     if (rememberMe) {
       await saveStringData(SAVED_EMAIL, email);
       await saveStringData(SAVED_PASSWORD, password);
@@ -63,23 +70,37 @@ export default function LoginScreen() {
     console.log("login");
     try {
       if (email && password && email.trim() !== "" && password.trim() !== "") {
-        console.log("logisssn");
+        setIsLoading(true);
         await handleRememberAccount();
-        console.log("logis213");
-        await login(email, password);
-        console.log("logis2222");
+        const resultAction = await dispatch(loginThunk({ email, password }));
+        if (loginThunk.rejected.match(resultAction)) {
+          const errorMessage =
+            (resultAction.payload as string) ||
+            "Đăng ký thất bại không rõ lý do.";
+          Alert.alert("Lỗi Đăng Ký", errorMessage);
+          return;
+        }
+        Alert.alert("Thành công", "Đăng nhập thành công!");
+        navigateCustom("/survey");
       } else {
         Alert.alert("Thông báo", "Vui lòng nhập email và mật khẩu hợp lệ");
       }
+      setIsLoading(false);
     } catch (error: any) {
-      Alert.alert("Lỗi", error.message || "Đăng nhập thất bại. Vui lòng thử lại.");
+      Alert.alert(
+        "Lỗi",
+        error.message || "Đăng nhập thất bại. Vui lòng thử lại."
+      );
+      setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
+      setIsLoading(true);
       await loginWithGoogle();
-      navigateCustom("/survey", { flagKey: HAS_LOGGED_IN, value: true });
+      navigateCustom("/survey");
+      setIsLoading(false);
     } catch (error: any) {
       console.error("Google login error from LOGIN:", error);
 

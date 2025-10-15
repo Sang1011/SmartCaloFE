@@ -1,8 +1,11 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { setCredentials } from "@features/auth";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import React from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
-import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
+import { SurveyData } from "./index";
 
 const { width } = Dimensions.get("window");
 
@@ -44,8 +47,18 @@ export default function Step10_ActivityLevel({
   surveyData,
   updateSurveyData,
 }: Props) {
+  const user = useAppSelector((state: RootState) => state.auth.user);
+  const dispatch = useAppDispatch();
   const handleSelect = (level: string) => {
     updateSurveyData((prev) => ({ ...prev, activityLevel: level }));
+    if (user) {
+      dispatch(
+        setCredentials({
+          ...user,
+          activityLevel:level,
+        })
+      );
+    }
   };
 
   return (

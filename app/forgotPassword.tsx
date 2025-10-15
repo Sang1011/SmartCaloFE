@@ -3,8 +3,8 @@ import SCInput from "@components/ui/SCInput";
 import color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
 import Fontisto from "@expo/vector-icons/Fontisto";
-import { forgotPasswordThunk } from "@features/auth";
-import { useAppDispatch, useAppSelector } from "@redux/hooks";
+import { forgotPasswordThunk, verifyOTPThunk } from "@features/auth";
+import { useAppDispatch } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
 import { Image } from "expo-image";
 import React, { useEffect, useState } from "react";
@@ -16,9 +16,8 @@ export default function ForgotPasswordScreen() {
   const [step, setStep] = useState<"email" | "otp">("email");
   const [otp, setOtp] = useState("");
   const [countdown, setCountdown] = useState(0);
-
+  const [isLoading, setIsLoading] = useState(false);
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((state) => state.auth);
 
   // 🔁 Giảm timer mỗi giây
   useEffect(() => {
@@ -33,7 +32,7 @@ export default function ForgotPasswordScreen() {
       Alert.alert("Thông báo", "Vui lòng nhập email");
       return;
     }
-
+    setIsLoading(true);
     const result = await dispatch(forgotPasswordThunk({ email }));
     if (forgotPasswordThunk.fulfilled.match(result)) {
       Alert.alert("Thành công", `Mã xác nhận đã được gửi đến ${email}`);
@@ -42,6 +41,7 @@ export default function ForgotPasswordScreen() {
     }else {
       Alert.alert("Thất bại", `Người dùng không tồn tại`);
     }
+    setIsLoading(false);
   };
 
   // ✅ Xác minh OTP
@@ -52,12 +52,15 @@ export default function ForgotPasswordScreen() {
     }
 
     console.log("email",email);
+    console.log("otp",otp);
+    setIsLoading(true);
+    const result = await dispatch(verifyOTPThunk({ email, otp }));
+    if (verifyOTPThunk.fulfilled.match(result)) {
+      Alert.alert("Thành công", "Xác minh thành công! Hãy đặt lại mật khẩu.");
+      navigateCustom("/resetPassword")
+    }
+    setIsLoading(false);
 
-    // const result = await dispatch(verifyOTPThunk({ email, otp }));
-    // if (verifyOTPThunk.fulfilled.match(result)) {
-    //   Alert.alert("Thành công", "Xác minh thành công! Hãy đặt lại mật khẩu.");
-    //   navigateCustom("/resetPassword")
-    // }
   };
 
   // 🔄 Gửi lại mã OTP
@@ -76,7 +79,7 @@ export default function ForgotPasswordScreen() {
 
       <Text style={[styles.title, globalStyles.semiBold]}>Quên mật khẩu</Text>
 
-      {loading && (
+      {isLoading && (
         <ActivityIndicator size="small" color={color.dark_green} style={{ marginTop: 8 }} />
       )}
 
@@ -94,9 +97,10 @@ export default function ForgotPasswordScreen() {
               icon={<Fontisto name="email" size={12} color="black" />}
               onChangeText={setEmail}
               value={email}
+              editable={!isLoading}
             />
             <View style={styles.button}>
-              <SCButton title="Gửi mã xác nhận" onPress={handleReset} disabled={loading} />
+              <SCButton title="Gửi mã xác nhận" onPress={handleReset} disabled={isLoading} />
             </View>
           </View>
         </>
@@ -114,9 +118,10 @@ export default function ForgotPasswordScreen() {
             maxLength={6}
             value={otp}
             onChangeText={setOtp}
+            editable={!isLoading}
           />
           <View style={styles.button}>
-            <SCButton title="Xác nhận mã" onPress={handleVerifyOTP} disabled={loading} />
+            <SCButton title="Xác nhận mã" onPress={handleVerifyOTP} disabled={isLoading} />
           </View>
 
           {/* ⏱️ Hiển thị countdown hoặc nút gửi lại */}

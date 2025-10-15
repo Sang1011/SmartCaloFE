@@ -1,4 +1,7 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { setCredentials } from "@features/auth";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import React, { useState } from "react";
 import {
   Dimensions,
@@ -8,8 +11,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
+import { SurveyData } from "./index";
 
 const { width } = Dimensions.get("window");
 
@@ -31,10 +34,26 @@ export default function Step11_Demographics({
   updateSurveyData,
 }: Props) {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const user = useAppSelector((state: RootState) => state.auth.user);
+  const dispatch = useAppDispatch();
 
   const handleUpdateAge = (age: string) => {
     if (/^\d*$/.test(age)) {
-      updateSurveyData((prev) => ({ ...prev, age }));
+      // Chuyển đổi age từ string sang number
+      const ageNumber = parseInt(age, 10) || 0; 
+      
+      // 1. Cập nhật surveyData
+      updateSurveyData((prev) => ({ ...prev, age: ageNumber }));
+      
+      // 2. Cập nhật Redux user
+      if (user) {
+        dispatch(
+          setCredentials({
+            ...user,
+            age: ageNumber, // Gán age là number
+          })
+        );
+      }
     }
   };
 
@@ -46,7 +65,8 @@ export default function Step11_Demographics({
   const selectedGenderLabel =
     GENDERS.find((g) => g.value === surveyData.gender)?.label || "Giới tính";
 
-  const showAgeError = surveyData.age !== undefined && !surveyData.age.trim();
+  // Sửa lỗi ở đây: surveyData.age là number, chỉ nên kiểm tra giá trị
+  const showAgeError = surveyData.age === 0;
 
   return (
     <View style={styles.container}>
@@ -61,7 +81,8 @@ export default function Step11_Demographics({
           </Text>
           <TextInput
             style={[styles.input, globalStyles.semiBold]}
-            value={surveyData.age}
+            // Chuyển age (number) sang string để hiển thị trong TextInput
+            value={surveyData.age?.toString()}
             onChangeText={handleUpdateAge}
             keyboardType="numeric"
             placeholder="Nhập tuổi của bạn"

@@ -2,39 +2,83 @@ import { HAS_LOGGED_IN } from "@constants/app";
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { useAuth } from "@contexts/AuthContext";
-import { Feather, FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Feather, FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
+import * as ImagePicker from "expo-image-picker";
 import { Link } from "expo-router";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ProfileScreen() {
   const { logout } = useAuth();
+
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const { user } = useAppSelector((state) => state.auth)
+
   const handleLogout = async () => {
     try {
       await logout();
-      console.log('Đăng xuất thành công');
+      console.log("Đăng xuất thành công");
     } catch (error) {
-      console.error('Lỗi khi đăng xuất:', error);
+      console.error("Lỗi khi đăng xuất:", error);
+    }
+  };
+
+  const pickImage = async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert("Thông báo", "Cần cấp quyền để truy cập thư viện ảnh.");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        setAvatarUri(result.assets[0].uri);
+      }
+    } catch (err) {
+      console.error("Lỗi chọn ảnh:", err);
     }
   };
 
   return (
     <View style={styles.container}>
-
       <ScrollView style={styles.contentContainer}>
         {/* User Info Section */}
         <View style={styles.userSection}>
-          <Link href="/tabs/profile/details" style={styles.detailText}>Xem chi tiết {">"}</Link>
+          <Link href="/tabs/profile/details" style={styles.detailText}>
+            Xem chi tiết {">"}
+          </Link>
+
+          {/* Avatar */}
           <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>H</Text>
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>H</Text>
+            )}
           </View>
-          <Text style={styles.userName}>hello</Text>
+          <Text style={styles.userName}>{user?.name || "hello"}</Text>
+
+
+          {/* Nút đổi ảnh */}
+          <TouchableOpacity style={styles.changePhotoBtn} onPress={pickImage}>
+            <Text style={styles.changePhotoText}>Đổi ảnh đại diện</Text>
+          </TouchableOpacity>
+
         </View>
 
         {/* Mục tiêu Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>MỤC TIÊU</Text>
-          
+
           <View style={styles.goalItem}>
             <View style={styles.goalIcon}>
               <FontAwesome5 name="weight" size={20} color={color.icon} />
@@ -59,7 +103,7 @@ export default function ProfileScreen() {
         {/* Pháp lý Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>PHÁP LÝ</Text>
-          
+
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuIcon}>
               <Ionicons name="document-text-outline" size={20} color={color.icon} />
@@ -80,7 +124,7 @@ export default function ProfileScreen() {
         {/* Tài khoản Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>TÀI KHOẢN</Text>
-          
+
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuIcon}>
               <Feather name="trash-2" size={20} color={color.icon} />
@@ -89,11 +133,14 @@ export default function ProfileScreen() {
             <MaterialIcons name="keyboard-arrow-right" size={24} color={color.icon} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => {
-            console.log('Đăng xuất');
-            handleLogout();
-            navigateCustom("/login", { flagKey: HAS_LOGGED_IN, value: false });
-          }}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              console.log("Đăng xuất");
+              handleLogout();
+              navigateCustom("/login", { flagKey: HAS_LOGGED_IN, value: false });
+            }}
+          >
             <View style={styles.menuIcon}>
               <MaterialIcons name="logout" size={20} color={color.icon} />
             </View>
@@ -102,8 +149,11 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Nâng cấp tài khoản Button */}
-        <TouchableOpacity style={styles.upgradeButton} onPress={() => navigateCustom("/subscription")}>
+        {/* Nâng cấp tài khoản */}
+        <TouchableOpacity
+          style={styles.upgradeButton}
+          onPress={() => navigateCustom("/subscription")}
+        >
           <MaterialIcons name="star" size={24} color="#fff" />
           <Text style={styles.upgradeText}>Nâng cấp tài khoản</Text>
         </TouchableOpacity>
@@ -123,15 +173,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   userSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
-    position: 'relative',
+    position: "relative",
   },
   detailText: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     fontFamily: FONTS.medium,
-    position: 'absolute',
+    position: "absolute",
     right: 16,
     top: 5,
   },
@@ -140,20 +190,33 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     backgroundColor: color.dark_green,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+    overflow: "hidden",
   },
   avatarText: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: color.white,
     fontFamily: FONTS.semiBold,
   },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+  },
+  changePhotoBtn: {
+    marginVertical: 10,
+  },
+  changePhotoText: {
+    fontSize: 14,
+    color: color.dark_green,
+    fontFamily: FONTS.medium,
+  },
   userName: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
     fontFamily: FONTS.semiBold,
   },
   section: {
@@ -161,7 +224,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
@@ -169,22 +232,22 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: color.dark_green,
     marginBottom: 16,
     fontFamily: FONTS.semiBold,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   goalItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   goalIcon: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   goalContent: {
@@ -192,45 +255,41 @@ const styles = StyleSheet.create({
   },
   goalLabel: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     fontFamily: FONTS.regular,
     marginBottom: 4,
   },
   goalValue: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
     fontFamily: FONTS.semiBold,
   },
-  trackingButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 12,
   },
   menuIcon: {
     width: 24,
-    alignItems: 'center',
+    alignItems: "center",
     marginRight: 12,
   },
   menuText: {
     flex: 1,
     fontSize: 16,
-    color: '#000',
+    color: "#000",
     fontFamily: FONTS.regular,
   },
   upgradeButton: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: color.dark_green,
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 32,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -238,7 +297,7 @@ const styles = StyleSheet.create({
   },
   upgradeText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: color.white,
     fontFamily: FONTS.semiBold,
     marginLeft: 8,

@@ -34,11 +34,11 @@ export const fetchAllSubscriptions = createAsyncThunk<
   void,              // Thunk arg type
   { rejectValue: string } // Reject type
 >(
-  "subscription/fetchAll",
+  SUBCRIPTION_URLS.GET_ALL_SUBCRIPTIONS,
   async (_, { rejectWithValue }) => {
     try {
       const response = await apiClient.get(SUBCRIPTION_URLS.GET_ALL_SUBCRIPTIONS);
-      // Lấy mảng subscriptionPlans từ response
+      console.log("response.data", response.data)
       return response.data.subscriptionPlans as SubcriptionPlan[];
     } catch (err: any) {
       return rejectWithValue(handleError(err));

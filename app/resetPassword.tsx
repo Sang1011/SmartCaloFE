@@ -4,8 +4,7 @@ import color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { resetPasswordThunk } from "@features/auth";
-import { useAppDispatch } from "@redux/hooks";
-import { getStringData } from "@stores";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
 import { Image } from "expo-image";
 import React, { useState } from "react";
@@ -17,6 +16,8 @@ export default function ResetPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
+  const resetToken = useAppSelector((state) => state.auth.resetToken);
+
 
   const handleResetPassword = async () => {
     if (!password || !confirmPassword) {
@@ -36,13 +37,12 @@ export default function ResetPasswordScreen() {
   
     setLoading(true);
     try {
-      const resetToken = await getStringData("resetToken");
   
       if (!resetToken) {
         Alert.alert("Lỗi", "Không tìm thấy mã xác thực, vui lòng thử lại quá trình quên mật khẩu");
         navigateCustom("/login");
       }
-  
+      
       const result = await dispatch(
         resetPasswordThunk({ resetToken, newPassword: password })
       ).unwrap();

@@ -5,6 +5,8 @@ import { SCTask } from "@components/ui/SCTask";
 import Color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { RootState } from "@redux";
+import { useAppSelector } from "@redux/hooks";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 export default function DefaultScreen() {
@@ -29,17 +31,18 @@ export default function DefaultScreen() {
     );
   };
 
+  const user = useAppSelector((state: RootState) => state.auth.user);
+
   return (
     <ScrollView style={styles.scrollView}>
       <View style={styles.layoutView}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.headerTextName}>Hello, User</Text>
+            <Text style={styles.headerTextName}>Hello, {user?.name || "User"}</Text>
             <Text style={styles.headerTextHour}>Thứ 3, 12 tháng 4</Text>
           </View>
           <View style={styles.headerRight}>
-            <Ionicons name="notifications-outline" size={24} color="black" />
-            <View style={styles.badge}></View>
+            <Ionicons name="chatbox-ellipses-sharp" size={24} color="black" />
           </View>
         </View>
         <View style={styles.bodyView}>

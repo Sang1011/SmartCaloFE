@@ -291,9 +291,6 @@ export default function RecipeDetail() {
           <MealSection meal={recipeDetails.meals.dinner} />
 
           {/* Sửa thứ tự và nội dung nút */}
-          <Pressable style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>Tùy chỉnh thực đơn</Text>
-          </Pressable>
           <Pressable style={styles.primaryButton}>
             <Text style={styles.primaryButtonText}>Ăn theo thực đơn này</Text>
           </Pressable>

@@ -1,13 +1,13 @@
-import Color from "../../constants/color";
-import { FONTS } from "../../constants/fonts";
 import * as React from "react";
 import {
+  Pressable,
+  StyleSheet,
   TextInput,
   TextInputProps,
-  StyleSheet,
   View,
-  Pressable,
 } from "react-native";
+import Color from "../../constants/color";
+import { FONTS } from "../../constants/fonts";
 
 export interface SCInputProps extends TextInputProps {
   placeholder?: string;
@@ -17,11 +17,12 @@ export interface SCInputProps extends TextInputProps {
   fontFamily?: string;
   fontSize?: number;
   icon?: React.ReactNode;
-  color?: string;
-  bgColor?: string;
+  color?: string; // Màu chữ (text color)
+  bgColor?: string; // Màu nền (background color) của container
   borderColor?: string;
   height?: number;
   width?: number;
+  disabled?: boolean;
 }
 
 export default function SCInput({
@@ -32,11 +33,12 @@ export default function SCInput({
   fontFamily = FONTS.regular,
   fontSize,
   icon,
-  color,
-  bgColor,
+  color, // Màu chữ
+  bgColor, // Màu nền container
   borderColor,
   height,
   width,
+  disabled = false,
   ...rest
 }: SCInputProps) {
   const inputRef = React.useRef<TextInput>(null);
@@ -45,7 +47,19 @@ export default function SCInput({
     inputRef.current?.focus();
   };
   return (
-    <Pressable style={styles.container} onPress={() => handlePress()}>
+    // 1. Áp dụng style màu sắc và kích thước vào Container
+    <Pressable
+      style={[
+        styles.container,
+        {
+          height: height || 50,
+          width: width,
+          backgroundColor: bgColor || Color.white,
+          borderColor: borderColor || Color.light_gray,
+        },
+      ]}
+      onPress={handlePress}
+    >
       {icon && (
         <>
           <View style={styles.iconContainer}>{icon}</View>
@@ -61,6 +75,7 @@ export default function SCInput({
             ? "email-address"
             : "default"
         }
+        editable={!disabled}
         autoCapitalize={variant === "email" ? "none" : "sentences"}
         autoCorrect={variant === "email" ? false : true}
         placeholder={placeholder}
@@ -74,12 +89,11 @@ export default function SCInput({
           {
             fontFamily: fontFamily,
             fontSize: fontSize,
-            color: color,
-            backgroundColor: bgColor,
-            borderColor: borderColor,
-            height: height,
-            width: width,
+            // 2. Sửa lỗi: Đảm bảo màu chữ luôn là Color.black nếu không được truyền
+            color: color || Color.black,
           },
+          // 3. Đảm bảo TextInput lấp đầy chiều cao của container
+          { height: '100%' } 
         ]}
         {...rest}
       />
@@ -89,20 +103,21 @@ export default function SCInput({
 
 const styles = StyleSheet.create({
   container: {
-    height: 50,
+    // ❌ Đã loại bỏ các giá trị mặc định cho height, bgColor, borderColor ở đây
     paddingHorizontal: 12,
     borderWidth: 1,
     borderRadius: 12,
-    color: Color.black,
-    backgroundColor: Color.white,
-    borderColor: Color.light_gray,
+    // Đảm bảo không có màu chữ ở đây
     flexDirection: "row",
-    alignItems: "center", // đảm bảo input + icon thẳng hàng
+    alignItems: "center", 
     gap: 10,
   },
   input: {
-    flex: 1,              // thay vì width: "95%"
-    color: Color.black,   // default màu chữ
+    flex: 1, 
+    // Mặc định màu chữ tối (dù là text thường hay ký tự bảo mật)
+    color: Color.black, 
+    // Quan trọng: Bỏ padding dọc vì đã dùng height: '100%' ở style inline
+    paddingVertical: 0, 
   },
   iconContainer: {
     justifyContent: "center",

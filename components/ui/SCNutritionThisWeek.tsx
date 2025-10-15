@@ -1,9 +1,6 @@
 import Color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import Entypo from "@expo/vector-icons/Entypo";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { navigateCustom } from "@utils/navigation";
 import { useState } from "react";
@@ -29,140 +26,34 @@ const days = [
 
 const mealsData = [
   {
-    name: "Breakfast",
+    name: "Bữa sáng",
     icon: "coffee", // FontAwesome
     consumed: 448,
     target: 414,
   },
   {
-    name: "Lunch",
+    name: "Bữa trưa",
     icon: "bowl-food", // FontAwesome6
     consumed: 234,
     target: 552,
   },
   {
-    name: "Dinner",
-    icon: "food-turkey", // MaterialCommunityIcons (Đã đổi từ bữa Chiều sang Dinner/Bữa tối như hình)
-    consumed: 0,
-    target: 345,
-  },
-  {
-    name: "Snacks",
+    name: "Bữa chiều",
     icon: "food-apple", // MaterialCommunityIcons
     consumed: 0,
     target: 69,
+  },
+  {
+    name: "Bữa tối",
+    icon: "food-turkey", // MaterialCommunityIcons (Đã đổi từ bữa Chiều sang Dinner/Bữa tối như hình)
+    consumed: 0,
+    target: 345,
   },
 ];
 
 const today = new Date();
 let currentDayIndex = today.getDay();
-currentDayIndex = (currentDayIndex + 6) % 7; // Chuyển từ (CN=0, T2=1,...) sang (T2=0, T7=5, CN=6)
-
-const MealItem = ({ meal }) => {
-  const isOverCal = meal.consumed > meal.target;
-  const progress = meal.target > 0 ? meal.consumed / meal.target : 0;
-  const isComplete = meal.consumed > 0;
-
-  // Chọn icon dựa trên tên bữa ăn
-  let IconComponent;
-  let iconName;
-  switch (meal.name) {
-    case "Breakfast":
-      IconComponent = FontAwesome;
-      iconName = "coffee";
-      break;
-    case "Lunch":
-      IconComponent = FontAwesome6;
-      iconName = "bowl-food";
-      break;
-    case "Dinner":
-      IconComponent = MaterialCommunityIcons;
-      iconName = "food-turkey";
-      break;
-    case "Snacks":
-      IconComponent = MaterialCommunityIcons;
-      iconName = "food-apple";
-      break;
-    default:
-      IconComponent = MaterialIcons;
-      iconName = "restaurant";
-      break;
-  }
-
-  const iconColor = isComplete ? Color.black : Color.dark_green;
-
-  return (
-    <Pressable
-      style={styles.mealContainer}
-      onPress={() => {
-        navigateCustom("/viewData");
-      }}
-    >
-      <View style={styles.mealIconWrapper}>
-        <View
-          style={[
-            styles.mealIcon,
-            {
-              // Thanh tiến trình
-              borderColor: isOverCal ? Color.red : Color.dark_green,
-            },
-          ]}
-        >
-          <View
-            style={[
-              styles.progressCircle,
-              {
-                // Vị trí thanh progress (đã đơn giản hóa progress bar)
-                // Cần một thư viện đồ họa để vẽ vòng tròn progress chuẩn
-                // Dùng một màu nền để mô phỏng vòng tròn.
-                borderWidth: 2,
-                borderColor: isComplete
-                  ? isOverCal
-                    ? Color.red
-                    : Color.dark_green
-                  : Color.light_gray,
-              },
-            ]}
-          >
-            {/* Sử dụng một View overlay để mô phỏng progress bar/vòng tròn, nhưng phức tạp với style.
-                Giữ đơn giản với icon và màu sắc như ảnh. */}
-            <IconComponent name={iconName} size={20} color={iconColor} />
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.mealTextContent}>
-        <View style={styles.mealHeader}>
-          <Text style={styles.mealName}>{meal.name}</Text>
-          <MaterialIcons
-            name="navigate-next"
-            size={24}
-            color={Color.white}
-            style={styles.arrowIcon}
-          />
-        </View>
-        <Text
-          style={[
-            styles.mealCalo,
-            { color: isOverCal ? Color.red_dark : Color.black },
-          ]}
-        >
-          {meal.consumed} / {meal.target} Cal
-        </Text>
-      </View>
-      <Pressable style={styles.addButton}>
-        <Entypo
-          name="plus"
-          size={28}
-          color={Color.white}
-          onPress={() => {
-            navigateCustom("/option");
-          }}
-        />
-      </Pressable>
-    </Pressable>
-  );
-};
+currentDayIndex = (currentDayIndex + 6) % 7;
 
 export default function SCNutritionThisWeek() {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
@@ -235,22 +126,28 @@ export default function SCNutritionThisWeek() {
         <Text style={styles.detailCalo}>
           {days[selectedDayIndex].calo}/{days[selectedDayIndex].max} calo
         </Text>
+
         <View style={styles.detailContainer}>
-          <Text style={styles.sectionTitle}>Dinh dưỡng</Text>
-          <View style={styles.detailRightContainer}>
-          <Text style={styles.detailLink} onPress={() => {
-            navigateCustom("/viewAllData");
-          }}>Xem chi tiết</Text>
-          <MaterialIcons
-            name="navigate-next"
-            size={16}
-            color={Color.dark_green}
-          />
-          </View>
+          <Text style={styles.detailLink}>Xem tổng quan</Text>
+          <MaterialIcons name="navigate-next" size={24} color={Color.dark_green} onPress={() => 
+            navigateCustom("/viewAllData")
+          }/>
         </View>
-        <View style={styles.separator}></View>
+
+        {/* Danh sách các bữa ăn trong ngày */}
         {mealsData.map((meal, index) => (
-          <MealItem key={index} meal={meal} />
+          <Pressable
+            key={index}
+            style={styles.mealRow}
+            onPress={() => navigateCustom("/viewData")}
+          >
+            <Text style={styles.mealText}>
+              {meal.name} - {meal.consumed || 0} calo
+            </Text>
+            <MaterialIcons name="navigate-next" size={20} color={Color.black} onPress={() => 
+            navigateCustom("/viewData")
+          }/>
+          </Pressable>
         ))}
       </View>
 
@@ -344,113 +241,59 @@ const styles = StyleSheet.create({
   },
 
   detail: {
-    borderRadius: 12, // Thêm bo góc để trông đẹp hơn
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginTop: 12, // Khoảng cách với biểu đồ cột
-  },
-  detailTitle: {
-    fontSize: 14, // Tăng nhẹ kích thước
-    fontFamily: FONTS.regular,
-    color: Color.black_50, // Chữ xám nhạt (trắng mờ)
+    borderTopWidth: 1,
+    borderTopColor: Color.black_50,
     paddingTop: 8,
   },
+  detailTitle: {
+    fontSize: 12,
+    fontFamily: FONTS.regular,
+  },
   detailCalo: {
-    fontSize: 20, // Kích thước lớn
+    fontSize: 18,
     fontFamily: FONTS.bold,
-    color: Color.black,
     marginVertical: 4,
   },
   detailContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 8,
+    paddingVertical: 5,
+  },
+  detailLink: {
+    fontSize: 15,
+    fontFamily: FONTS.medium,
+    color: Color.dark_green,
+  },
+  meal: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    marginTop: 2,
+    marginLeft: 15,
   },
   sectionTitle: {
-    fontFamily: FONTS.bold, 
+    fontFamily: FONTS.bold,
     color: Color.dark_green,
     fontSize: 18,
-},
+  },
   detailRightContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
   },
-  detailLink: {
-    fontSize: 12,
-    fontFamily: FONTS.medium,
-    color: Color.dark_green, // "Xem chi tiết" màu xanh lá đậm
-  },
-  separator: {
-    borderBottomWidth: 1,
-    borderBottomColor: Color.white_10, // Đường kẻ phân cách
-    marginVertical: 8,
-  },
-
-  mealContainer: {
+  mealRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 10, // Khoảng cách giữa các bữa ăn
-    borderBottomWidth: 1,
-    borderBottomColor: Color.black_50, // Đường kẻ mờ
+    paddingVertical: 6,
+    marginLeft: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Color.border,
   },
-  mealIconWrapper: {
-    // Vòng tròn ngoài cùng
-    width: 48,
-    height: 48,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 24,
-    // Màu nền mờ (optional, tùy thuộc vào độ chính xác của hình ảnh)
-    backgroundColor: Color.dark_green,
-  },
-  mealIcon: {
-    // Vòng tròn progress bar (Đang mô phỏng bằng border)
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: Color.white, // Nền bên trong
-    // Giữ nguyên logic border/progress ở trên
-  },
-  progressCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  mealTextContent: {
-    flex: 1,
-    paddingHorizontal: 10,
-  },
-  mealHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 2,
-  },
-  mealName: {
-    fontSize: 16,
-    fontFamily: FONTS.semiBold,
-  },
-  arrowIcon: {
-    // Icon mũi tên
-    opacity: 0.5, // Làm mờ bớt
-  },
-  mealCalo: {
+  mealText: {
     fontSize: 14,
-    fontFamily: FONTS.medium,
-    color: Color.dark_green, // Calo tiêu chuẩn dùng dark_green
-  },
-  mealItems: {
-    fontSize: 12,
     fontFamily: FONTS.regular,
-    color: Color.black_60, // Danh sách món ăn dùng trắng mờ (gray/xám)
-    flexWrap: "wrap",
+    color: Color.black,
   },
   addButton: {
     width: 32,

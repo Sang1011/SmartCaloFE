@@ -19,6 +19,7 @@ interface ExerciseCardProps {
   paddingTop?: number;
   marginBottom?: number;
   day?: number;
+  notHaveProgress?: boolean;
 }
 
 export default function ExerciseCard({

@@ -12,7 +12,7 @@ export const responseInterceptor = {
       status: response.status,
       data: response.data
     });
-    return response.data;
+    return response;
   },
   onRejected: async (error: any) => {
     const config = error.config;
