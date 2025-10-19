@@ -123,15 +123,21 @@ export default function SCNutritionThisWeek() {
           Tổng calo {days[selectedDayIndex].day}, {days[selectedDayIndex].date}{" "}
           tháng 3
         </Text>
-        <Text style={styles.detailCalo}>
-          {days[selectedDayIndex].calo}/{days[selectedDayIndex].max} calo
-        </Text>
-
-        <View style={styles.detailContainer}>
-          <Text style={styles.detailLink}>Xem tổng quan</Text>
-          <MaterialIcons name="navigate-next" size={24} color={Color.dark_green} onPress={() => 
-            navigateCustom("/viewAllData")
-          }/>
+        <View style={styles.detailCaloRow}>
+          <Text style={styles.detailCalo}>
+            {days[selectedDayIndex].calo}/{days[selectedDayIndex].max} calo
+          </Text>
+          <Pressable
+            style={styles.detailLinkContainer}
+            onPress={() => navigateCustom("/viewAllData")}
+          >
+            <Text style={styles.detailLink}>Xem tổng quan</Text>
+            <MaterialIcons
+              name="navigate-next"
+              size={20}
+              color={Color.dark_green}
+            />
+          </Pressable>
         </View>
 
         {/* Danh sách các bữa ăn trong ngày */}
@@ -144,9 +150,12 @@ export default function SCNutritionThisWeek() {
             <Text style={styles.mealText}>
               {meal.name} - {meal.consumed || 0} calo
             </Text>
-            <MaterialIcons name="navigate-next" size={20} color={Color.black} onPress={() => 
-            navigateCustom("/viewData")
-          }/>
+            <MaterialIcons
+              name="navigate-next"
+              size={20}
+              color={Color.black}
+              onPress={() => navigateCustom("/viewData")}
+            />
           </Pressable>
         ))}
       </View>
@@ -254,17 +263,25 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     marginVertical: 4,
   },
-  detailContainer: {
+  detailCaloRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 4,
+  },
+
+  detailLinkContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 5,
   },
+
   detailLink: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: FONTS.medium,
     color: Color.dark_green,
+    marginRight: 4,
   },
+
   meal: {
     fontSize: 14,
     fontFamily: FONTS.regular,

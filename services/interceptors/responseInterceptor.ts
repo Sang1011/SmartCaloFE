@@ -1,36 +1,94 @@
-import { AxiosResponse } from 'axios';
+import { authApi } from "@features/auth";
+import { getAccessToken, getRefreshToken, saveTokens } from "@stores";
+import axios, { AxiosResponse } from "axios";
+import { RefreshTokenResponse } from "../../types/auth";
+
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) prom.reject(error);
+    else prom.resolve(token);
+  });
+  failedQueue = [];
+};
 
 export const responseInterceptor = {
   onFulfilled: (response: AxiosResponse) => {
-    const baseURL = response.config.baseURL || '';
-    const url = response.config.url || '';
-    
-    console.log('✅ API SUCCESS:', {
+    const baseURL = response.config.baseURL || "";
+    const url = response.config.url || "";
+
+    console.log("✅ API SUCCESS:", {
       url: url,
       baseURL: baseURL,
       fullURL: baseURL + url,
       status: response.status,
-      data: response.data
+      data: response.data,
     });
+
     return response;
   },
+
   onRejected: async (error: any) => {
-    const config = error.config;
-    const baseURL = config?.baseURL || '';
-    const url = config?.url || '';
-    
-    console.log('❌ API ERROR:', {
+    const originalRequest = error.config;
+    const baseURL = originalRequest?.baseURL || "";
+    const url = originalRequest?.url || "";
+
+    console.log("❌ API ERROR:", {
       url: url,
       baseURL: baseURL,
       fullURL: baseURL + url,
-      method: config?.method?.toUpperCase(),
+      method: originalRequest?.method?.toUpperCase(),
       status: error.response?.status,
       data: error.response?.data,
-      message: error.message
+      message: error.message,
     });
-    if (error.response?.status === 401) {
-      console.warn('Token hết hạn, cần đăng nhập lại');
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // 🔁 tránh lặp vô hạn
+      originalRequest._retry = true;
+
+      if (isRefreshing) {
+        // ⏳ Nếu đang refresh, đợi token mới
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers["Authorization"] = `Bearer ${token}`;
+            return axios(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      isRefreshing = true;
+
+      try {
+        const accessToken = await getAccessToken();
+        const refreshToken = await getRefreshToken();
+        if (!accessToken || !refreshToken) throw new Error("No token available");
+
+        // 🔄 Gọi API refresh token
+        const res = await authApi.refresh({ accessToken, refreshToken });
+        const data = res.data as RefreshTokenResponse;
+
+        // 💾 Lưu token mới
+        await saveTokens(data.accessToken, data.refreshToken);
+
+        // ✅ Gửi lại các request bị treo
+        processQueue(null, data.accessToken);
+
+        // 🔁 Retry request cũ
+        originalRequest.headers["Authorization"] = `Bearer ${data.accessToken}`;
+        return axios(originalRequest);
+      } catch (err) {
+        processQueue(err, null);
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
     return Promise.reject(error);
   },
 };

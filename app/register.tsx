@@ -12,12 +12,11 @@ import React, { useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useAppDispatch();
 
@@ -36,31 +35,52 @@ export default function RegisterScreen() {
       Alert.alert("Lỗi", "Mật khẩu xác nhận không trùng khớp");
       return;
     }
-    
+
     setIsLoading(true);
 
     try {
-      const resultAction = await dispatch(registerThunk({ email, password, name: "Sang" })); 
-      
+      const resultAction = await dispatch(
+        registerThunk({ email, password, name: "" })
+      );
+
       if (registerThunk.rejected.match(resultAction)) {
-        const errorMessage = resultAction.payload as string || "Đăng ký thất bại không rõ lý do.";
+        const errorMessage =
+          (resultAction.payload as string) ||
+          "Đăng ký thất bại không rõ lý do.";
         Alert.alert("Lỗi Đăng Ký", errorMessage);
         return;
       }
-      
-      Alert.alert("Thành công", "Đăng ký thành công!");
-      navigateCustom("/login");
 
+      Alert.alert("Thành công", "Đăng ký thành công!");
+      navigateCustom("/survey");
     } catch (e) {
       console.error("Async Register Error:", e);
       Alert.alert("Lỗi hệ thống", "Đã xảy ra lỗi không mong muốn.");
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
+  if (isLoading) {
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text
+        style={{
+          fontSize: 24,
+          fontFamily: FONTS.bold,
+          color: color.dark_green,
+        }}
+      >
+        LOADING...
+      </Text>
+      <ActivityIndicator size="large" color={color.dark_green} />
+    </View>;
+  }
+
   return (
-    <SafeAreaView style={styles.screen} edges={["top", "left", "right", "bottom"]}>
+    <SafeAreaView
+      style={styles.screen}
+      edges={["top", "left", "right", "bottom"]}
+    >
       <Image
         source={require("../assets/images/logo.png")}
         style={styles.logo}
@@ -100,21 +120,10 @@ export default function RegisterScreen() {
         </View>
 
         <View style={styles.button}>
-          {isLoading ? (
-            <SCButton 
-            title="Đăng ký" 
-            onPress={handleRegister} 
-            icon={<ActivityIndicator color={color.white} size="small" />}
-            disabled={isLoading}
-          />
-          ) : (
-            <SCButton 
-            title="Đăng ký" 
+          <SCButton
+            title="Đăng ký"
             onPress={handleRegister}
-            disabled={isLoading}
-            />
-          )}
-          
+          />
         </View>
       </View>
 

@@ -1,49 +1,35 @@
 import SCDonutChart from "@components/ui/SCDonutChart";
 import SCNutritionThisWeek from "@components/ui/SCNutritionThisWeek";
 import SCProgressBar from "@components/ui/SCProgressBar";
-import { SCTask } from "@components/ui/SCTask";
 import Color from "@constants/color";
-import { FONTS, globalStyles } from "@constants/fonts";
+import { FONTS } from "@constants/fonts";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { fetchCurrentUserThunk } from "@features/users";
 import { RootState } from "@redux";
-import { useAppSelector } from "@redux/hooks";
-import { useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
+import { navigateCustom } from "@utils/navigation";
+import { useEffect } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 export default function DefaultScreen() {
-  const [tasks, setTasks] = useState([
-    { id: 1, title: "Kiểm tra cân nặng trước khi ăn sáng", completed: false },
-    { id: 2, title: "Uống 1 ly nước", completed: false },
-    {
-      id: 3,
-      title: "Ăn theo thực đơn & Ghi lại nhật ký ăn uống",
-      completed: true,
-    },
-    { id: 4, title: "Không ăn sau 20h", completed: true },
-    { id: 5, title: "Không ăn đồ ngoài thực đơn", completed: true },
-    { id: 6, title: "Thực hiện các bài tập hôm nay", completed: true },
-  ]);
 
-  const handleTaskToggle = (id: number) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
+  const { user } = useAppSelector((state: RootState) => state.user);
+  const dispatch = useAppDispatch();
 
-  const user = useAppSelector((state: RootState) => state.auth.user);
+  useEffect(() => {
+    dispatch(fetchCurrentUserThunk());
+  }, [])
 
   return (
     <ScrollView style={styles.scrollView}>
       <View style={styles.layoutView}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.headerTextName}>Hello, {user?.name || "User"}</Text>
+            <Text style={styles.headerTextName}>Hello, {user?.name}</Text>
             <Text style={styles.headerTextHour}>Thứ 3, 12 tháng 4</Text>
           </View>
-          <View style={styles.headerRight}>
+          <Pressable style={styles.headerRight} onPress={() => navigateCustom("/chat")}>
             <Ionicons name="chatbox-ellipses-sharp" size={24} color="black" />
-          </View>
+          </Pressable>
         </View>
         <View style={styles.bodyView}>
           <View style={styles.caloContainer}>
@@ -85,7 +71,7 @@ export default function DefaultScreen() {
                 </View>
               </View>
             </View>
-            <View style={styles.dailySection}>
+            {/* <View style={styles.dailySection}>
               <View style={styles.checklist}>
                 <Text style={styles.checklistTitle}>Nhiệm vụ hàng ngày</Text>
                 <View style={styles.checklistItems}>
@@ -108,7 +94,7 @@ export default function DefaultScreen() {
               <Text style={[globalStyles.medium, styles.warningText]}>
                 Bạn chưa hoàn thành tất cả nhiệm vụ hôm nay!
               </Text>
-            )}
+            )} */}
             <View>
               <SCNutritionThisWeek />
             </View>

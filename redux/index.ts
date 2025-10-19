@@ -1,4 +1,6 @@
+import { dishesReducer } from "@features/dishes";
 import { excerciseReducer } from "@features/excercises";
+import { menuReducer } from "@features/menus";
 import { programReducer } from "@features/programs";
 import { subcriptionReducer } from "@features/subscriptions";
 import { userReducer } from "@features/users";
@@ -11,7 +13,9 @@ export const store = configureStore({
     subscription: subcriptionReducer,
     user: userReducer,
     program: programReducer,
-    excercise: excerciseReducer
+    excercise: excerciseReducer,
+    menu: menuReducer,
+    dish: dishesReducer
   },
 });
 

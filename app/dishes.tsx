@@ -4,10 +4,15 @@ import { FONTS } from "@constants/fonts";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { clearSelectedDish, fetchDishById } from "@features/dishes";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
+import { calculateNutritionPercentages } from "@utils/calculateNutrionPercentages";
 import { navigateCustom } from "@utils/navigation";
 import { useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
@@ -18,75 +23,186 @@ import {
 import { PieChart } from "react-native-gifted-charts/dist";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Dữ liệu mẫu đã được xử lý
+// Dữ liệu mẫu đã được xử lý (Giữ nguyên)
 const rawIngredients =
   "Thịt heo 300 Gr, Thơm 1/2 Trái, Nước dừa 100 muỗngl, Ớt 2 Trái, Hạt nêm 1 muỗnguỗng cà phê, Nước mắm 1 muỗnguỗng canh, Tiêu 1/2 muỗnguỗng cà phê, Đường trắng 1 muỗnguỗng canh, Muối 1/2 muỗnguỗng cà phê, Dầu ăn 2 muỗnguỗng canh";
 
 const rawMethods =
   "Gà rửa sạch, chặt miếng vừa ăn rồi ướp với 1 muỗnguỗng cà phê hạt nêm, 1 muỗnguỗng cà phê nước mắm ngon, 1/2 muỗnguỗng cà phê tiêu, ướp gà khoảng 2 giờ. Cho thịt gà vào lò vi sóng nấu khoảng 6-7 phút, đến khi chín sơ, rắc đều một lớp bột chiên giòn lên các miếng thịt gà., Gừng cắt sợi.Sả, riềng, tỏi băm nhuyễn. Lá lốt rửa sạch, cắt sợi mỏng. Hành tím cắt lát., Bắc chảo lên bếp, đun nóng dầu lên, cho gà vào chiên vàng rồi vớt ra, để ráo dầu., Vẫn chảo dầu ấy, cho tỏi vào phi thơm vàng. Tiếp tục cho sả, hành tím, lá lốt và gừng vào đảo đều, nêm với 2 muỗnguỗng cà phê hạt nêm., Cuối cùng cho gà đã chiên vàng vào xào nhanh tay rồi tắt bếp., Lấy ra đĩa, ăn với cơm. Chút cay nồng của gừng, chút ấm thơm của sả khiến người thưởng thức thêm ấm lòng ngày mưa lạnh.";
 
-const ingredients = rawIngredients
-  .split(",")
-  .map((item) => item.trim())
-  .filter((item) => item.length > 0);
-
-  const methods = rawMethods
+const methods = rawMethods
   .replace(/[,]+/g, "") // xoá hết dấu phẩy thừa
-  .split(".")            // tách theo dấu chấm
+  .split(".") // tách theo dấu chấm
   .map((item) => item.trim())
   .filter((item) => item.length > 0);
 
 export default function Dishes() {
   const [tab, setTab] = useState<"ingre" | "method">("ingre");
-  const { mealId } = useLocalSearchParams();
+  const { id, menuId } = useLocalSearchParams();
+  const dispatch = useAppDispatch();
+  const { selectedDish, loading } = useAppSelector(
+    (state: RootState) => state.dish
+  );
+  const [dishId, setDishId] = useState<string | null>(null);
+  const [menuCheckId, setMenuCheckId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const extractedId = Array.isArray(id) ? id[0] : id;
+    const extractedMenuId = Array.isArray(menuId) ? menuId[0] : menuId;
+
+    if (extractedId && typeof extractedId === "string") {
+      setDishId(extractedId);
+      dispatch(fetchDishById(extractedId));
+    } else {
+      console.warn("⚠️ Không tìm thấy dishId hợp lệ:", id);
+    }
+
+    if(extractedMenuId && typeof extractedMenuId === "string"){
+      setMenuCheckId(extractedMenuId);
+    }
+
+    return () => {
+      dispatch(clearSelectedDish());
+    };
+  }, [id, menuId, dispatch]);
 
   const handleAddPress = () => {
     navigateCustom("/addMealEntry");
   };
 
+  // Nếu dữ liệu đang tải hoặc chưa có, bạn có thể hiển thị loading/placeholder
+  if (loading && !selectedDish) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text
+          style={{
+            fontSize: 24,
+            fontFamily: FONTS.bold,
+            color: color.dark_green,
+          }}
+        >
+          LOADING...
+        </Text>
+        <ActivityIndicator size="large" color={color.dark_green} />
+      </View>
+    );
+  }
+
+  // Nếu không có món ăn nào được chọn
+  if (!selectedDish) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={{ textAlign: "center", marginTop: 50 }}>
+          Không tìm thấy món ăn.
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  const dishName = selectedDish.name;
+  const dishTime = `${selectedDish.cookingTime} phút`;
+  const dishCalories = `${selectedDish.calories} Kcal`;
+  const dishCategory = selectedDish.category;
+  const dishServings = `${selectedDish.servings} suất ăn`;
+  const dishDescription = selectedDish.description;
+  const dishImageUrl = selectedDish.imageUrl;
+  const calculateNutrion = calculateNutritionPercentages(selectedDish);
+
+  const dishIngredients = selectedDish.ingredients
+    ? selectedDish.ingredients
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0)
+    : [];
+
+  const dishMethods = selectedDish.instructions
+    ? selectedDish.instructions
+        .replace(/[,]+/g, "")
+        .split(".")
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0)
+    : [];
   return (
     <SafeAreaView edges={["top"]} style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Header - ảnh và nút quay lại (Giữ nguyên) */}
         <View style={styles.header}>
           <View style={styles.gobackButton}>
-            <ButtonGoBack link="/tabs" />
+            <ButtonGoBack
+              handleLogic={() => {
+                if (menuCheckId) {
+                  navigateCustom("/RecipeDetail", {
+                    params: {
+                      manuId: menuCheckId
+                    }
+                  });
+                }else{
+                  navigateCustom("/library");
+                }
+              }}
+            />
           </View>
           <View style={styles.imageContainer}>
-            <Image
-              source={require("@assets/images/com-tam.png")}
-              style={styles.image}
-            />
+            {dishImageUrl ? (
+              <Image src={dishImageUrl} style={styles.image} />
+            ) : (
+              <Image
+                source={require("@assets/images/com-tam.png")}
+                style={styles.image}
+              />
+            )}
           </View>
         </View>
 
-        {/* Phần thân bo tròn nổi lên (Giữ nguyên) */}
+        {/* Phần thân bo tròn nổi lên */}
         <View style={styles.bodyContainer}>
           <View style={styles.flyContainer}>
-            <Text style={styles.titleText}>Cơm sườn bì chả</Text>
+            <Text style={styles.titleText}>{dishName}</Text>
 
-            <View style={styles.iconContainer}>
-              <View style={styles.icon}>
-                <Ionicons name="time-outline" size={24} color="black" />
-                <Text style={{ fontFamily: FONTS.semiBold, fontSize: 14 }}>
-                  30 phút
-                </Text>
+            {/* START: PHẦN THÔNG TIN ĐÃ SỬA ĐỔI */}
+
+            {/* ⭐️ Hàng 1: Calories (Làm nổi bật) */}
+            <View style={styles.caloriesContainer}>
+              <AntDesign name="fire" size={30} color={color.red_dark} />
+              <Text style={styles.calorieText}>{dishCalories}</Text>
+            </View>
+
+            {/* ⭐️ Hàng 2: Thời gian, Khẩu phần, Loại món ăn */}
+            <View style={styles.infoRowContainer}>
+              {/* Thời gian */}
+              <View style={styles.infoItem}>
+                <Ionicons
+                  name="time-outline"
+                  size={20}
+                  color={color.dark_green}
+                />
+                <Text style={styles.infoText}>{dishTime}</Text>
               </View>
-              <View style={styles.divider} />
-              <View style={styles.icon}>
-                <AntDesign name="fire" size={24} color="black" />
-                <Text style={{ fontFamily: FONTS.semiBold, fontSize: 14 }}>
-                  800Kcal
-                </Text>
+              <View style={styles.infoDivider} />
+
+              {/* Khẩu phần (Servings) */}
+              <View style={styles.infoItem}>
+                <Ionicons
+                  name="people-outline"
+                  size={20}
+                  color={color.dark_green}
+                />
+                <Text style={styles.infoText}>{dishServings}</Text>
               </View>
-              <View style={styles.divider} />
-              <View style={styles.icon}>
-                <Ionicons name="fast-food-outline" size={24} color="black" />
-                <Text style={{ fontFamily: FONTS.semiBold, fontSize: 14 }}>
-                  Đồ mặn
-                </Text>
+              <View style={styles.infoDivider} />
+
+              {/* Loại món ăn */}
+              <View style={styles.infoItem}>
+                <Ionicons
+                  name="fast-food-outline"
+                  size={20}
+                  color={color.dark_green}
+                />
+                <Text style={styles.infoText}>{dishCategory}</Text>
               </View>
             </View>
+
+            {/* END: PHẦN THÔNG TIN ĐÃ SỬA ĐỔI */}
 
             <View style={styles.desContainer}>
               <Text style={{ fontFamily: FONTS.semiBold, fontSize: 17 }}>
@@ -99,9 +215,7 @@ export default function Dishes() {
                   paddingHorizontal: 10,
                 }}
               >
-                Món ngon đặc trưng, rất được ưa chuộng. Để học cách làm sườn
-                nướng cơm tấm ngon chuẩn thì cần biết cách ướp sườn cốt lết sao
-                cho ngấm vị đậm đà.
+                {dishDescription}
               </Text>
             </View>
           </View>
@@ -115,7 +229,9 @@ export default function Dishes() {
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Text
                   style={{ fontFamily: FONTS.semiBold, fontSize: 12 }}
-                  onPress={() => navigateCustom("/nutrions")}
+                  onPress={() =>
+                    navigateCustom("/nutrions", { params: { id: dishId } })
+                  }
                 >
                   Xem tất cả
                 </Text>
@@ -129,9 +245,9 @@ export default function Dishes() {
                 radius={60}
                 innerRadius={40}
                 data={[
-                  { value: 25, color: "#60A5FA" },
-                  { value: 35, color: "#FCA5A5" },
-                  { value: 40, color: "#C4B5FD" },
+                  { value: calculateNutrion.protein || 25, color: "#60A5FA" },
+                  { value: calculateNutrion.fat || 35, color: "#FCA5A5" },
+                  { value: calculateNutrion.carbs || 40, color: "#C4B5FD" },
                 ]}
               />
               <View style={styles.legendContainer}>
@@ -139,19 +255,25 @@ export default function Dishes() {
                   <View
                     style={[styles.colorBox, { backgroundColor: "#60A5FA" }]}
                   />
-                  <Text style={styles.legendText}>25% Protein</Text>
+                  <Text style={styles.legendText}>
+                    {calculateNutrion.protein}% Protein
+                  </Text>
                 </View>
                 <View style={styles.legendItem}>
                   <View
                     style={[styles.colorBox, { backgroundColor: "#FCA5A5" }]}
                   />
-                  <Text style={styles.legendText}>35% Chất béo</Text>
+                  <Text style={styles.legendText}>
+                    {calculateNutrion.fat}% Chất béo
+                  </Text>
                 </View>
                 <View style={styles.legendItem}>
                   <View
                     style={[styles.colorBox, { backgroundColor: "#C4B5FD" }]}
                   />
-                  <Text style={styles.legendText}>40% Tinh bột</Text>
+                  <Text style={styles.legendText}>
+                    {calculateNutrion.carbs}% Chất đường bột
+                  </Text>
                 </View>
               </View>
             </View>
@@ -198,11 +320,11 @@ export default function Dishes() {
               </Pressable>
             </View>
 
-            {/* Nội dung tab - ĐÃ CẬP NHẬT */}
+            {/* Nội dung tab (Giữ nguyên) */}
             <View style={styles.contentContainer}>
               {tab === "ingre" ? (
                 <View style={styles.ingreContainer}>
-                  {ingredients.map((item, index) => (
+                  {dishIngredients.map((item, index) => (
                     <View key={index} style={styles.ingreRow}>
                       <Text style={styles.bulletPoint}>•</Text>
                       <Text style={styles.ingreText}>{item}</Text>
@@ -211,7 +333,7 @@ export default function Dishes() {
                 </View>
               ) : (
                 <View style={styles.methodContainer}>
-                  {methods.map((stepContent, index) => (
+                  {dishMethods.map((stepContent, index) => (
                     <View key={index} style={styles.methodRow}>
                       <View style={styles.numberDots}>
                         <Text
@@ -284,26 +406,58 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    marginBottom: 10, // Giảm khoảng cách giữa flyContainer và Nutrions
   },
   titleText: {
-    fontFamily: FONTS.semiBold,
+    marginTop: 10,
+    fontFamily: FONTS.bold,
     fontSize: 25,
-    marginBottom: 15,
+    marginBottom: 5,
+    textAlign: "center", // Căn giữa tên món ăn
+    color: color.dark_green,
   },
-  iconContainer: {
+
+  // ⭐️ STYLES MỚI CHO CALORIES (Nổi bật)
+  caloriesContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 40,
+    marginBottom: 15,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginHorizontal: 15,
   },
-  icon: {
+  calorieText: {
+    fontFamily: FONTS.bold,
+    fontSize: 24,
+    marginLeft: 8,
+    color: color.red_dark, // Màu đỏ cho calorie
+  },
+
+  // ⭐️ STYLES MỚI CHO HÀNG THÔNG TIN GỘP
+  infoRowContainer: {
+    flexDirection: "row",
+    justifyContent: "space-evenly", // Căn đều các mục
+    alignItems: "center",
+    marginBottom: 20,
+    paddingHorizontal: 10,
+  },
+  infoItem: {
     alignItems: "center",
   },
-  divider: {
-    height: "85%",
+  infoText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    marginTop: 4,
+    color: color.black,
+  },
+  infoDivider: {
+    height: "100%",
     width: 1,
     backgroundColor: color.grey,
   },
+  // END STYLES MỚI
+
   desContainer: {
     paddingHorizontal: 15,
     marginTop: 20,
@@ -379,9 +533,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    paddingHorizontal: 10, // Thêm padding chung cho nội dung
+    paddingHorizontal: 10,
   },
-  // START: STYLES MỚI CHO THÀNH PHẦN
   ingreContainer: {
     flexDirection: "column",
     gap: 8,
@@ -395,19 +548,18 @@ const styles = StyleSheet.create({
     marginRight: 8,
     fontSize: 16,
     lineHeight: 20,
-    color: color.dark_green, // Màu chấm
+    color: color.dark_green,
   },
   ingreText: {
     fontFamily: FONTS.regular,
     fontSize: 15,
-    flexShrink: 1, // Đảm bảo text wrapping
+    flexShrink: 1,
     lineHeight: 20,
   },
-  // END: STYLES MỚI CHO THÀNH PHẦN
   methodContainer: {
     flexDirection: "column",
     justifyContent: "center",
-    gap: 12, // Tăng khoảng cách giữa các bước
+    gap: 12,
   },
   methodRow: {
     flexDirection: "row",
@@ -416,7 +568,7 @@ const styles = StyleSheet.create({
   },
   numberDots: {
     backgroundColor: color.dark_green,
-    width: 25, // Tăng kích thước
+    width: 25,
     height: 25,
     borderRadius: 45,
     flexDirection: "row",
@@ -424,12 +576,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   methodSteps: {
-    flex: 1, // Đảm bảo chiếm phần còn lại
+    flex: 1,
   },
   step: {
     fontSize: 15,
     fontFamily: FONTS.semiBold,
-    marginBottom: 2, // Khoảng cách giữa Bước 1 và nội dung
+    marginBottom: 2,
   },
   stepContent: {
     fontSize: 14,

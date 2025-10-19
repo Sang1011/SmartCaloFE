@@ -14,7 +14,7 @@ import {
 import { navigateCustom } from "@utils/navigation";
 import { Image } from "expo-image";
 import React, { useEffect, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SCButton from "../components/ui/SCButton";
 import color from "../constants/color";
@@ -116,6 +116,21 @@ export default function LoginScreen() {
       }
     }
   };
+
+  if (isLoading) {
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text
+          style={{
+            fontSize: 24,
+            fontFamily: FONTS.bold,
+            color: color.dark_green,
+          }}
+        >
+          LOADING...
+        </Text>
+        <ActivityIndicator size="large" color={color.dark_green} />
+      </View>;
+    }
 
   return (
     <SafeAreaView

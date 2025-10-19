@@ -1,7 +1,7 @@
 import axios from 'axios';
+import { Config } from '../config/config';
 import { requestInterceptor } from './interceptors/requestInterceptor';
 import { responseInterceptor } from './interceptors/responseInterceptor';
-import { Config } from '../config/config';
 
 const apiClient = axios.create({
   baseURL: Config.API_URL + "api",

@@ -1,7 +1,12 @@
 import SCButton from "@components/ui/SCButton";
 import color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
+import { useAuth } from "@contexts/AuthContext";
+import { fetchCurrentUserThunk } from "@features/users";
 import { RootState } from "@redux";
+import { useAppDispatch } from "@redux/hooks";
+import { navigateCustom } from "@utils/navigation";
+import { useEffect } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -11,9 +16,24 @@ import {
 import { useSelector } from 'react-redux';
 
 export default function ProfileDetailsScreen() {
+  const { logout } = useAuth();
   const { user } = useSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.user
   );
+
+  const dispatch = useAppDispatch();
+
+  const handleLoadUser = async () => {
+    const result = await dispatch(fetchCurrentUserThunk());
+    if(fetchCurrentUserThunk.rejected.match(result)){
+      await logout();
+      navigateCustom("/login")
+    }
+  }
+  
+  useEffect(() => {
+    handleLoadUser();
+  }, [!user]) 
 
   return (
     <ScrollView style={styles.container}>
@@ -47,9 +67,9 @@ export default function ProfileDetailsScreen() {
             </Text>
           </View>
           <View style={styles.row}>
-            <Text style={[styles.label, globalStyles.regular]}>Ngày sinh</Text>
+            <Text style={[styles.label, globalStyles.regular]}>Tuổi</Text>
             <Text style={[styles.value, globalStyles.medium]}>
-              {user?.birthdate || "Chưa có thông tin"}
+              {"Chưa có thông tin"}
             </Text>
           </View>
         </View>
@@ -109,15 +129,6 @@ export default function ProfileDetailsScreen() {
               Bao gồm hoạt động hằng ngày
             </Text>
           </View>
-        </View>
-
-        <View style={styles.groupButton}>
-          <SCButton
-            variant="outline"
-            title="Điều chỉnh mục tiêu"
-            onPress={() => {}}
-            fontFamily={FONTS.semiBold}
-          />
         </View>
       </View>
     </ScrollView>

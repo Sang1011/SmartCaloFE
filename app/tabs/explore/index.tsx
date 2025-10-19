@@ -8,7 +8,6 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRoute } from "@react-navigation/native";
 import { navigateCustom } from "@utils/navigation";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
@@ -174,20 +173,6 @@ export default function ExploreScreen() {
               </View>
             </View>
           </View>
-
-          <SCButton
-            title="Thay đổi kế hoạch"
-            variant="outline"
-            iconPos="left"
-            icon={
-              <MaterialIcons
-                name="change-circle"
-                size={24}
-                color={color.dark_green}
-              />
-            }
-            onPress={() => {}}
-          />
         </View>
 
         {/* --- Current Menu Section --- */}

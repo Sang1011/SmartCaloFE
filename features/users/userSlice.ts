@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { getAccessToken, saveStringData } from "@stores";
+import { getAccessToken } from "@stores";
 import { userApi } from "./userApi";
 import { USER_URLS } from "./userUrls";
 
@@ -49,7 +49,7 @@ export const fetchCurrentUserThunk = createAsyncThunk(
       if (!token) throw new Error("Không có token, vui lòng đăng nhập lại");
 
       const res = await userApi.me();
-      return res.data as UserDto;
+      return res.data.userDto as UserDto;
     } catch (err: any) {
       return rejectWithValue(handleError(err));
     }
@@ -81,8 +81,6 @@ const userSlice = createSlice({
         (state, action: PayloadAction<UserDto>) => {
           state.loading = false;
           state.user = action.payload;
-          // Optionally lưu tên hoặc ID nếu cần
-          saveStringData("userId", action.payload.id);
         }
       )
       .addCase(fetchCurrentUserThunk.rejected, (state, action) => {

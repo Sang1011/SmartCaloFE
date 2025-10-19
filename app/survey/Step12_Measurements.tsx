@@ -1,7 +1,5 @@
-import { setCredentials } from "@features/auth";
-import { RootState } from "@redux";
-import { useAppDispatch, useAppSelector } from "@redux/hooks";
-import React from "react";
+import color from "@constants/color";
+import React, { useState } from "react";
 import {
   Dimensions,
   Pressable,
@@ -24,43 +22,42 @@ export default function Step12_Measurements({
   surveyData,
   updateSurveyData,
 }: Props) {
-  const user = useAppSelector((state: RootState) => state.auth.user);
-  const dispatch = useAppDispatch();
+  const [errors, setErrors] = useState({
+    height: false,
+    weight: false,
+  });
 
   const handleUpdateHeight = (heightStr: string) => {
-    if (/^\d*\.?\d*$/.test(heightStr)) {
-      const height = heightStr ? parseFloat(heightStr) : undefined;
-      updateSurveyData((prev) => ({ ...prev, height }));
+    // Cập nhật giá trị người dùng nhập
+    const parsed = parseFloat(heightStr);
 
-      if (user && height !== undefined) {
-        dispatch(
-          setCredentials({
-            ...user,
-            height,
-          })
-        );
-      }
+    updateSurveyData((prev) => ({
+      ...prev,
+      height: heightStr === "" ? undefined : parsed,
+    }));
+
+    // Kiểm tra hợp lệ
+    if (heightStr === "" || isNaN(parsed) || parsed <= 0) {
+      setErrors((prev) => ({ ...prev, height: true }));
+    } else {
+      setErrors((prev) => ({ ...prev, height: false }));
     }
   };
 
   const handleUpdateWeight = (weightStr: string) => {
-    if (/^\d*\.?\d*$/.test(weightStr)) {
-      const weight = weightStr ? parseFloat(weightStr) : undefined;
-      updateSurveyData((prev) => ({ ...prev, weight }));
+    const parsed = parseFloat(weightStr);
 
-      if (user && weight !== undefined) {
-        dispatch(
-          setCredentials({
-            ...user,
-            weight,
-          })
-        );
-      }
+    updateSurveyData((prev) => ({
+      ...prev,
+      weight: weightStr === "" ? undefined : parsed,
+    }));
+
+    if (weightStr === "" || isNaN(parsed) || parsed <= 0) {
+      setErrors((prev) => ({ ...prev, weight: true }));
+    } else {
+      setErrors((prev) => ({ ...prev, weight: false }));
     }
   };
-
-  const showHeightError = surveyData.height === undefined;
-  const showWeightError = surveyData.weight === undefined;
 
   return (
     <View style={styles.container}>
@@ -77,18 +74,22 @@ export default function Step12_Measurements({
           <View style={styles.inputRow}>
             <TextInput
               style={[styles.input, globalStyles.semiBold]}
-              value={surveyData.height?.toString() ?? ""}
+              value={
+                surveyData.height !== undefined
+                  ? surveyData.height.toString()
+                  : ""
+              }
               onChangeText={handleUpdateHeight}
               keyboardType="numeric"
               placeholder="Nhập chiều cao"
-              placeholderTextColor="#BDBDBD"
+              placeholderTextColor={color.black_50}
             />
             <Pressable style={styles.unitButton}>
               <Text style={[styles.unitButtonText, globalStyles.bold]}>cm</Text>
             </Pressable>
           </View>
-          {showHeightError && (
-            <Text style={styles.errorText}>Vui lòng nhập chiều cao</Text>
+          {errors.height && (
+            <Text style={styles.errorText}>Vui lòng nhập chiều cao hợp lệ</Text>
           )}
         </View>
 
@@ -100,18 +101,22 @@ export default function Step12_Measurements({
           <View style={styles.inputRow}>
             <TextInput
               style={[styles.input, globalStyles.semiBold]}
-              value={surveyData.weight?.toString() ?? ""}
+              value={
+                surveyData.weight !== undefined
+                  ? surveyData.weight.toString()
+                  : ""
+              }
               onChangeText={handleUpdateWeight}
               keyboardType="numeric"
+              placeholderTextColor={color.black_50}
               placeholder="Nhập cân nặng"
-              placeholderTextColor="#BDBDBD"
             />
             <Pressable style={styles.unitButton}>
               <Text style={[styles.unitButtonText, globalStyles.bold]}>kg</Text>
             </Pressable>
           </View>
-          {showWeightError && (
-            <Text style={styles.errorText}>Vui lòng nhập cân nặng</Text>
+          {errors.weight && (
+            <Text style={styles.errorText}>Vui lòng nhập cân nặng hợp lệ</Text>
           )}
         </View>
       </View>

@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
 import { Image } from "expo-image";
 import React, { useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ResetPasswordScreen() {
@@ -59,6 +59,21 @@ export default function ResetPasswordScreen() {
       setLoading(false);
     }
   };
+
+  if (loading) {
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text
+          style={{
+            fontSize: 24,
+            fontFamily: FONTS.bold,
+            color: color.dark_green,
+          }}
+        >
+          LOADING...
+        </Text>
+        <ActivityIndicator size="large" color={color.dark_green} />
+      </View>;
+    }
   
 
   return (

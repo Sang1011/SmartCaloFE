@@ -55,7 +55,7 @@
     ],
     "extra": {
       // "API_URL": "http://10.0.2.2:5013/",
-      "API_URL": "https://662e0eeb4307.ngrok-free.app/",
+      "API_URL": "https://590e94221d2f.ngrok-free.app/",
       "GOOGLE_ANDROID_CLIENT_ID": "723818287625-eci24g8031so2phimko68826dofkhhsd.apps.googleusercontent.com",
       "GOOGLE_WEB_CLIENT_ID": "723818287625-s3l202uu5n18vuc821it5i9ep09jrud0.apps.googleusercontent.com",
       "FACEBOOK_APP_ID": "1756016208411923",

@@ -19,19 +19,19 @@ const initialState: DishesState = {
   error: null,
 };
 
-/**
- * 2. Định nghĩa Async Thunks
- */
-
+export type FetchDishesProps = {
+  pageIndex?: number;
+  pageSize?: number; 
+};
 // Async Thunk cho việc lấy tất cả món ăn
 export const fetchAllDishes = createAsyncThunk<
   Dish[], // Kiểu trả về khi fulfilled (chỉ cần mảng Dish)
-  void, // Kiểu đối số đầu vào (không có)
+  FetchDishesProps, // Kiểu đối số đầu vào (không có)
   { rejectValue: string }
->('dishes/fetchAllDishes', async (_, { rejectWithValue }) => {
+>('dishes/fetchAllDishes', async ({pageIndex = 0, pageSize = 10}, { rejectWithValue }) => {
   try {
     // Gọi API. Giả sử apiClient.get trả về { data: GetAllDishesResponse }
-    const response = await dishApi.getAllDish();
+    const response = await dishApi.getAllDish(pageIndex, pageSize);
     
     // **Sử dụng Kiểu GetAllDishesResponse để trích xuất mảng Dish**
     const data = response.data as GetAllDishesResponse; 
@@ -53,7 +53,7 @@ export const fetchDishById = createAsyncThunk<
   try {
     // Gọi API. Giả sử getDishById trả về trực tiếp đối tượng Dish
     const response = await dishApi.getDishById(id);
-    return response.data as Dish; 
+    return response.data.dish as Dish; 
   } catch (error) {
     return rejectWithValue(`Failed to fetch dish with ID: ${id}.`);
   }
@@ -96,7 +96,6 @@ export const dishesSlice = createSlice({
       })
       .addCase(fetchDishById.fulfilled, (state, action: PayloadAction<Dish>) => {
         state.loading = false;
-        // Cập nhật món ăn được chọn
         state.selectedDish = action.payload; 
       })
       .addCase(fetchDishById.rejected, (state, action) => {

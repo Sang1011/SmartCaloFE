@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSelector } from "react-redux";
@@ -45,7 +45,7 @@ export interface SurveyData {
   healthyHabits?: string[];
   planningFrequency?: string;
   willingness?: string;
-  activityLevel?: string;
+  activityLevel?: number;
   gender?: "male" | "female" | "other";
   age?: number;
   height?: number;
@@ -68,7 +68,7 @@ const isNextButtonDisabled = (stepIndex: number, data: SurveyData): boolean => {
     case 8:
       return !data.willingness?.trim();
     case 9:
-      return !data.activityLevel?.trim();
+      return !data.activityLevel;
     case 10:
       return !data.age || !data.gender?.trim();
     case 11:
@@ -79,18 +79,10 @@ const isNextButtonDisabled = (stepIndex: number, data: SurveyData): boolean => {
 };
 
 export default function SurveyScreen() {
-  const user = useSelector((state: RootState) => state.auth.user);
 
   const [currentStep, setCurrentStep] = useState(0);
   const [surveyData, setSurveyData] = useState<SurveyData>({}); 
   const totalSteps = SURVEY_SCREENS.length;
-
-  useEffect(() => {
-    if (user?.name) {
-      setSurveyData((prev) => ({ ...prev, name: user.name }));
-      setCurrentStep(1);
-    }
-  }, [user]);
 
   const isNextDisabled = isNextButtonDisabled(currentStep, surveyData);
 
@@ -109,6 +101,7 @@ export default function SurveyScreen() {
   };
 
   const handleFinish = () => {
+    
     navigateCustom("/tabs", { flagKey: HAS_DONE_SURVEY });
   };
 

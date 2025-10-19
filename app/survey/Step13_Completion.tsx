@@ -13,6 +13,7 @@ interface Props {
 
 export default function Step13_Completion({ surveyData }: Props) {
   const userName = surveyData.name || "bạn";
+  console.log("surveyData", surveyData);
 
   return (
     <View style={styles.container}>

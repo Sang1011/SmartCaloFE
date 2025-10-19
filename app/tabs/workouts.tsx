@@ -1,7 +1,12 @@
 import ExerciseCard from "@components/ui/excerciseCard";
 import color from "@constants/color";
-import { useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FONTS } from "@constants/fonts";
+import { fetchAllPrograms } from "@features/programs";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
+import { navigateCustom } from "@utils/navigation";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 
 type WorkoutDataType = {
   title: string;
@@ -10,30 +15,40 @@ type WorkoutDataType = {
   image: any;
 };
 
-// Khởi tạo dữ liệu
-const workoutDataList: WorkoutDataType[] = [
-  {
-    title: "XÂY DỰNG CƠ THỂ MẠNH MẼ & SĂN CHẮC",
-    info: "13 phút - 10 bài tập / 1 ngày",
-    totalProgress: 30,
-    image: require("../../assets/images/dumbbell.png"),
-  },
-  {
-    title: "XÂY DỰNG CƠ THỂ MẠNH MẼ & SĂN CHẮC",
-    info: "13 phút - 10 bài tập / 1 ngày",
-    totalProgress: 30,
-    image: require("../../assets/images/dumbbell.png"),
-  },
-  {
-    title: "XÂY DỰNG CƠ THỂ MẠNH MẼ & SĂN CHẮC",
-    info: "13 phút - 10 bài tập / 1 ngày",
-    totalProgress: 30,
-    image: require("../../assets/images/dumbbell.png"),
-  },
-];
 
 export default function Workout() {
-  const [workoutList, setWorkoutList] = useState<WorkoutDataType[]>(workoutDataList);
+  const [workoutList, setWorkoutList] = useState<WorkoutDataType[]>([]);
+  const dispatch = useAppDispatch();
+    
+    // Select the necessary state from the Redux store
+    const { 
+        allPrograms, 
+        loading, 
+        error 
+    } = useAppSelector((state:RootState) => state.program)
+
+    // Fetch the data when the component mounts
+    useEffect(() => {
+        // Dispatch the async thunk to fetch all programs
+        dispatch(fetchAllPrograms());
+    }, [dispatch]); // Dependency array to run once
+
+    // --- Render Logic ---
+
+    if (loading) {
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <Text
+              style={{
+                fontSize: 24,
+                fontFamily: FONTS.bold,
+                color: color.dark_green,
+              }}
+            >
+              LOADING...
+            </Text>
+            <ActivityIndicator size="large" color={color.dark_green} />
+          </View>;
+        }
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -44,12 +59,20 @@ export default function Workout() {
 
       {/* DANH SÁCH */}
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {workoutList.map((item, index) => (
+        {allPrograms.map((item) => (
           <ExerciseCard
-            key={index}
-            title={item.title}
-            totalProgress={item.totalProgress}
-            image={item.image}
+            key={item.id}
+            des={item.description}
+            title={item.name}
+            notHaveProgress={true}
+            image={item.imageUrl}
+            onPress={() => {
+              navigateCustom("/schedule", {
+                params: {
+                  programId: item.id
+                }
+              });
+            }}
           />
         ))}
       </ScrollView>

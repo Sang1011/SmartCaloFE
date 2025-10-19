@@ -1,7 +1,4 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { setCredentials } from "@features/auth";
-import { RootState } from "@redux";
-import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import React from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import { globalStyles } from "../../constants/fonts";
@@ -9,11 +6,14 @@ import { SurveyData } from "./index";
 
 const { width } = Dimensions.get("window");
 
+// Mapping song song giữa label hiển thị và value để lưu
 const ACTIVITY_LEVELS = [
-  "Ít vận động",
-  "Thỉnh thoảng",
-  "Thường xuyên",
-  "Rất năng động",
+  { label: "Ít vận động", value: 0 },
+  { label: "Thỉnh thoảng", value: 1 },
+  { label: "Thường xuyên", value: 2 },
+  { label: "Rất năng động", value: 3 },
+  // Có thể thêm nếu cần:
+  // { label: "Cực kỳ năng động", value: 4 },
 ];
 
 interface SingleSelectOptionProps {
@@ -47,18 +47,8 @@ export default function Step10_ActivityLevel({
   surveyData,
   updateSurveyData,
 }: Props) {
-  const user = useAppSelector((state: RootState) => state.auth.user);
-  const dispatch = useAppDispatch();
-  const handleSelect = (level: string) => {
-    updateSurveyData((prev) => ({ ...prev, activityLevel: level }));
-    if (user) {
-      dispatch(
-        setCredentials({
-          ...user,
-          activityLevel:level,
-        })
-      );
-    }
+  const handleSelect = (levelValue: number) => {
+    updateSurveyData((prev) => ({ ...prev, activityLevel: levelValue }));
   };
 
   return (
@@ -72,10 +62,10 @@ export default function Step10_ActivityLevel({
       <View style={styles.optionsList}>
         {ACTIVITY_LEVELS.map((item) => (
           <SingleSelectOption
-            key={item}
-            label={item}
-            isSelected={surveyData.activityLevel === item}
-            onPress={() => handleSelect(item)}
+            key={item.value}
+            label={item.label}
+            isSelected={surveyData.activityLevel === item.value}
+            onPress={() => handleSelect(item.value)}
           />
         ))}
       </View>

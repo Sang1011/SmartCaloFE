@@ -2,8 +2,12 @@ import ButtonGoBack from "@components/ui/buttonGoBack";
 import ExerciseCard from "@components/ui/excerciseCard";
 import ScheduleSlotItem from "@components/ui/ScheduleSlotItem";
 import color from "@constants/color";
+import { clearSelectedProgram, fetchProgramById } from "@features/programs";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
 import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -14,36 +18,44 @@ export default function ScheduleScreen() {
     exerciseCount: Math.floor(Math.random() * 5) + 5,
   }));
 
-  const params = useLocalSearchParams<{
-    title?: string;
-    day?: string;
-    info?: string;
-    progress?: string;
-    image?: string;
-  }>();
+  const { programId } = useLocalSearchParams();
 
-  const title = params.title ?? "Bài tập";
-  const day = params.day ?? "Ngày 1";
-  const info = params.info ?? "";
-  const image = params.image ?? "";
-  const progress = params.progress
-    ? JSON.parse(params.progress)
-    : { current: 0, total: 1 };
+  const { selectedProgram, loading } = useAppSelector(
+      (state: RootState) => state.program
+    );
+    const dispatch = useAppDispatch();
+    const [proramCheckId, setProramCheckId] = useState<string>("");
+  
+    // 🧭 Lấy ID từ params và fetch món ăn
+    useEffect(() => {
+      const extractedId = Array.isArray(programId) ? programId[0] : programId;
+      if (extractedId && typeof extractedId === "string") {
+        setProramCheckId(extractedId);
+        dispatch(fetchProgramById(extractedId));
+      }
+  
+      return () => {
+        dispatch(clearSelectedProgram());
+      };
+    }, [programId, dispatch]);
 
   return (
     <SafeAreaView edges={["top"]} style={styles.container}>
       <View style={styles.goback}>
         <ButtonGoBack bgColor={color.transparent} />
       </View>
-      <ExerciseCard
-        title={title}
-        progress={progress}
-        image={image ? image : require("../../assets/images/dumbbell.png")}
+      {selectedProgram && (
+        <ExerciseCard
+        title={selectedProgram.name}
+        // progress={selectedProgram?.}
+        image={selectedProgram.imageUrl}
         haveButton={false}
         width={"100%"}
         border={0}
         marginBottom={0}
       />
+      )}
+      
       <View style={styles.scheduleList}>
         <ScrollView style={styles.scheduleContent}>
           {fakeScheduleData.map((item, index) => (
@@ -51,11 +63,10 @@ export default function ScheduleScreen() {
               params: {
                 scheduleId: index,
                 day: item.day,
-                title: title
+                title: selectedProgram?.name
               }
             })} >
               <ScheduleSlotItem
-                key={index}
                 day={item.day}
                 isCompleted={item.isCompleted}
                 exerciseCount={item.exerciseCount}

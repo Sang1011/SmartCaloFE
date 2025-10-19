@@ -69,6 +69,21 @@ export default function ForgotPasswordScreen() {
     handleReset(); // gọi lại API quên mật khẩu
   };
 
+  if (isLoading) {
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text
+          style={{
+            fontSize: 24,
+            fontFamily: FONTS.bold,
+            color: color.dark_green,
+          }}
+        >
+          LOADING...
+        </Text>
+        <ActivityIndicator size="large" color={color.dark_green} />
+      </View>;
+    }
+
   return (
     <SafeAreaView style={styles.screen}>
       <Image
@@ -78,10 +93,6 @@ export default function ForgotPasswordScreen() {
       />
 
       <Text style={[styles.title, globalStyles.semiBold]}>Quên mật khẩu</Text>
-
-      {isLoading && (
-        <ActivityIndicator size="small" color={color.dark_green} style={{ marginTop: 8 }} />
-      )}
 
       {step === "email" && (
         <>
@@ -97,10 +108,9 @@ export default function ForgotPasswordScreen() {
               icon={<Fontisto name="email" size={12} color="black" />}
               onChangeText={setEmail}
               value={email}
-              editable={!isLoading}
             />
             <View style={styles.button}>
-              <SCButton title="Gửi mã xác nhận" onPress={handleReset} disabled={isLoading} />
+              <SCButton title="Gửi mã xác nhận" onPress={handleReset}/>
             </View>
           </View>
         </>
@@ -118,10 +128,9 @@ export default function ForgotPasswordScreen() {
             maxLength={6}
             value={otp}
             onChangeText={setOtp}
-            editable={!isLoading}
           />
           <View style={styles.button}>
-            <SCButton title="Xác nhận mã" onPress={handleVerifyOTP} disabled={isLoading} />
+            <SCButton title="Xác nhận mã" onPress={handleVerifyOTP}/>
           </View>
 
           {/* ⏱️ Hiển thị countdown hoặc nút gửi lại */}

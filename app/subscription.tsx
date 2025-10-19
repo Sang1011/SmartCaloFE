@@ -1,9 +1,13 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { Ionicons } from "@expo/vector-icons";
+import { fetchAllSubscriptions } from "@features/subscriptions";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,13 +16,41 @@ import {
 } from "react-native";
 
 export default function SubscriptionScreen() {
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("yearly");
+  const [selectedPlan, setSelectedPlan] = useState<"free" | "monthly" | "yearly">(
+    "free"
+  );
+  const dispatch = useAppDispatch();
+  const { subscriptionPlans, loading } = useAppSelector(
+    (state: RootState) => state.subscription
+  );
+
+  useEffect(() => {
+    dispatch(fetchAllSubscriptions());
+  }, [dispatch]);
+
+  // --- Loading state ---
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <Text style={[styles.loadingText, { fontFamily: FONTS.bold }]}>
+          LOADING...
+        </Text>
+        <ActivityIndicator size="large" color={color.dark_green} />
+      </View>
+    );
+  }
+
+
+  // --- Main content ---
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
       {/* Nút back */}
       <View style={styles.header}>
-        <Ionicons name="arrow-back" size={32} color={color.black} 
-        onPress={() => navigateCustom("/tabs/profile")}
+        <Ionicons
+          name="arrow-back"
+          size={32}
+          color={color.black}
+          onPress={() => navigateCustom("/tabs/profile")}
         />
       </View>
 
@@ -28,14 +60,14 @@ export default function SubscriptionScreen() {
           Chọn gói phù hợp với bạn!
         </Text>
         <Text style={[styles.subtitle, { fontFamily: FONTS.regular }]}>
-          So sánh tính năng giữa gói FREE và PRO
+          So sánh tính năng giữa gói FREE và PREMIMUM
         </Text>
       </View>
 
       {/* Bảng so sánh */}
       <View style={styles.tableContainer}>
         <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderText, { flex: 2 }]}> </Text>
+          <Text style={[styles.tableHeaderText, { flex: 2 }]} />
           <Text style={[styles.tableHeaderText, { flex: 1 }]}>FREE</Text>
           <View
             style={{
@@ -45,9 +77,7 @@ export default function SubscriptionScreen() {
               justifyContent: "center",
             }}
           >
-            <Text style={[styles.tableHeaderText, { marginRight: 4 }]}>
-              PRO
-            </Text>
+            <Text style={[styles.tableHeaderText, { marginRight: 4 }]}>PREMIMUM</Text>
             <Text style={styles.crown}>👑</Text>
           </View>
         </View>
@@ -67,10 +97,7 @@ export default function SubscriptionScreen() {
                 styles.cellText,
                 {
                   flex: 1,
-                  color:
-                    freeValue === "10 lần / 1 tháng"
-                      ? color.red_dark
-                      : color.black,
+                  color: freeValue === "10 lần / 1 tháng" ? color.red_dark : color.black,
                   textAlign: "center",
                 },
               ]}
@@ -86,42 +113,27 @@ export default function SubscriptionScreen() {
 
       {/* Gói chọn */}
       <View style={styles.planContainer}>
-        <TouchableOpacity
-          style={[
-            styles.planBox,
-            selectedPlan === "yearly" && styles.planSelected,
-          ]}
-          onPress={() => setSelectedPlan("yearly")}
-          activeOpacity={0.8}
-        >
-          <View
-            style={{ flexDirection: "row", justifyContent: "space-between" }}
+        {subscriptionPlans.map((plan) => (
+          <TouchableOpacity
+            key={plan.id}
+            style={[
+              styles.planBox,
+              selectedPlan === plan.planName.toLowerCase() && styles.planSelected,
+            ]}
+            onPress={() =>
+              setSelectedPlan(plan.planName.toLowerCase() as "monthly" | "yearly")
+            }
+            activeOpacity={0.8}
           >
             <Text style={[styles.planTitle, { fontFamily: FONTS.bold }]}>
-              12 THÁNG
+              {plan.planName.toUpperCase()}
             </Text>
-            <Text style={styles.discount}>Giảm giá gần 17%</Text>
-          </View>
-          <Text style={[styles.planPrice, { fontFamily: FONTS.medium }]}>
-            300.000 VND / 1 năm
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.planBox,
-            selectedPlan === "monthly" && styles.planSelected,
-          ]}
-          onPress={() => setSelectedPlan("monthly")}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.planTitle, { fontFamily: FONTS.bold }]}>
-            1 THÁNG
-          </Text>
-          <Text style={[styles.planPrice, { fontFamily: FONTS.medium }]}>
-            30.000 VND / 1 tháng
-          </Text>
-        </TouchableOpacity>
+            <Text style={[styles.planPrice, { fontFamily: FONTS.medium }]}>
+              {plan.price.toLocaleString()} VND /{" "}
+              {plan.durationInDays >= 365 ? "1 năm" : "1 tháng"}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {/* Nút nâng cấp */}
@@ -136,10 +148,23 @@ export default function SubscriptionScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: color.white,
     paddingHorizontal: 20,
     paddingTop: 60,
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: 24,
+    color: color.dark_green,
+    marginBottom: 12,
+  },
+  errorText: {
+    fontSize: 18,
+    color: "red",
   },
   header: {
     position: "absolute",
@@ -154,7 +179,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     color: color.dark_green,
-    fontFamily: FONTS.bold,
   },
   subtitle: {
     fontSize: 14,
@@ -214,14 +238,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: color.black,
     marginTop: 6,
-  },
-  discount: {
-    backgroundColor: "#E6F3DC",
-    color: color.dark_green,
-    fontSize: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
   },
   button: {
     backgroundColor: color.dark_green,

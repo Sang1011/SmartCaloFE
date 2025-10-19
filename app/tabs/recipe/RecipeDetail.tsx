@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   dayScroll: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 5,
     paddingHorizontal: 10,
     paddingVertical: 5,
     display: "flex",
