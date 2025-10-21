@@ -1,8 +1,8 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React, { useState } from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
-import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
+import { SurveyData } from "./index";
 
 const { width } = Dimensions.get("window");
 

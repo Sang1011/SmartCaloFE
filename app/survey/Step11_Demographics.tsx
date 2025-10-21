@@ -8,15 +8,15 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
+import { Gender } from "../../types/me";
+import { SurveyData } from "./index";
 
 const { width } = Dimensions.get("window");
 
 const GENDERS = [
-  { label: "Nam", value: "male" as const },
-  { label: "Nữ", value: "female" as const },
-  { label: "Khác", value: "other" as const },
+  { label: "Nam", value: Gender.Male },
+  { label: "Nữ", value: Gender.Female },
 ];
 
 type GenderValue = (typeof GENDERS)[number]["value"];
@@ -31,10 +31,17 @@ export default function Step11_Demographics({
   updateSurveyData,
 }: Props) {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const [ageInput, setAgeInput] = useState(
+    surveyData.age ? surveyData.age.toString() : ""
+  );
 
   const handleUpdateAge = (age: string) => {
     if (/^\d*$/.test(age)) {
-      updateSurveyData((prev) => ({ ...prev, age }));
+      setAgeInput(age);
+      updateSurveyData((prev) => ({
+        ...prev,
+        age: age === "" ? 0 : parseInt(age, 10),
+      }));      
     }
   };
 
@@ -46,7 +53,7 @@ export default function Step11_Demographics({
   const selectedGenderLabel =
     GENDERS.find((g) => g.value === surveyData.gender)?.label || "Giới tính";
 
-  const showAgeError = surveyData.age !== undefined && !surveyData.age.trim();
+  const showAgeError = !surveyData.age || surveyData.age <= 0;
 
   return (
     <View style={styles.container}>
@@ -57,11 +64,11 @@ export default function Step11_Demographics({
       <View style={styles.formContainer}>
         <View style={styles.inputGroup}>
           <Text style={[styles.label, globalStyles.regular]}>
-            Bạn bao nhiêu tuổi ?
+            Bạn bao nhiêu tuổi?
           </Text>
           <TextInput
             style={[styles.input, globalStyles.semiBold]}
-            value={surveyData.age}
+            value={ageInput}
             onChangeText={handleUpdateAge}
             keyboardType="numeric"
             placeholder="Nhập tuổi của bạn"
@@ -72,12 +79,10 @@ export default function Step11_Demographics({
           )}
         </View>
 
-        {/* Gender Dropdown */}
         <View style={styles.inputGroup}>
           <Text style={[styles.label, globalStyles.regular]}>
             Giới tính của bạn là gì
           </Text>
-          {/* Dropdown component... */}
           <View style={styles.dropdownContainer}>
             <Pressable
               style={[
@@ -123,24 +128,15 @@ export default function Step11_Demographics({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   title: {
     fontSize: width * 0.07,
     color: "#000000",
     marginBottom: 32,
   },
-  formContainer: {
-    gap: 24,
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    fontSize: width * 0.04,
-    color: "#4F4F4F",
-  },
+  formContainer: { gap: 24 },
+  inputGroup: { gap: 8 },
+  label: { fontSize: width * 0.04, color: "#4F4F4F" },
   input: {
     backgroundColor: "#F2F2F2",
     borderWidth: 1,
@@ -150,15 +146,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: width * 0.04,
   },
-  errorText: {
-    color: "red",
-    fontSize: 14,
-    paddingLeft: 4,
-  },
-  // Dropdown styles
-  dropdownContainer: {
-    position: "relative",
-  },
+  errorText: { color: "red", fontSize: 14, paddingLeft: 4 },
+  dropdownContainer: { position: "relative" },
   dropdownSelector: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -187,10 +176,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E0E0E0",
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,

@@ -77,9 +77,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  header: {},
+  header: {
+  },
   content: {
     flex: 1,
+    marginTop: 10
   },
   contentContainer: {
     flexGrow: 1,

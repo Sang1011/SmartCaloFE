@@ -1,29 +1,31 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
-import React, { useState } from "react";
+import React from "react";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
-import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
+import { HealthGoal } from "../../types/me"; // enum bạn đã có
+import { SurveyData } from "./index";
 
 const { width } = Dimensions.get("window");
 
-const GOALS = [
-  "Giảm cân nặng",
-  "Duy trì cân nặng",
-  "Tăng cân nặng",
-  "Tăng cơ bắp",
-  "Sửa đổi chế độ ăn uống",
-  "Lập kế hoạch ăn uống",
-  "Quản lý căng thẳng",
-  "Duy trì hoạt động",
+// ⚙️ Mapping giữa label hiển thị và enum value thực tế
+const GOAL_OPTIONS = [
+  { label: "Giảm cân nặng", value: HealthGoal.LoseWeight },
+  { label: "Duy trì cân nặng", value: HealthGoal.MaintainWeight },
+  { label: "Tăng cân nặng", value: HealthGoal.GainWeight },
+  { label: "Tăng cơ bắp", value: HealthGoal.GainMuscle },
 ];
 
-interface OptionProps {
+interface SingleSelectOptionProps {
   label: string;
   isSelected: boolean;
   onPress: () => void;
 }
 
-const SurveyOption = ({ label, isSelected, onPress }: OptionProps) => (
+const SingleSelectOption = ({
+  label,
+  isSelected,
+  onPress,
+}: SingleSelectOptionProps) => (
   <Pressable
     onPress={onPress}
     style={[styles.optionContainer, isSelected && styles.optionSelected]}
@@ -41,24 +43,11 @@ interface Props {
 }
 
 export default function Step2_Goals({ surveyData, updateSurveyData }: Props) {
-  const [selectedGoals, setSelectedGoals] = useState<string[]>(
-    surveyData.goals || []
-  );
-
-  const handleSelectGoal = (goal: string) => {
-    const isCurrentlySelected = selectedGoals.includes(goal);
-
-    let newSelection;
-    if (isCurrentlySelected) {
-      newSelection = selectedGoals.filter((item) => item !== goal);
-    } else {
-      // Chỉ cho phép chọn tối đa 3
-      if (selectedGoals.length >= 3) return;
-      newSelection = [...selectedGoals, goal];
-    }
-
-    setSelectedGoals(newSelection);
-    updateSurveyData((prev) => ({ ...prev, goals: newSelection }));
+  const handleSelectGoal = (goalValue: HealthGoal) => {
+    updateSurveyData((prev) => ({
+      ...prev,
+      goal: goalValue, // 👈 ghi thẳng enum value vào SurveyData.goal
+    }));
   };
 
   return (
@@ -67,15 +56,15 @@ export default function Step2_Goals({ surveyData, updateSurveyData }: Props) {
         Chào {surveyData.name || "bạn"}, hãy bắt đầu với mục tiêu của bạn
       </Text>
       <Text style={[styles.subtitle, globalStyles.semiBold]}>
-        Hãy chọn ra 3 mục tiêu quan trọng với bạn
+        Hãy chọn mục tiêu chính của bạn
       </Text>
       <View style={styles.optionsList}>
-        {GOALS.map((goal) => (
-          <SurveyOption
-            key={goal}
-            label={goal}
-            isSelected={selectedGoals.includes(goal)}
-            onPress={() => handleSelectGoal(goal)}
+        {GOAL_OPTIONS.map(({ label, value }) => (
+          <SingleSelectOption
+            key={value}
+            label={label}
+            isSelected={surveyData.goal === value}
+            onPress={() => handleSelectGoal(value)}
           />
         ))}
       </View>
@@ -95,7 +84,8 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: width * 0.04,
     color: "#656565",
-    marginBottom: 20,
+    textAlign: "left",
+    marginBottom: 24,
   },
   optionsList: {
     gap: 12,
@@ -110,7 +100,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "transparent",
   },
-
   optionSelected: {
     borderColor: "transparent",
     backgroundColor: "#EEEEEE",

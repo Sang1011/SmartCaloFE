@@ -1,20 +1,129 @@
+import GenderPicker from "@components/ui/genderPicker";
 import SCButton from "@components/ui/SCButton";
 import color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
 import { useAuth } from "@contexts/AuthContext";
+import { fetchCurrentUserThunk, updateProfileThunk } from "@features/users";
 import { RootState } from "@redux";
+import { useAppDispatch } from "@redux/hooks";
+import { navigateCustom } from "@utils/navigation";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
+  LayoutAnimation,
   ScrollView,
   StyleSheet,
   Text,
-  View
+  TextInput,
+  View,
 } from "react-native";
-import { useSelector } from 'react-redux';
+import { useSelector } from "react-redux";
+import {
+  ActivityLevel,
+  activityLevelMap,
+  Gender,
+  HealthGoal,
+  healthGoalMap,
+  UpdateProfileDto,
+  UserDTO,
+} from "../../../types/me";
 
 export default function ProfileDetailsScreen() {
-  const { user } = useSelector(
-    (state: RootState) => state.auth
-  );
+  const { logout } = useAuth();
+  const { user } = useSelector((state: RootState) => state.user);
+  const dispatch = useAppDispatch();
+
+  const [editableData, setEditableData] = useState({
+    name: "",
+    gender: 0,
+    height: "",
+    weight: "",
+    age: "",
+  });
+
+  const [isChanged, setIsChanged] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleLoadUser = async () => {
+    const result = await dispatch(fetchCurrentUserThunk());
+    if (fetchCurrentUserThunk.rejected.match(result)) {
+      await logout();
+      navigateCustom("/login");
+    }
+  };
+
+  useEffect(() => {
+    handleLoadUser();
+  }, [!user]);
+
+  useEffect(() => {
+    if (user) {
+      setEditableData({
+        name: user.name || "",
+        gender: user.gender === "Female" ? Gender.Female : Gender.Male,
+        height: user.userStats?.height?.toString() || "",
+        weight: user.userStats?.weight?.toString() || "",
+        age: user.age?.toString() || "",
+      });
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const changed =
+      editableData.name !== (user.name || "") ||
+      editableData.gender !==
+        (user.gender === "Female" ? Gender.Female : Gender.Male) ||
+      editableData.height !== (user.userStats?.height?.toString() || "") ||
+      editableData.weight !== (user.userStats?.weight?.toString() || "") ||
+      editableData.age !== (user.age?.toString() || "");
+
+    setIsChanged(changed);
+  }, [editableData, user]);
+
+  const handleChange = (field: string, value: any) => {
+    setEditableData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const toggleEdit = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsEditing((prev) => !prev);
+  };
+
+  const handleUpdateProfile = async () => {
+    if (user) {
+      const objectSend: UpdateProfileDto = {
+        name: editableData.name,
+        age: Number(editableData.age),
+        height: Number(editableData.height),
+        weight: Number(editableData.weight),
+        targetWeight: user.targetWeight,
+        goal:
+          healthGoalMap[user.userStats.healthGoal] ?? HealthGoal.MaintainWeight,
+        gender: editableData.gender,
+        activityLevel:
+          activityLevelMap[user.activityLevel] ?? ActivityLevel.Sedentary,
+      };
+      console.log("objectSend", objectSend);
+      const result = await dispatch(updateProfileThunk(objectSend));
+      if (updateProfileThunk.fulfilled.match(result)) {
+        const data = result.payload.userDto as UserDTO;
+        setEditableData({
+          name: data.name,
+          age: data.age.toString(),
+          gender: Number(data.gender) || Gender.Male,
+          height: data.userStats.height.toString(),
+          weight: data.userStats.weight.toString(),
+        });
+        Alert.alert("Cập nhật thông tin cá nhân thành công!");
+      } else {
+        Alert.alert("Lỗi khi cập nhật thông tin cá nhân");
+      }
+    }
+    setIsChanged(false);
+    setIsEditing(false);
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -25,39 +134,143 @@ export default function ProfileDetailsScreen() {
             <Text style={[styles.label, globalStyles.regular]}>
               Tên của bạn
             </Text>
-            <Text style={[styles.value, globalStyles.medium]}>
-              {user?.name || "Chưa có thông tin"}
-            </Text>
+            <TextInput
+              editable={isEditing}
+              style={[
+                styles.valueInput,
+                globalStyles.medium,
+                isEditing && {
+                  borderColor: color.dark_green,
+                  backgroundColor: "#F4F9FF",
+                },
+                !isEditing && { color: color.grey, borderBottomWidth: 0 },
+              ]}
+              value={editableData.name}
+              onChangeText={(text) => handleChange("name", text)}
+              placeholder="Chưa có thông tin"
+              placeholderTextColor={color.grey}
+            />
           </View>
+
           <View style={styles.row}>
             <Text style={[styles.label, globalStyles.regular]}>Email</Text>
             <Text style={[styles.value, globalStyles.medium]}>
               {user?.email || "Chưa có thông tin"}
             </Text>
           </View>
+
+          {/* 🔹 Giới tính */}
           <View style={styles.row}>
             <Text style={[styles.label, globalStyles.regular]}>Giới tính</Text>
-            <Text style={[styles.value, globalStyles.medium]}>
-              {user?.gender || "Chưa có thông tin"}
-            </Text>
+            <View style={{ flex: 1, alignItems: "flex-end" }}>
+              <GenderPicker
+                value={editableData.gender}
+                onSelect={(gender) => handleChange("gender", gender)}
+                disabled={!isEditing}
+                isEditing={isEditing}
+              />
+            </View>
           </View>
+
           <View style={styles.row}>
             <Text style={[styles.label, globalStyles.regular]}>Chiều cao</Text>
-            <Text style={[styles.value, globalStyles.medium]}>
-              {user?.height || "Chưa có thông tin"}
-            </Text>
+            <TextInput
+              editable={isEditing}
+              style={[
+                styles.valueInput,
+                globalStyles.medium,
+                isEditing && {
+                  borderColor: color.dark_green,
+                  backgroundColor: "#F4F9FF",
+                },
+                !isEditing && { color: color.grey, borderBottomWidth: 0 },
+              ]}
+              value={editableData.height}
+              onChangeText={(text) => handleChange("height", text)}
+              keyboardType="numeric"
+              placeholder="Chưa có thông tin"
+              placeholderTextColor={color.grey}
+            />
           </View>
+
           <View style={styles.row}>
-            <Text style={[styles.label, globalStyles.regular]}>Ngày sinh</Text>
-            <Text style={[styles.value, globalStyles.medium]}>
-              {user?.birthdate || "Chưa có thông tin"}
-            </Text>
+            <Text style={[styles.label, globalStyles.regular]}>Cân nặng</Text>
+            <TextInput
+              editable={isEditing}
+              style={[
+                styles.valueInput,
+                globalStyles.medium,
+                isEditing && {
+                  borderColor: color.dark_green,
+                  backgroundColor: "#F4F9FF",
+                },
+                !isEditing && { color: color.grey, borderBottomWidth: 0 },
+              ]}
+              value={editableData.weight}
+              onChangeText={(text) => handleChange("weight", text)}
+              keyboardType="numeric"
+              placeholder="Chưa có thông tin"
+              placeholderTextColor={color.grey}
+            />
+          </View>
+
+          <View style={styles.row}>
+            <Text style={[styles.label, globalStyles.regular]}>Tuổi</Text>
+            <TextInput
+              editable={isEditing}
+              style={[
+                styles.valueInput,
+                globalStyles.medium,
+                isEditing && {
+                  borderColor: color.dark_green,
+                  backgroundColor: "#F4F9FF",
+                },
+                !isEditing && { color: color.grey, borderBottomWidth: 0 },
+              ]}
+              value={editableData.age}
+              onChangeText={(text) => handleChange("age", text)}
+              keyboardType="numeric"
+              placeholder="Chưa có thông tin"
+              placeholderTextColor={color.grey}
+            />
           </View>
         </View>
 
+        {isEditing && isChanged && (
+          <SCButton
+            title="Hủy thay đổi"
+            variant="outline"
+            bgColor={color.white}
+            onPress={() => {
+              // Reset editableData về dữ liệu user hiện tại
+              if (user) {
+                setEditableData({
+                  name: user.name || "",
+                  gender:
+                    user.gender === "Female" ? Gender.Female : Gender.Male,
+                  height: user.userStats?.height?.toString() || "",
+                  weight: user.userStats?.weight?.toString() || "",
+                  age: user.age?.toString() || "",
+                });
+              }
+              setIsChanged(false);
+              setIsEditing(false);
+            }}
+            fontFamily={FONTS.semiBold}
+            style={{ marginBottom: 8 }}
+          />
+        )}
+
         <SCButton
-          title="Lưu thay đổi"
-          onPress={() => {}}
+          title={isEditing ? "Lưu thay đổi" : "Chỉnh sửa"}
+          onPress={() => {
+            if (isEditing) {
+              if (isChanged) handleUpdateProfile();
+              else setIsEditing(false);
+            } else {
+              toggleEdit();
+            }
+          }}
           fontFamily={FONTS.semiBold}
         />
 
@@ -70,18 +283,27 @@ export default function ProfileDetailsScreen() {
             <Text style={[styles.targetLabel, globalStyles.regular]}>
               Mục tiêu
             </Text>
-            <Text style={[styles.targetValue, globalStyles.bold]}>2,321</Text>
+            <Text style={[styles.targetValue, globalStyles.bold]}>
+              {user?.dailyCaloGoal !== undefined
+                ? Math.ceil(user.dailyCaloGoal).toLocaleString()
+                : "—"}
+            </Text>
             <Text style={[styles.unit, globalStyles.light]}>calo / ngày</Text>
           </View>
           <View style={styles.targetItem}>
             <Text style={[styles.targetLabel, globalStyles.regular]}>
               Mục tiêu tuần này
             </Text>
-            <Text style={[styles.targetValue, globalStyles.bold]}>16,247</Text>
+            <Text style={[styles.targetValue, globalStyles.bold]}>
+              {user?.dailyCaloGoal !== undefined
+                ? Math.ceil(user.dailyCaloGoal * 7).toLocaleString()
+                : "—"}
+            </Text>
             <Text style={[styles.unit, globalStyles.light]}>calo / tuần</Text>
           </View>
         </View>
       </View>
+
       {/* Chi tiết tính toán */}
       <View style={styles.calcContainer}>
         <Text style={[styles.sectionTitleCal, globalStyles.semiBold]}>
@@ -93,7 +315,7 @@ export default function ProfileDetailsScreen() {
               Tỉ lệ chuyển hóa cơ bản (BMR)
             </Text>
             <Text style={[styles.calcValue, globalStyles.bold]}>
-              2,088 calo / ngày
+              {user?.userStats.bmr.toLocaleString()} / ngày
             </Text>
             <Text style={[styles.calcDesc, globalStyles.light]}>
               Năng lượng cần thiết
@@ -104,26 +326,12 @@ export default function ProfileDetailsScreen() {
               Tổng năng lượng tiêu hao (TDEE)
             </Text>
             <Text style={[styles.calcValue, globalStyles.bold]}>
-              2,871 calo / ngày
+              {user?.userStats.tdee.toLocaleString()} calo / ngày
             </Text>
             <Text style={[styles.calcDesc, globalStyles.light]}>
               Bao gồm hoạt động hằng ngày
             </Text>
           </View>
-        </View>
-
-        <View style={styles.groupButton}>
-          <SCButton
-            variant="outline"
-            title="Điều chỉnh mục tiêu"
-            onPress={() => {}}
-            fontFamily={FONTS.semiBold}
-          />
-          <SCButton
-            title="Xem lịch sử"
-            onPress={() => {}}
-            fontFamily={FONTS.semiBold}
-          />
         </View>
       </View>
     </ScrollView>
@@ -149,44 +357,37 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
-  calcContainer: {
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    backgroundColor: color.white,
-    padding: 16,
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 6,
   },
-  sectionTitleCal: {
-    marginVertical: 8,
-    fontSize: 16,
+  label: {
+    fontSize: 14,
+    color: color.grey,
+    flex: 1,
+  },
+  value: {
+    fontSize: 14,
+    color: color.black,
+    flex: 1,
+    textAlign: "right",
+  },
+  valueInput: {
+    fontSize: 14,
+    color: color.black,
+    textAlign: "right",
+    flex: 1,
+    borderBottomWidth: 0.5,
+    borderColor: "#ddd",
+    paddingVertical: 2,
   },
   sectionTitle: {
     marginTop: 20,
     fontSize: 16,
     marginBottom: 8,
     color: color.black,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 6,
-  },
-  label: {
-    fontSize: 14,
-    color: color.grey,
-  },
-  value: {
-    fontSize: 14,
-    color: color.black,
-  },
-  saveBtn: {
-    backgroundColor: color.dark_green,
-    padding: 14,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  saveBtnText: {
-    color: color.white,
-    fontSize: 15,
   },
   targetBox: {
     flexDirection: "row",
@@ -213,6 +414,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: color.grey,
   },
+  calcContainer: {
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    backgroundColor: color.white,
+    padding: 16,
+  },
+  sectionTitleCal: {
+    marginVertical: 8,
+    fontSize: 16,
+  },
   calcBox: {
     marginVertical: 8,
   },
@@ -234,8 +445,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: color.grey,
   },
-  groupButton: {
-    display: "flex",
-    gap: 6
-  }
 });

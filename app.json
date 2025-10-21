@@ -8,16 +8,19 @@
     "scheme": "smartcalomanaged",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    
-    // THÊM DEVELOPMENT CONFIG
     "developmentClient": {
       "silentLaunch": false
     },
     "packagerOpts": {
       "config": "metro.config.js",
-      "sourceExts": ["js", "jsx", "ts", "tsx", "json"]
+      "sourceExts": [
+        "js",
+        "jsx",
+        "ts",
+        "tsx",
+        "json"
+      ]
     },
-
     "android": {
       "enableHermes": true,
       "jsEngine": "hermes",
@@ -48,26 +51,9 @@
           }
         }
       ],
-      "expo-secure-store",
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.723818287625-s3l202uu5n18vuc821it5i9ep09jrud0"
-        }
-      ],
-      [
-        "react-native-fbsdk-next",
-        {
-          "appID": "1756016208411923",
-          "clientToken": "25439e137ef72f99f08238acd8c3a34e",
-          "displayName": "smart calo", 
-          "scheme": "fb1756016208411923",
-          "isAutoInitEnabled": true
-        }
-      ]
+      "expo-secure-store"
     ],
     "extra": {
-      "API_URL": "http://10.0.2.2:5013/",
       "GOOGLE_ANDROID_CLIENT_ID": "723818287625-eci24g8031so2phimko68826dofkhhsd.apps.googleusercontent.com",
       "GOOGLE_WEB_CLIENT_ID": "723818287625-s3l202uu5n18vuc821it5i9ep09jrud0.apps.googleusercontent.com",
       "FACEBOOK_APP_ID": "1756016208411923",
@@ -81,6 +67,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "ios": {
+      "bundleIdentifier": "com.penta.smartcalo",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     }
   }
 }

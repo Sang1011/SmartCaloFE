@@ -1,124 +1,603 @@
 import ButtonGoBack from "@components/ui/buttonGoBack";
-import SCDonutChart from "@components/ui/SCDonutChart";
-import SCShadowCard from "@components/ui/SCShadowCard";
 import color from "@constants/color";
-import { Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { FONTS } from "@constants/fonts";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { clearSelectedDish, fetchDishById } from "@features/dishes";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
+import { calculateNutritionPercentages } from "@utils/calculateNutrionPercentages";
+import { navigateCustom } from "@utils/navigation";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { PieChart } from "react-native-gifted-charts/dist";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+// const methods = rawMethods
+//   .replace(/[,]+/g, "") // xoá hết dấu phẩy thừa
+//   .split(".") // tách theo dấu chấm
+//   .map((item) => item.trim())
+//   .filter((item) => item.length > 0);
 
 export default function Dishes() {
+  const [tab, setTab] = useState<"ingre" | "method">("ingre");
+  const { id, menuId, predict } = useLocalSearchParams<{
+    id : string
+    menuId: string
+    predict: string
+  }>();
+  const dispatch = useAppDispatch();
+  const { selectedDish, loading } = useAppSelector(
+    (state: RootState) => state.dish
+  );
+  const [dishId, setDishId] = useState<string | null>(null);
+  const [isPredict, setIsPredict] = useState<boolean>(false);
+
+  useEffect(() => {
+
+    if (id) {
+      setDishId(id);
+      dispatch(fetchDishById(id));
+    } else {
+      console.warn("⚠️ Không tìm thấy dishId hợp lệ:", id);
+    }
+
+    if(predict){
+      setIsPredict(true);
+    }
+
+
+    return () => {
+      dispatch(clearSelectedDish());
+    };
+  }, [id, menuId, dispatch]);
+
+  const handleAddPress = () => {
+    navigateCustom("/addMealEntry");
+  };
+
+  // Nếu dữ liệu đang tải hoặc chưa có, bạn có thể hiển thị loading/placeholder
+  if (loading && !selectedDish) {
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <View style={styles.gobackButton}>
-                    <ButtonGoBack />
-                </View>
-                <View style={styles.imageContainer}>
-                <Image source={require("@assets/images/com-tam.png")} style={styles.image} />
-                </View>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text
+          style={{
+            fontSize: 24,
+            fontFamily: FONTS.bold,
+            color: color.dark_green,
+          }}
+        >
+          LOADING...
+        </Text>
+        <ActivityIndicator size="large" color={color.dark_green} />
+      </View>
+    );
+  }
+
+  // Nếu không có món ăn nào được chọn
+  if (!selectedDish) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={{ textAlign: "center", marginTop: 50 }}>
+          Không tìm thấy món ăn.
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  const dishName = selectedDish.name;
+  const dishTime = `${selectedDish.cookingTime} phút`;
+  const dishCalories = `${selectedDish.calories} Kcal`;
+  const dishCategory = selectedDish.category;
+  const dishServings = `${selectedDish.servings} suất ăn`;
+  const dishDescription = selectedDish.description;
+  const dishImageUrl = selectedDish.imageUrl;
+  const calculateNutrion = calculateNutritionPercentages(selectedDish);
+
+  const dishIngredients = selectedDish.ingredients
+    ? selectedDish.ingredients
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0)
+    : [];
+
+  const dishMethods = selectedDish.instructions
+    ? selectedDish.instructions
+        .replace(/[,]+/g, "")
+        .split(".")
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0)
+    : [];
+  return (
+    <SafeAreaView edges={["top"]} style={styles.container}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        {/* Header - ảnh và nút quay lại (Giữ nguyên) */}
+        <View style={styles.header}>
+          <View style={styles.gobackButton}>
+            <ButtonGoBack
+              handleLogic={() => {
+                if(isPredict){
+                  navigateCustom("/tabs")
+                }
+                else{
+                  navigateCustom("/library");
+                }
+              }}
+            />
+          </View>
+          <View style={styles.imageContainer}>
+            {dishImageUrl ? (
+              <Image src={dishImageUrl} style={styles.image} />
+            ) : (
+              <Image
+                source={require("@assets/images/com-tam.png")}
+                style={styles.image}
+              />
+            )}
+          </View>
+        </View>
+
+        {/* Phần thân bo tròn nổi lên */}
+        <View style={styles.bodyContainer}>
+          <View style={styles.flyContainer}>
+            <Text style={styles.titleText}>{dishName}</Text>
+
+            {/* START: PHẦN THÔNG TIN ĐÃ SỬA ĐỔI */}
+
+            {/* ⭐️ Hàng 1: Calories (Làm nổi bật) */}
+            <View style={styles.caloriesContainer}>
+              <AntDesign name="fire" size={30} color={color.red_dark} />
+              <Text style={styles.calorieText}>{dishCalories}</Text>
             </View>
-            <SCShadowCard>
-                <Text>Com suon bi cha</Text>
-                <View style={styles.iconContainer}>
-                    <View style={styles.icon}>
-                        {/* icon */}
-                        <Text></Text>
-                    </View>
-                    <View style={styles.divider}/>
-                    <View style={styles.icon}>
-                        {/* icon */}
-                        <Text></Text>
-                    </View>
-                </View>
-                <View>
-                    <Text>Gioi thieu</Text>
-                    <Text>Com suon bi cha la mot mon an truyen thong cua nguoi Viet....</Text>
-                </View>
-            </SCShadowCard>
-            <View style={styles.nutrions}>
-                <View style={styles.headerNutrions}>
-                    <Text>Giá trị dinh dưỡng</Text>
-                    <Text>Xem tất cả</Text>
-                </View>
-                <Text>Theo % giá trị khuyến nghị DV – Daily Value, khuyến nghị hàng ngày</Text>
-                <View style={styles.chartContainer}>
-                    <SCDonutChart
-                        maxValue={100}
-                        segments={[25,35,40]}
-                    />
-                    <View style={styles.nutrientContainer}>
-                        <View style={styles.nutrient}>
-                            <View style={styles.colorRectangle}></View>
-                            <Text>Protein</Text>
-                        </View>
-                        <View style={styles.nutrient}>
-                            <View style={styles.colorRectangle}></View>
-                            <Text>Protein</Text>
-                        </View>
-                        <View style={styles.nutrient}>
-                            <View style={styles.colorRectangle}></View>
-                            <Text>Protein</Text>
-                        </View>
-                    </View>
-                </View>
-                <View style={styles.buttonContainer}>
-                    {/* button doi */}
-                </View>
+
+            {/* ⭐️ Hàng 2: Thời gian, Khẩu phần, Loại món ăn */}
+            <View style={styles.infoRowContainer}>
+              {/* Thời gian */}
+              <View style={styles.infoItem}>
+                <Ionicons
+                  name="time-outline"
+                  size={20}
+                  color={color.dark_green}
+                />
+                <Text style={styles.infoText}>{dishTime}</Text>
+              </View>
+              <View style={styles.infoDivider} />
+
+              {/* Khẩu phần (Servings) */}
+              <View style={styles.infoItem}>
+                <Ionicons
+                  name="people-outline"
+                  size={20}
+                  color={color.dark_green}
+                />
+                <Text style={styles.infoText}>{dishServings}</Text>
+              </View>
+              <View style={styles.infoDivider} />
+
+              {/* Loại món ăn */}
+              <View style={styles.infoItem}>
+                <Ionicons
+                  name="fast-food-outline"
+                  size={20}
+                  color={color.dark_green}
+                />
+                <Text style={styles.infoText}>{dishCategory}</Text>
+              </View>
             </View>
-        </SafeAreaView>
-    )
+
+            {/* END: PHẦN THÔNG TIN ĐÃ SỬA ĐỔI */}
+
+            <View style={styles.desContainer}>
+              <Text style={{ fontFamily: FONTS.semiBold, fontSize: 17 }}>
+                Giới thiệu
+              </Text>
+              <Text
+                style={{
+                  fontFamily: FONTS.regular,
+                  fontSize: 14,
+                  paddingHorizontal: 10,
+                }}
+              >
+                {dishDescription}
+              </Text>
+            </View>
+          </View>
+
+          {/* Dinh dưỡng (Giữ nguyên) */}
+          <View style={styles.nutrions}>
+            <View style={styles.headerNutrions}>
+              <Text style={{ fontFamily: FONTS.semiBold, fontSize: 15 }}>
+                Giá trị dinh dưỡng
+              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text
+                  style={{ fontFamily: FONTS.semiBold, fontSize: 12 }}
+                  onPress={() =>
+                    navigateCustom("/nutrions", { params: { id: dishId } })
+                  }
+                >
+                  Xem tất cả
+                </Text>
+                <MaterialIcons name="navigate-next" size={16} color="black" />
+              </View>
+            </View>
+
+            <View style={styles.chartContainer}>
+              <PieChart
+                donut
+                radius={60}
+                innerRadius={40}
+                data={[
+                  { value: calculateNutrion.protein || 25, color: "#60A5FA" },
+                  { value: calculateNutrion.fat || 35, color: "#FCA5A5" },
+                  { value: calculateNutrion.carbs || 40, color: "#C4B5FD" },
+                ]}
+              />
+              <View style={styles.legendContainer}>
+                <View style={styles.legendItem}>
+                  <View
+                    style={[styles.colorBox, { backgroundColor: "#60A5FA" }]}
+                  />
+                  <Text style={styles.legendText}>
+                    {calculateNutrion.protein}% Protein
+                  </Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View
+                    style={[styles.colorBox, { backgroundColor: "#FCA5A5" }]}
+                  />
+                  <Text style={styles.legendText}>
+                    {calculateNutrion.fat}% Chất béo
+                  </Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View
+                    style={[styles.colorBox, { backgroundColor: "#C4B5FD" }]}
+                  />
+                  <Text style={styles.legendText}>
+                    {calculateNutrion.carbs}% Chất đường bột
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <Text
+              style={{
+                fontFamily: FONTS.semiBold,
+                fontSize: 12,
+                textAlign: "center",
+              }}
+            >
+              Theo % giá trị khuyến nghị DV – Daily Value, khuyến nghị hàng ngày
+            </Text>
+
+            {/* Tabs (Giữ nguyên) */}
+            <View style={styles.buttonContainer}>
+              <Pressable
+                style={[tab === "ingre" ? styles.buttonActive : styles.button]}
+                onPress={() => setTab("ingre")}
+              >
+                <Text
+                  style={[
+                    tab === "ingre"
+                      ? styles.buttonTextActive
+                      : styles.buttonText,
+                  ]}
+                >
+                  Thành phần
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[tab === "method" ? styles.buttonActive : styles.button]}
+                onPress={() => setTab("method")}
+              >
+                <Text
+                  style={[
+                    tab === "method"
+                      ? styles.buttonTextActive
+                      : styles.buttonText,
+                  ]}
+                >
+                  Cách làm
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Nội dung tab (Giữ nguyên) */}
+            <View style={styles.contentContainer}>
+              {tab === "ingre" ? (
+                <View style={styles.ingreContainer}>
+                  {dishIngredients.map((item, index) => (
+                    <View key={index} style={styles.ingreRow}>
+                      <Text style={styles.bulletPoint}>•</Text>
+                      <Text style={styles.ingreText}>{item}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.methodContainer}>
+                  {dishMethods.map((stepContent, index) => (
+                    <View key={index} style={styles.methodRow}>
+                      <View style={styles.numberDots}>
+                        <Text
+                          style={{
+                            color: color.white,
+                            fontFamily: FONTS.semiBold,
+                            fontSize: 14,
+                          }}
+                        >
+                          {index + 1}
+                        </Text>
+                      </View>
+                      <View style={styles.methodSteps}>
+                        <Text style={styles.step}>Bước {index + 1}</Text>
+                        <Text style={styles.stepContent}>{stepContent}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+      <Pressable style={styles.addButton} onPress={handleAddPress}>
+        <AntDesign name="plus" size={20} color={color.white} />
+        <Text style={styles.addButtonText}>Thêm vào lịch sử</Text>
+      </Pressable>
+    </SafeAreaView>
+  );
 }
 
+// --- Cập nhật Styles ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: color.white,
   },
   header: {
     backgroundColor: color.background_dish,
-    height: 230,
-    display: "flex",
+    height: 270,
     justifyContent: "center",
     alignItems: "center",
   },
   gobackButton: {
     position: "absolute",
-    top: 12,
-    left: 15
+    top: 30,
+    left: 15,
   },
   imageContainer: {
-    display: "flex",
+    marginTop: 15,
     justifyContent: "center",
     alignItems: "center",
   },
   image: {
-    marginHorizontal: "auto"
+    marginHorizontal: "auto",
   },
-  iconContainer: {
+  bodyContainer: {
+    backgroundColor: color.white,
+    borderRadius: 25,
+    marginTop: -40, // bo góc chồng lên ảnh
+    paddingBottom: 20,
+  },
+  flyContainer: {
+    padding: 16,
+    borderRadius: 25,
+    backgroundColor: color.white,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    marginBottom: 10, // Giảm khoảng cách giữa flyContainer và Nutrions
+  },
+  titleText: {
+    marginTop: 10,
+    fontFamily: FONTS.bold,
+    fontSize: 25,
+    marginBottom: 5,
+    textAlign: "center", // Căn giữa tên món ăn
+    color: color.dark_green,
+  },
 
+  // ⭐️ STYLES MỚI CHO CALORIES (Nổi bật)
+  caloriesContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 15,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginHorizontal: 15,
   },
-  icon: {
+  calorieText: {
+    fontFamily: FONTS.bold,
+    fontSize: 24,
+    marginLeft: 8,
+    color: color.red_dark, // Màu đỏ cho calorie
+  },
 
+  // ⭐️ STYLES MỚI CHO HÀNG THÔNG TIN GỘP
+  infoRowContainer: {
+    flexDirection: "row",
+    justifyContent: "space-evenly", // Căn đều các mục
+    alignItems: "center",
+    marginBottom: 20,
+    paddingHorizontal: 10,
   },
-  divider: {
-    // style cho thanh phân cách giữa các icon/info
+  infoItem: {
+    alignItems: "center",
+  },
+  infoText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    marginTop: 4,
+    color: color.black,
+  },
+  infoDivider: {
+    height: "100%",
+    width: 1,
+    backgroundColor: color.grey,
+  },
+  // END STYLES MỚI
+
+  desContainer: {
+    paddingHorizontal: 15,
+    marginTop: 20,
   },
   nutrions: {
-    // style cho phần dinh dưỡng
+    paddingVertical: 20,
+    paddingHorizontal: 15,
   },
   headerNutrions: {
-    // style cho tiêu đề và "xem tất cả"
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   chartContainer: {
-    // style cho container chart + legend
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 20,
+    gap: 20,
   },
-  nutrientContainer: {
-    // style cho container các nutrient item
+  legendContainer: {
+    gap: 8,
   },
-  nutrient: {
-    // style cho mỗi nutrient: icon + text
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
-  colorRectangle: {
-    // style cho hình chữ nhật màu biểu thị nutrient
+  colorBox: {
+    width: 14,
+    height: 14,
+    borderRadius: 3,
+  },
+  legendText: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: "#333",
   },
   buttonContainer: {
-
-  }
+    alignSelf: "center",
+    marginVertical: 15,
+    width: 220,
+    height: 35,
+    borderRadius: 8,
+    borderWidth: 0.5,
+    borderColor: color.grey,
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+  },
+  button: {
+    height: 25,
+    width: 102,
+  },
+  buttonActive: {
+    height: 25,
+    width: 102,
+    backgroundColor: color.dark_green,
+    borderRadius: 8,
+  },
+  buttonText: {
+    textAlign: "center",
+    fontSize: 12,
+    fontFamily: FONTS.semiBold,
+    lineHeight: 25,
+  },
+  buttonTextActive: {
+    textAlign: "center",
+    fontSize: 12,
+    fontFamily: FONTS.semiBold,
+    lineHeight: 25,
+    color: color.white,
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 10,
+  },
+  ingreContainer: {
+    flexDirection: "column",
+    gap: 8,
+  },
+  ingreRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingHorizontal: 5,
+  },
+  bulletPoint: {
+    marginRight: 8,
+    fontSize: 16,
+    lineHeight: 20,
+    color: color.dark_green,
+  },
+  ingreText: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    flexShrink: 1,
+    lineHeight: 20,
+  },
+  methodContainer: {
+    flexDirection: "column",
+    justifyContent: "center",
+    gap: 12,
+  },
+  methodRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  numberDots: {
+    backgroundColor: color.dark_green,
+    width: 25,
+    height: 25,
+    borderRadius: 45,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  methodSteps: {
+    flex: 1,
+  },
+  step: {
+    fontSize: 15,
+    fontFamily: FONTS.semiBold,
+    marginBottom: 2,
+  },
+  stepContent: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+  },
+  addButton: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: color.dark_green,
+    paddingVertical: 15,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 10,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButtonText: {
+    color: color.white,
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    marginLeft: 8,
+  },
 });

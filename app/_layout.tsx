@@ -1,13 +1,14 @@
 import color from "@constants/color";
+import { AuthProvider } from "@contexts/AuthContext";
 import { useSystemBars } from "@hooks/useSystemBars";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
+import React from "react";
 import { StatusBar } from "react-native";
 import { LocaleConfig } from "react-native-calendars";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Provider } from "react-redux";
 import { store } from "../redux";
-import { AuthProvider } from "@contexts/AuthContext";
 
 export default function RootLayout() {
   LocaleConfig.locales["vi"] = {
@@ -76,28 +77,31 @@ export default function RootLayout() {
 
   useSystemBars();
 
+  if (!loaded) return null;
+
   return (
     <Provider store={store}>
       <AuthProvider>
-      <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1 }} edges={["bottom"]}>
-        <StatusBar barStyle="dark-content" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: color.white },
-          }}
-        >
-          <Stack.Screen name="index" /> 
-          <Stack.Screen name="introScreen" />
-          <Stack.Screen name="welcomeScreen" />
-          <Stack.Screen name="login" />
-          <Stack.Screen name="survey/index" />
-          <Stack.Screen name="tabs" />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-      </SafeAreaView>
-      </SafeAreaProvider>
+        <SafeAreaProvider>
+          <SafeAreaView edges={["bottom"]} style={{ flex: 1}}>
+            <StatusBar barStyle="dark-content" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: color.white },
+              }}
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="introScreen" />
+              <Stack.Screen name="welcomeScreen" />
+              <Stack.Screen name="login" />
+              <Stack.Screen name="survey/index" />
+              <Stack.Screen name="tabs" />
+              <Stack.Screen name="/schedule/workout/index" />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+            </SafeAreaView>
+        </SafeAreaProvider>
       </AuthProvider>
     </Provider>
   );

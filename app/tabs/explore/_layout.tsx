@@ -1,8 +1,8 @@
-import { FONTS } from "@constants/fonts";
-import { Stack, useRouter, usePathname } from "expo-router";
-import { StyleSheet, View, TouchableOpacity, Text } from "react-native";
 import color from "@constants/color";
+import { FONTS } from "@constants/fonts";
 import { navigateCustom } from "@utils/navigation";
+import { Stack, usePathname } from "expo-router";
+import { StyleSheet, Text, View } from "react-native";
 
 function HeaderTabs() {
   const pathname = usePathname();
@@ -15,7 +15,7 @@ function HeaderTabs() {
   return (
     <View style={styles.body}>
       <Text style={styles.headerText}>Khám phá</Text>
-      <View style={styles.tabContainer}>
+      {/* <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, pathname === "/tabs/explore" && styles.activeTab]}
           onPress={() => handleRedirect("/tabs/explore")}
@@ -46,7 +46,7 @@ function HeaderTabs() {
             Gợi ý sản phẩm
           </Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 }

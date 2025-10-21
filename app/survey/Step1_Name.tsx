@@ -1,7 +1,7 @@
 import React from "react";
 import { Dimensions, StyleSheet, Text, TextInput, View } from "react-native";
-import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
+import { SurveyData } from "./index";
 
 const { width } = Dimensions.get("window");
 

@@ -1,8 +1,8 @@
 import { Image } from "expo-image";
 import React from "react";
 import { Dimensions, StyleSheet, Text, View } from "react-native";
-import { SurveyData } from "../../app/survey/surveyScreen";
 import { globalStyles } from "../../constants/fonts";
+import { SurveyData } from "./index";
 
 const { width, height } = Dimensions.get("window");
 

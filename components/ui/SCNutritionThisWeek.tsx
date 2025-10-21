@@ -2,6 +2,7 @@ import Color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { navigateCustom } from "@utils/navigation";
 import { useState } from "react";
 import {
   Modal,
@@ -23,12 +24,40 @@ const days = [
   { day: "CN", date: 17, calo: 0, max: 2000 },
 ];
 
+const mealsData = [
+  {
+    name: "Bữa sáng",
+    icon: "coffee", // FontAwesome
+    consumed: 448,
+    target: 414,
+  },
+  {
+    name: "Bữa trưa",
+    icon: "bowl-food", // FontAwesome6
+    consumed: 234,
+    target: 552,
+  },
+  {
+    name: "Bữa chiều",
+    icon: "food-apple", // MaterialCommunityIcons
+    consumed: 0,
+    target: 69,
+  },
+  {
+    name: "Bữa tối",
+    icon: "food-turkey", // MaterialCommunityIcons (Đã đổi từ bữa Chiều sang Dinner/Bữa tối như hình)
+    consumed: 0,
+    target: 345,
+  },
+];
+
 const today = new Date();
 let currentDayIndex = today.getDay();
 currentDayIndex = (currentDayIndex + 6) % 7;
 
 export default function SCNutritionThisWeek() {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(currentDayIndex);
 
   return (
     <View style={styles.container}>
@@ -36,7 +65,7 @@ export default function SCNutritionThisWeek() {
       <View style={styles.header}>
         <Text style={styles.title}>Dinh dưỡng tuần này</Text>
         <Pressable onPress={() => setCalendarVisible(true)}>
-          <Entypo name="calendar" size={24} color="black" />
+          <Entypo name="calendar" size={24} color={Color.black} />
         </Pressable>
       </View>
 
@@ -51,7 +80,7 @@ export default function SCNutritionThisWeek() {
                   style={{
                     flex: progress,
                     backgroundColor:
-                      idx === currentDayIndex
+                      idx === selectedDayIndex
                         ? Color.light_green
                         : Color.light_gray,
                     borderTopLeftRadius: 8,
@@ -59,16 +88,17 @@ export default function SCNutritionThisWeek() {
                   }}
                 />
               </View>
-              <View
+              <Pressable
                 style={[
                   styles.barLabel,
-                  idx === currentDayIndex && styles.barLabelActive,
+                  idx === selectedDayIndex && styles.barLabelActive,
                 ]}
+                onPress={() => setSelectedDayIndex(idx)}
               >
                 <Text
                   style={[
                     styles.day,
-                    idx === currentDayIndex && styles.dayActive,
+                    idx === selectedDayIndex && styles.dayActive,
                   ]}
                 >
                   {item.day}
@@ -76,12 +106,12 @@ export default function SCNutritionThisWeek() {
                 <Text
                   style={[
                     styles.date,
-                    idx === currentDayIndex && styles.dateActive,
+                    idx === selectedDayIndex && styles.dateActive,
                   ]}
                 >
                   {item.date}
                 </Text>
-              </View>
+              </Pressable>
             </View>
           );
         })}
@@ -90,19 +120,44 @@ export default function SCNutritionThisWeek() {
       {/* Chi tiết hôm nay */}
       <View style={styles.detail}>
         <Text style={styles.detailTitle}>
-          Tổng calo {days[currentDayIndex].day}, {days[currentDayIndex].date}{" "}
+          Tổng calo {days[selectedDayIndex].day}, {days[selectedDayIndex].date}{" "}
           tháng 3
         </Text>
-        <Text style={styles.detailCalo}>
-          {days[currentDayIndex].calo}/{days[currentDayIndex].max} calo
-        </Text>
-        <View style={styles.detailContainer}>
-          <Text style={styles.detailLink}>Xem chi tiết</Text>
-          <MaterialIcons name="navigate-next" size={24} color="black" />
+        <View style={styles.detailCaloRow}>
+          <Text style={styles.detailCalo}>
+            {days[selectedDayIndex].calo}/{days[selectedDayIndex].max} calo
+          </Text>
+          <Pressable
+            style={styles.detailLinkContainer}
+            onPress={() => navigateCustom("/viewAllData")}
+          >
+            <Text style={styles.detailLink}>Xem tổng quan</Text>
+            <MaterialIcons
+              name="navigate-next"
+              size={20}
+              color={Color.dark_green}
+            />
+          </Pressable>
         </View>
-        <Text style={styles.meal}>Bữa sáng - 300 calo</Text>
-        <Text style={styles.meal}>Bữa trưa</Text>
-        <Text style={styles.meal}>Bữa tối</Text>
+
+        {/* Danh sách các bữa ăn trong ngày */}
+        {mealsData.map((meal, index) => (
+          <Pressable
+            key={index}
+            style={styles.mealRow}
+            onPress={() => navigateCustom("/viewData")}
+          >
+            <Text style={styles.mealText}>
+              {meal.name} - {meal.consumed || 0} calo
+            </Text>
+            <MaterialIcons
+              name="navigate-next"
+              size={20}
+              color={Color.black}
+              onPress={() => navigateCustom("/viewData")}
+            />
+          </Pressable>
+        ))}
       </View>
 
       {/* Modal lịch */}
@@ -132,7 +187,7 @@ export default function SCNutritionThisWeek() {
 const styles = StyleSheet.create({
   container: {
     marginTop: 16,
-    backgroundColor: Color.white,
+    backgroundColor: Color.white, // Nền ngoài cùng là trắng
     borderRadius: 16,
     padding: 12,
   },
@@ -167,10 +222,11 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     width: 28,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   barLabelActive: {
     backgroundColor: Color.dark_green,
+    borderRadius: 8,
   },
   day: {
     fontSize: 12,
@@ -192,6 +248,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 4,
   },
+
   detail: {
     borderTopWidth: 1,
     borderTopColor: Color.black_50,
@@ -206,25 +263,69 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     marginVertical: 4,
   },
-  detailContainer: {
+  detailCaloRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 4,
+  },
+
+  detailLinkContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
   },
+
   detailLink: {
-    fontSize: 15,
-    width: "80%",
+    fontSize: 14,
     fontFamily: FONTS.medium,
+    color: Color.dark_green,
+    marginRight: 4,
   },
+
   meal: {
     fontSize: 14,
     fontFamily: FONTS.regular,
     marginTop: 2,
     marginLeft: 15,
   },
+  sectionTitle: {
+    fontFamily: FONTS.bold,
+    color: Color.dark_green,
+    fontSize: 18,
+  },
+  detailRightContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  mealRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 6,
+    marginLeft: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Color.border,
+  },
+  mealText: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: Color.black,
+  },
+  addButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Color.dark_green, // Nút + màu xanh lá đậm
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  // END: Sửa đổi style cho phần chi tiết bữa ăn (detail)
+
+  // Style cũ (giữ lại và loại bỏ các style không dùng)
   overlay: {
     flex: 1,
-    backgroundColor: Color.black_50, 
+    backgroundColor: Color.black_50,
     justifyContent: "flex-end",
   },
   calendarBox: {
@@ -233,11 +334,5 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     padding: 16,
     minHeight: "50%",
-  },
-  calendarTitle: {
-    fontSize: 18,
-    fontFamily: FONTS.semiBold,
-    marginBottom: 12,
-    textAlign: "center",
   },
 });

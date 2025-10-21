@@ -1,36 +1,42 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { LinearGradient } from "expo-linear-gradient";
-import { DimensionValue, Image, StyleSheet, Text, View } from "react-native";
+import { DimensionValue, Image, StyleSheet, Text, View, } from "react-native";
 import SCButton from "./SCButton";
 
-interface ExerciseCardProps {
+interface ExerciseCardProps{
   title: string;
   progress?: {
     current: number;
     total: number;
   };
   totalProgress?: number;
-  image?: any; // require image
+  image?: string; // require image
   haveButton?: boolean;
-  onPress?: () => void;
   width?: DimensionValue;
   border?: number;
   paddingTop?: number;
   marginBottom?: number;
+  day?: number;
+  notHaveProgress?: boolean;
+  des?: string;
+  onPress? : () => void;
 }
 
 export default function ExerciseCard({
   title,
-  progress = {current: 0, total: 100 },
+  progress = { current: 0, total: 100 },
   image,
   haveButton = true,
-  onPress,
   width = "90%",
   border = 16,
   paddingTop,
   marginBottom = 16,
   totalProgress,
+  notHaveProgress = false,
+  des,
+  day,
+  onPress
 }: ExerciseCardProps) {
   const progressPercent = Math.min(
     (progress.current / progress.total) * 100,
@@ -56,8 +62,13 @@ export default function ExerciseCard({
           {/* Left content */}
           <View style={styles.leftContent}>
             <Text style={styles.title}>{title}</Text>
+            {des && <Text style={styles.des}>{des}</Text>}
+
+            {/* Day */}
+            {day && <Text style={styles.day}>Ngày {day}</Text>}
 
             {/* Progress */}
+            {! day || notHaveProgress &&(
             <View style={styles.progressWrapper}>
               {totalProgress ? (
                 <Text style={styles.progressText}>{totalProgress} ngày</Text>
@@ -76,12 +87,15 @@ export default function ExerciseCard({
                 />
               </View>
             </View>
+            )}
           </View>
 
           {/* Right image */}
           <View style={styles.rightContent}>
-            {image && (
-              <Image source={image} style={styles.image} resizeMode="contain" />
+            {image ? (
+              <Image src={image} style={styles.image} resizeMode="contain" />
+            ) : (
+              <Image source={require("../../assets/images/dumbbell.png")} style={styles.image} resizeMode="contain" />
             )}
           </View>
         </View>
@@ -90,7 +104,7 @@ export default function ExerciseCard({
         {haveButton && (
           <View style={{ width: "100%" }}>
             <SCButton
-              title="Chọn"
+              title="Xem chi tiết"
               onPress={() => {
                 if (onPress) onPress();
               }}
@@ -123,6 +137,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: color.white,
     fontFamily: FONTS.bold,
+    marginBottom: 8,
+  },
+  des: {
+    fontSize: 12,
+    color: color.white,
+    fontFamily: FONTS.regular,
     marginBottom: 8,
   },
   day: {

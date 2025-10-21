@@ -1,9 +1,25 @@
-import React, { useState } from "react";
-import { StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { HAS_DONE_SURVEY } from "@constants/app";
+import color from "@constants/color";
+import { updateProfileThunk } from "@features/users";
+import { useAppDispatch } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
+
+import { globalStyles } from "@constants/fonts";
+import {
+  ActivityLevel,
+  Gender,
+  HealthGoal,
+  UpdateProfileDto,
+} from "../../types/me";
 import Step10_ActivityLevel from "../survey/Step10_ActivityLevel";
 import Step11_Demographics from "../survey/Step11_Demographics";
 import Step12_Measurements from "../survey/Step12_Measurements";
@@ -36,41 +52,41 @@ const SURVEY_SCREENS = [
 ];
 
 export interface SurveyData {
-  name?: string;
-  goals?: string[];
+  name: string;
+  goal: HealthGoal;
   obstacles?: string[];
   eatingHabit?: string;
   healthyHabits?: string[];
   planningFrequency?: string;
   willingness?: string;
-  activityLevel?: string;
-  gender?: "male" | "female" | "other";
-  age?: string;
-  height?: string;
-  weight?: string;
-  targetWeight?: string;
+  activityLevel: ActivityLevel;
+  gender: Gender;
+  age: number;
+  height: number;
+  weight: number;
+  targetWeight: number;
 }
 
 const isNextButtonDisabled = (stepIndex: number, data: SurveyData): boolean => {
   switch (stepIndex) {
-    case 0: // Step1_Name
+    case 0:
       return !data.name?.trim();
-    case 1: // Step2_Goals
-      return !data.goals || data.goals.length === 0;
-    case 3: // Step4_Obstacles
+    case 1:
+      return !data.goal;
+    case 3:
       return !data.obstacles || data.obstacles.length === 0;
-    case 5: // Step6_Habits
+    case 5:
       return !data.healthyHabits || data.healthyHabits.length === 0;
-    case 7: // Step8_PlanningFrequency
+    case 7:
       return !data.planningFrequency?.trim();
-    case 8: // Step9_Willingness
+    case 8:
       return !data.willingness?.trim();
-    case 9: // Step10_ActivityLevel
-      return !data.activityLevel?.trim();
-    case 10: // Step11_Demographics
-      return !data.age?.trim() || !data.gender;
-    case 11: // Step12_Measurements
-      return !data.height?.trim() || !data.weight?.trim();
+    case 9:
+      return !data.activityLevel;
+    case 10:
+      return !data.age || !data.gender;
+    case 11:
+      return !data.height || !data.weight || !data.targetWeight;
     default:
       return false;
   }
@@ -78,14 +94,33 @@ const isNextButtonDisabled = (stepIndex: number, data: SurveyData): boolean => {
 
 export default function SurveyScreen() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [surveyData, setSurveyData] = useState<SurveyData>({});
+  const [surveyData, setSurveyData] = useState<SurveyData>({
+    name: "",
+    age: 0,
+    height: 0,
+    weight: 0,
+    gender: Gender.Male,
+    activityLevel: ActivityLevel.LightlyActive,
+    targetWeight: 0,
+    goal: HealthGoal.MaintainWeight,
+  });
   const totalSteps = SURVEY_SCREENS.length;
 
   const isNextDisabled = isNextButtonDisabled(currentStep, surveyData);
+  const [loading, setLoading] = useState(true);
+
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2500); // giả lập loading 2.5s
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleNext = () => {
     if (currentStep < totalSteps - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep((prev) => prev + 1);
     } else {
       handleFinish();
     }
@@ -93,31 +128,63 @@ export default function SurveyScreen() {
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((prev) => prev - 1);
+    }
+  };
+
+  const handleUpdateUser = async () => {
+    const objectSend: UpdateProfileDto = {
+      name: surveyData.name,
+      age: surveyData.age,
+      height: surveyData.height,
+      weight: surveyData.weight,
+      targetWeight: surveyData.targetWeight,
+      goal: surveyData.goal,
+      gender: surveyData.gender,
+      activityLevel: surveyData.activityLevel,
+    };
+
+    const result = await dispatch(updateProfileThunk(objectSend));
+
+    if (updateProfileThunk.rejected.match(result)) {
+      Alert.alert("Đã có lỗi xảy ra");
+      navigateCustom("/login");
+    } else {
+      navigateCustom("/tabs");
     }
   };
 
   const handleFinish = () => {
-    navigateCustom("/tabs", { flagKey: HAS_DONE_SURVEY });
+    setLoading(true);
+    handleUpdateUser();
   };
 
   const CurrentStepComponent = SURVEY_SCREENS[currentStep];
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "bottom"]}>
-      <SurveyLayout
-        currentStep={currentStep + 1}
-        totalSteps={totalSteps}
-        onBack={handleBack}
-        onNext={handleNext}
-        isFinalStep={currentStep === totalSteps - 1}
-        isNextDisabled={isNextDisabled}
-      >
-        <CurrentStepComponent
-          surveyData={surveyData}
-          updateSurveyData={setSurveyData}
-        />
-      </SurveyLayout>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={color.dark_green || "#6C9C39"} />
+          <Text style={[styles.loadingText, globalStyles.semiBold]}>
+            Đang khởi tạo dữ liệu cho bạn...
+          </Text>
+        </View>
+      ) : (
+        <SurveyLayout
+          currentStep={currentStep + 1}
+          totalSteps={totalSteps}
+          onBack={handleBack}
+          onNext={handleNext}
+          isFinalStep={currentStep === totalSteps - 1}
+          isNextDisabled={isNextDisabled}
+        >
+          <CurrentStepComponent
+            surveyData={surveyData}
+            updateSurveyData={setSurveyData}
+          />
+        </SurveyLayout>
+      )}
     </SafeAreaView>
   );
 }
@@ -125,6 +192,15 @@ export default function SurveyScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#ffff",
+    backgroundColor: "#fff",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
   },
 });
