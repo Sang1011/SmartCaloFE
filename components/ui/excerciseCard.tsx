@@ -92,8 +92,10 @@ export default function ExerciseCard({
 
           {/* Right image */}
           <View style={styles.rightContent}>
-            {image && (
+            {image ? (
               <Image src={image} style={styles.image} resizeMode="contain" />
+            ) : (
+              <Image source={require("../../assets/images/dumbbell.png")} style={styles.image} resizeMode="contain" />
             )}
           </View>
         </View>

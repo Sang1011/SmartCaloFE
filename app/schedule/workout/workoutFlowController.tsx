@@ -1,33 +1,84 @@
 import { useWorkoutFlow } from "@hooks/useWorkoutFlow";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  WorkoutExcerciseDTO,
+  WorkoutExcerciseTypeEnum
+} from "../../../types/workoutExcercise";
 import RestScreen from "./restScreen";
 import SuccessScreen from "./successScreen";
 import WorkoutIntro from "./workoutIntro";
 import WorkoutTest from "./workoutTest";
 
-export default function WorkoutFlowController() {
-  // 🔹 Danh sách bài tập mẫu
-  const exercises = [
-    { id: 1, name: "Bước ngang", duration: 30, type: "timed" as const, image:"https://static.exercisedb.dev/media/jeHtrlO.gif" },
-    { id: 2, name: "Chống đẩy", reps: 12, type: "reps" as const, image: "https://static.exercisedb.dev/media/ztAa1RK.gif"},
-    { id: 3, name: "Squat", duration: 40, type: "timed" as const, image: "https://static.exercisedb.dev/media/ztAa1RK.gif" },
-  ];
+interface WorkoutFlowControllerProps {
+  excerciseList: WorkoutExcerciseDTO[]
+}
 
-  const { currentItem, isRest, next, currentIndex, prev, canPrev } = useWorkoutFlow(exercises);
+export default function WorkoutFlowController({excerciseList}: WorkoutFlowControllerProps) {
+  // 🔹 2. Chuẩn hóa dữ liệu từ API sang định dạng mà useWorkoutFlow cần
+  const normalizedExercises = useMemo(() => {
+    if (!excerciseList || excerciseList.length === 0) return [];
+
+    return excerciseList.map((item) => {
+      console.log(item);
+      const baseItem = {
+        id: item.id,
+        name: item.exerciseName || "Bài tập không tên",
+        image: item.exerciseGifUrl || "default-image-url"
+      };
+
+      if (item.type === WorkoutExcerciseTypeEnum.TimeBased) {
+        return {
+          ...baseItem,
+          type: WorkoutExcerciseTypeEnum.TimeBased,
+          duration: item.durationMin === 0 ? 30 : item.durationMin  // phút -> giây
+        };
+      }
+
+      // Mặc định RepBased
+      return {
+        ...baseItem,
+        type: WorkoutExcerciseTypeEnum.RepBased,
+        reps: item.reps || item.sets * 12 || 10
+      };
+    });
+  }, [excerciseList]);
+
+  // 🔹 3. Dùng useWorkoutFlow
+  const { currentItem, isRest, next, currentIndex, prev, canPrev } =
+    useWorkoutFlow(normalizedExercises);
+
+  // 🔹 4. Phase quản lý flow
   const [phase, setPhase] = useState<"intro" | "workout" | "rest" | "success">(
     "intro"
   );
 
-  const handleStart = () => setPhase("workout");
+  useEffect(() => {
+    if (normalizedExercises.length > 0 && phase === "intro") {
+      // giữ nguyên intro cho người dùng bấm start
+    }
+
+    if (normalizedExercises.length === 0 && phase !== "intro") {
+      // có thể xử lý lỗi hoặc navigate ra
+    }
+  }, [normalizedExercises, phase]);
+
+  const handleStart = () => {
+    if (normalizedExercises.length > 0) {
+      setPhase("workout");
+    }
+  };
 
   const handleNext = () => {
     next();
-    // nếu còn bài → phân loại để hiển thị rest hay workout
-    if (currentIndex + 1 < exercises.length * 2 - 1) {
+
+    const totalSteps = normalizedExercises.length * 2 - 1;
+
+    if (currentIndex + 1 < totalSteps) {
+      // Nếu đang ở nghỉ -> chuyển sang bài tập
       if (isRest) setPhase("workout");
+      // Nếu đang ở bài tập -> chuyển sang nghỉ
       else setPhase("rest");
     } else {
-      // xong tất cả
       setPhase("success");
     }
   };
@@ -35,24 +86,35 @@ export default function WorkoutFlowController() {
   const handlePrev = () => {
     if (!canPrev) return;
     prev();
-    // nếu còn bài → phân loại để hiển thị rest hay workout
+
     if (currentIndex - 1 >= 0) {
       if (isRest) setPhase("workout");
       else setPhase("rest");
     } else {
       setPhase("intro");
     }
-  }
+  };
 
-  // 🔹 render theo phase hiện tại
-  if (phase === "intro")
-    return <WorkoutIntro onStart={handleStart} />;
+  const nextItem =
+  currentIndex + 1 < normalizedExercises.length
+    ? normalizedExercises[currentIndex + 1]
+    : null;
 
-  if (phase === "workout" && "type" in currentItem)
-    return <WorkoutTest item={currentItem} onNext={handleNext} onPrev={handlePrev} />;
+  // 🔹 5. Render theo phase
+  if (phase === "intro") return <WorkoutIntro onStart={handleStart} />;
 
-  if (phase === "rest" && "isRest" in currentItem)
-    return <RestScreen duration={currentItem.duration} onNext={handleNext}/>;
+  if (phase === "workout" && currentItem)
+    return (
+      <WorkoutTest
+        item={currentItem}
+        onNext={handleNext}
+        onPrev={handlePrev}
+        canPrev={canPrev} 
+      />
+    );
+
+  if (phase === "rest")
+    return <RestScreen duration={currentItem?.duration ?? 30} onNext={handleNext} nextItem={nextItem} />;
 
   if (phase === "success") return <SuccessScreen />;
 

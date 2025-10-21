@@ -1,23 +1,33 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { WorkoutExcerciseDTO, WorkoutExcerciseTypeEnum } from "../../types/workoutExcercise";
 
-export default function ScheduleBody({ data }: { data: any[] }) {
+export default function ScheduleBody({
+  data,
+}: {
+  data: WorkoutExcerciseDTO[];
+}) {
+  const handleTextType = (item: WorkoutExcerciseDTO) => {
+    if (item.type === WorkoutExcerciseTypeEnum.RepBased) {
+      return `x ${item.reps} lần`;
+    } else {
+      if (!item.durationMin || item.durationMin === 0) {
+        return "30 giây";
+      }
+      return `${item.durationMin} giây`;
+    }
+  };
+
   return (
     <View style={styles.body}>
-      <Text style={styles.bodyText}>{data.length} bài tập</Text>
-
-      <ScrollView
-        style={styles.scrollArea}
-        showsVerticalScrollIndicator={false}
-      >
-        {data.map((item, index) => (
-          <View key={index} style={styles.slotItem}>
-            <Text style={styles.contentTitle}>{item.name}</Text>
-            <Text style={styles.contentDes}>{item.duration}</Text>
-          </View>
-        ))}
-      </ScrollView>
+      <Text style={styles.bodyText}>{data?.length} bài tập</Text>
+      {data.map((item: WorkoutExcerciseDTO) => (
+        <View key={item.id} style={styles.slotItem}>
+          <Text style={styles.contentTitle}>{item.exerciseName}</Text>
+          <Text style={styles.contentDes}>{handleTextType(item)}</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -32,9 +42,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     fontSize: 16,
     paddingLeft: 10,
-  },
-  scrollArea: {
-    marginTop: 10,
   },
   slotItem: {
     paddingHorizontal: 20,

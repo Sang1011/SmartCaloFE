@@ -32,7 +32,7 @@ export default function WorkoutIntro({ onStart }: { onStart: () => void }) {
         borderColor={color.white}
         width={300}
         height={50}
-        onPress={() => navigateCustom("/schedule/workout/workoutTest")}
+        onPress={() => navigateCustom("/tabs/workouts")}
       />
     </View>
   );

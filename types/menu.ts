@@ -9,6 +9,8 @@ export interface MealDish {
   fat: number;
   fiber: number;
   sugar: number;
+  imageUrl: string;
+  name: string;
 }
 
 export interface Meal {
@@ -29,27 +31,28 @@ export interface MenuDay {
   meals: Meal[];
 }
 
+
 export interface Menu {
-  /** UUID của bản ghi Menu */
   id: string;
   menuName: string;
   description: string;
   imageUrl: string;
-  /** Số bữa ăn trong một ngày (ví dụ: 3) */
   mealsPerDay: number;
-  /** Giới hạn calo tối thiểu/ngày */
   dailyCaloriesMin: number;
-  /** Giới hạn calo tối đa/ngày */
   dailyCaloriesMax: number;
   menuDays: MenuDay[];
 }
 
-/** Cấu trúc response body hoàn chỉnh */
-export interface MenuResponse {
-  menu: Menu;
+export interface MenuItemResponse {
+  id: string,
+  menuName: string,
+  description: string,
+  imageUrl: string,
+  dailyCaloriesMin: number,
+  dailyCaloriesMax: number
 }
 
-export type MealDishResponseFromAdopt = {
+export type MealDishRequestFromAdopt = {
   dishId: string
 }
 
@@ -59,7 +62,7 @@ export interface AdopMenuBodyRequest {
 
 export type AdoptCustomMenuDTO = {
   sourceMenuId: string;
-  menuDays: MenuDayFromAdopt[]
+  menuDays?: MenuDayFromAdopt[]
 }
 
 export type MenuDayFromAdopt = {
@@ -70,5 +73,9 @@ export type MenuDayFromAdopt = {
 export type MealFromAdopt = {
   mealType: string,
   isMainMeal: true,
-  mealDishes: MealDishResponseFromAdopt[]
+  mealDishes: MealDishRequestFromAdopt[]
+}
+
+export type AdoptCustomMenuResponse = {
+  newMenuId: string
 }

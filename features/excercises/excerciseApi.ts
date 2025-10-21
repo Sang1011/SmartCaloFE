@@ -1,4 +1,4 @@
-import apiClient from "@services/apiClient";
+import { apiClient } from "@services/apiClient";
 import { EXCERCISE_URLS } from "./excerciseUrls";
 export const excerciseApi = {
   getAllExcercise: () => apiClient.get(EXCERCISE_URLS.GET_ALL),

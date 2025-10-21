@@ -10,15 +10,18 @@ import { navigateCustom } from "@utils/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { WorkoutExcerciseTypeEnum } from "../../../types/workoutExcercise";
 
 export default function WorkoutTest({
   item,
   onNext,
   onPrev,
+  canPrev,
 }: {
   item: any;
   onNext: () => void;
   onPrev: () => void;
+  canPrev: boolean;
 }) {
   const [type] = useState(item.type);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -28,7 +31,7 @@ export default function WorkoutTest({
 
   // 🕒 Logic đếm ngược chỉ dành cho bài tập timed
   useEffect(() => {
-    if (type === "timed") {
+    if (type === WorkoutExcerciseTypeEnum.TimeBased) {
       if (isPlaying && timeLeft > 0 && !isPaused) {
         timerRef.current = setInterval(() => {
           setTimeLeft((prev) => {
@@ -72,7 +75,7 @@ export default function WorkoutTest({
 
   // 🧠 Xử lý khi nhấn nút chính
   const handleMainPress = () => {
-    if (type === "reps") {
+    if (type === WorkoutExcerciseTypeEnum.RepBased) {
       onNext(); // reps thì bỏ qua đếm, chuyển luôn
       return;
     }
@@ -88,7 +91,7 @@ export default function WorkoutTest({
       <View style={styles.goback}>
         <ButtonGoBack
           bgColor={color.black_50}
-          link="/schedule/scheduleDetail"
+          link="/tabs/workouts"
           borderRadius={30}
           width={42}
           height={42}
@@ -118,7 +121,7 @@ export default function WorkoutTest({
 
         <View style={styles.infoContainer}>
           <Text style={styles.timeText}>
-            {type === "timed"
+            {type === WorkoutExcerciseTypeEnum.TimeBased
               ? `00:${timeLeft.toString().padStart(2, "0")}`
               : `x${item.reps}`}
           </Text>
@@ -129,16 +132,18 @@ export default function WorkoutTest({
         <View style={styles.clickContainer}>
           <SCButton
             bgColor={color.transparent}
-            width="15%"
+            width="20%"
             height={58}
             icon={
               <Ionicons
                 name="play-skip-back-circle"
-                size={38}
-                color={color.black_70}
+                size={40}
+                color={canPrev ? color.black_70 : color.black_30}
               />
             }
-            onPress={onPrev}
+            onPress={() => {
+              if (canPrev) onPrev;
+            }}
           />
 
           <SCAnimatedGradientButton
@@ -146,18 +151,30 @@ export default function WorkoutTest({
             height={70}
             borderRadius={28}
             icon={
-              type === "timed" ? (
-                isPlaying ? (
-                  <Ionicons name="pause" size={24} color="white" />
+              type === WorkoutExcerciseTypeEnum.TimeBased ? (
+                // 🔹 Nếu là bài tập theo thời gian
+                timeLeft === 0 ? (
+                  <Entypo
+                    name="controller-play"
+                    size={28}
+                    color={color.white}
+                  />
+                ) : isPlaying ? (
+                  <Ionicons name="pause" size={24} color={color.white} />
                 ) : (
-                  <Entypo name="controller-play" size={28} color={color.white} />
+                  <Entypo
+                    name="controller-play"
+                    size={28}
+                    color={color.white}
+                  />
                 )
               ) : (
-                <Feather name="check" size={32} color="white" />
+                // 🔹 Nếu là bài tập theo reps
+                <Feather name="check" size={32} color={color.white} />
               )
             }
             title={
-              type === "timed"
+              type === WorkoutExcerciseTypeEnum.TimeBased
                 ? timeLeft === 0
                   ? "LÀM LẠI"
                   : isPlaying
@@ -168,7 +185,7 @@ export default function WorkoutTest({
             fontSize={22}
             onPress={handleMainPress}
             progress={
-              type === "timed"
+              type === WorkoutExcerciseTypeEnum.TimeBased
                 ? 1 - timeLeft / item.duration
                 : 0 // reps không có progress
             }
@@ -176,12 +193,12 @@ export default function WorkoutTest({
 
           <SCButton
             bgColor={color.transparent}
-            width="15%"
+            width="20%"
             height={58}
             icon={
               <Ionicons
                 name="play-skip-forward-circle"
-                size={38}
+                size={40}
                 color={color.black_70}
               />
             }

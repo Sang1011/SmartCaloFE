@@ -7,8 +7,18 @@ import { navigateCustom } from "@utils/navigation";
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { WorkoutExcerciseTypeEnum } from "../../../types/workoutExcercise";
 
-export default function RestScreen({ duration, onNext }: { duration: number; onNext: () => void }) {
+interface NormalizedExercise {
+  id: string;
+  name: string;
+  image: string;
+  type: WorkoutExcerciseTypeEnum;
+  duration?: number;
+  reps?: number;
+}
+
+export default function RestScreen({ duration, onNext, nextItem }: { duration: number; onNext: () => void, nextItem: NormalizedExercise | null }) {
   const [restTime, setRestTime] = useState(duration);
 
   useEffect(() => {
@@ -86,7 +96,7 @@ export default function RestScreen({ duration, onNext }: { duration: number; onN
         </View>
 
         <Text style={styles.nextDes}>
-          Tiếp theo: Đứng gập cơ liên sườn bên trái x12
+          Tiếp theo: {nextItem?.name} {nextItem?.type === WorkoutExcerciseTypeEnum.RepBased ? `x${nextItem.reps}` : `${nextItem?.duration}:00 giây`}
         </Text>
       </View>
     </SafeAreaView>

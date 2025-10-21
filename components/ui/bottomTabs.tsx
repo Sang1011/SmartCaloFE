@@ -144,7 +144,7 @@ export default function BottomTabs({ name = "log" }: IBottomTabsProps) {
           }}
         />
         <SCButton
-          title="Thể dục"
+          title="Luyện tập"
           bgColor={Color.fast_button}
           color={Color.black}
           iconPos="top"

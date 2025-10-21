@@ -2,7 +2,7 @@ import { Config } from "@config/config";
 import {
   googleLoginThunk,
   loginThunk,
-  logout
+  logoutThunk
 } from "@features/auth";
 
 // Imports cho Expo AuthSession
@@ -10,6 +10,7 @@ import { makeRedirectUri, ResponseType } from 'expo-auth-session';
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import React, {
   createContext,
   useCallback,
@@ -18,8 +19,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "../redux";
+import { RootState } from "../redux";
 
 // ⚙️ Hoàn tất phiên xác thực (bắt buộc cho AuthSession)
 WebBrowser.maybeCompleteAuthSession();
@@ -39,8 +39,9 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { error } = useSelector((state: RootState) => state.auth);
+  const dispatch = useAppDispatch();
+  const { error } = useAppSelector((state: RootState) => state.auth);
+  const { user } = useAppSelector((state :RootState) => state.user);
 
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -59,7 +60,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     scopes: ['profile', 'email'],
     responseType: ResponseType.IdToken, 
   });
-
 
   useEffect(() => {
     console.log("AuthProvider mounted", isMounted.current);
@@ -142,16 +142,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // 🚪 Logout (Đã loại bỏ tất cả logic SDK native)
   const handleLogout = useCallback(async (): Promise<void> => {
     if (!isMounted.current) return;
-
+  
     try {
       console.log("Logging out...");
-      
-      // Không còn logic logout cho Google hay Facebook SDK
-
-      dispatch(logout());
+  
+      await dispatch(logoutThunk()).unwrap(); 
+  
       clearError();
+      console.log("✅ Logout thành công (đã huỷ session server)");
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("❌ Logout error:", error);
     }
   }, [dispatch, clearError]);
 

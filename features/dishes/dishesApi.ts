@@ -1,4 +1,4 @@
-import apiClient from "@services/apiClient";
+import { apiClient } from "@services/apiClient";
 import { DISHES_URLS } from "./dishesUrls";
 export const dishApi = {
   getAllDish: (pageIndex: number, pageSize: number) => {

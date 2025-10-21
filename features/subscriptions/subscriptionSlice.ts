@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import apiClient from "@services/apiClient";
+import { subcriptionApi } from "./subscriptionApi";
 import { SUBCRIPTION_URLS } from "./subscriptionUrls";
 
 // ========== Types ==========
@@ -37,7 +37,7 @@ export const fetchAllSubscriptions = createAsyncThunk<
   SUBCRIPTION_URLS.GET_ALL_SUBCRIPTIONS,
   async (_, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get(SUBCRIPTION_URLS.GET_ALL_SUBCRIPTIONS);
+      const response = await subcriptionApi.getAllSubcription();
       console.log("response.data", response.data)
       return response.data.subscriptionPlans as SubcriptionPlan[];
     } catch (err: any) {
