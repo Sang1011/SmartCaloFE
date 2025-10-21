@@ -1,4 +1,4 @@
-import apiClient from "@services/apiClient";
+import { apiClient } from "@services/apiClient";
 import { CHAT_URLS } from "./chatUrls";
 export const chatApi = {
   getAllChatMessage: (

@@ -23,43 +23,39 @@ import {
 import { PieChart } from "react-native-gifted-charts/dist";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Dữ liệu mẫu đã được xử lý (Giữ nguyên)
-const rawIngredients =
-  "Thịt heo 300 Gr, Thơm 1/2 Trái, Nước dừa 100 muỗngl, Ớt 2 Trái, Hạt nêm 1 muỗnguỗng cà phê, Nước mắm 1 muỗnguỗng canh, Tiêu 1/2 muỗnguỗng cà phê, Đường trắng 1 muỗnguỗng canh, Muối 1/2 muỗnguỗng cà phê, Dầu ăn 2 muỗnguỗng canh";
-
-const rawMethods =
-  "Gà rửa sạch, chặt miếng vừa ăn rồi ướp với 1 muỗnguỗng cà phê hạt nêm, 1 muỗnguỗng cà phê nước mắm ngon, 1/2 muỗnguỗng cà phê tiêu, ướp gà khoảng 2 giờ. Cho thịt gà vào lò vi sóng nấu khoảng 6-7 phút, đến khi chín sơ, rắc đều một lớp bột chiên giòn lên các miếng thịt gà., Gừng cắt sợi.Sả, riềng, tỏi băm nhuyễn. Lá lốt rửa sạch, cắt sợi mỏng. Hành tím cắt lát., Bắc chảo lên bếp, đun nóng dầu lên, cho gà vào chiên vàng rồi vớt ra, để ráo dầu., Vẫn chảo dầu ấy, cho tỏi vào phi thơm vàng. Tiếp tục cho sả, hành tím, lá lốt và gừng vào đảo đều, nêm với 2 muỗnguỗng cà phê hạt nêm., Cuối cùng cho gà đã chiên vàng vào xào nhanh tay rồi tắt bếp., Lấy ra đĩa, ăn với cơm. Chút cay nồng của gừng, chút ấm thơm của sả khiến người thưởng thức thêm ấm lòng ngày mưa lạnh.";
-
-const methods = rawMethods
-  .replace(/[,]+/g, "") // xoá hết dấu phẩy thừa
-  .split(".") // tách theo dấu chấm
-  .map((item) => item.trim())
-  .filter((item) => item.length > 0);
+// const methods = rawMethods
+//   .replace(/[,]+/g, "") // xoá hết dấu phẩy thừa
+//   .split(".") // tách theo dấu chấm
+//   .map((item) => item.trim())
+//   .filter((item) => item.length > 0);
 
 export default function Dishes() {
   const [tab, setTab] = useState<"ingre" | "method">("ingre");
-  const { id, menuId } = useLocalSearchParams();
+  const { id, menuId, predict } = useLocalSearchParams<{
+    id : string
+    menuId: string
+    predict: string
+  }>();
   const dispatch = useAppDispatch();
   const { selectedDish, loading } = useAppSelector(
     (state: RootState) => state.dish
   );
   const [dishId, setDishId] = useState<string | null>(null);
-  const [menuCheckId, setMenuCheckId] = useState<string | null>(null);
+  const [isPredict, setIsPredict] = useState<boolean>(false);
 
   useEffect(() => {
-    const extractedId = Array.isArray(id) ? id[0] : id;
-    const extractedMenuId = Array.isArray(menuId) ? menuId[0] : menuId;
 
-    if (extractedId && typeof extractedId === "string") {
-      setDishId(extractedId);
-      dispatch(fetchDishById(extractedId));
+    if (id) {
+      setDishId(id);
+      dispatch(fetchDishById(id));
     } else {
       console.warn("⚠️ Không tìm thấy dishId hợp lệ:", id);
     }
 
-    if(extractedMenuId && typeof extractedMenuId === "string"){
-      setMenuCheckId(extractedMenuId);
+    if(predict){
+      setIsPredict(true);
     }
+
 
     return () => {
       dispatch(clearSelectedDish());
@@ -130,13 +126,10 @@ export default function Dishes() {
           <View style={styles.gobackButton}>
             <ButtonGoBack
               handleLogic={() => {
-                if (menuCheckId) {
-                  navigateCustom("/RecipeDetail", {
-                    params: {
-                      manuId: menuCheckId
-                    }
-                  });
-                }else{
+                if(isPredict){
+                  navigateCustom("/tabs")
+                }
+                else{
                   navigateCustom("/library");
                 }
               }}

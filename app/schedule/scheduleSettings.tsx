@@ -3,17 +3,15 @@ import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import Feather from "@expo/vector-icons/Feather";
 import { navigateCustom } from "@utils/navigation";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getNumberData, saveNumberData } from "../../stores/asyncStorage";
 
 export default function ScheduleSettingsScreen() {
-  const router = useRouter();
   const [restTime, setRestTime] = useState(30);
   const [countdown, setCountdown] = useState(10);
-
 
   // Giới hạn
   const REST_MIN = 10;
@@ -57,11 +55,28 @@ export default function ScheduleSettingsScreen() {
     await saveNumberData(key, value);
   };
 
-  const params = useLocalSearchParams();
-  
-    const title = params.title;
-    const image = params.image;
-    const day = params.day;
+  const [programCheckId, setProgramCheckId] = useState<string>("");
+  const [workoutId, setWorkoutId] = useState<string>("");
+  const [dayNumber, setDayNumber] = useState<number>(1);
+
+  const { programId, scheduleId, day } = useLocalSearchParams<{
+    programId: string;
+    scheduleId: string;
+    day: string;
+  }>();
+
+  useEffect(() => {
+    if (programId) {
+      setProgramCheckId(programId);
+    }
+
+    if (scheduleId) {
+      setWorkoutId(scheduleId);
+    }
+    if (day) {
+      setDayNumber(Number(day));
+    }
+  }, []);
 
   return (
     <SafeAreaView edges={["top"]} style={styles.container}>
@@ -71,14 +86,13 @@ export default function ScheduleSettingsScreen() {
           icon={<Feather name="arrow-left" size={24} color="black" />}
           width={65}
           bgColor={color.transparent}
-          onPress={() => 
+          onPress={() =>
             navigateCustom("/schedule/scheduleDetail", {
               params: {
-                scheduleId: 1,
-                day: day,
-                title: title,
-                image: image
-              }
+                programId: programCheckId,
+                scheduleId: workoutId,
+                day: dayNumber,
+              },
             })
           }
         />

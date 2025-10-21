@@ -2,19 +2,32 @@ import { HAS_LOGGED_IN } from "@constants/app";
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { useAuth } from "@contexts/AuthContext";
-import { Feather, FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { useAppSelector } from "@redux/hooks";
+import {
+  Feather,
+  FontAwesome5,
+  Ionicons,
+  MaterialIcons,
+} from "@expo/vector-icons";
+import { fetchCurrentUserThunk } from "@features/users";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
-import * as ImagePicker from "expo-image-picker";
 import { Link } from "expo-router";
-import React, { useState } from "react";
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function ProfileScreen() {
   const { logout } = useAuth();
 
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
-  const { user } = useAppSelector((state) => state.auth)
+  const { user } = useAppSelector((state: RootState) => state.user);
 
   const handleLogout = async () => {
     try {
@@ -25,28 +38,12 @@ export default function ProfileScreen() {
     }
   };
 
-  const pickImage = async () => {
-    try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert("Thông báo", "Cần cấp quyền để truy cập thư viện ảnh.");
-        return;
-      }
+  const dispatch = useAppDispatch();
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled) {
-        setAvatarUri(result.assets[0].uri);
-      }
-    } catch (err) {
-      console.error("Lỗi chọn ảnh:", err);
-    }
-  };
+  useEffect(() => {
+    dispatch(fetchCurrentUserThunk());
+    console.log(user);
+  }, [user?.id]);
 
   return (
     <View style={styles.container}>
@@ -66,13 +63,6 @@ export default function ProfileScreen() {
             )}
           </View>
           <Text style={styles.userName}>{user?.name || "hello"}</Text>
-
-
-          {/* Nút đổi ảnh */}
-          <TouchableOpacity style={styles.changePhotoBtn} onPress={pickImage}>
-            <Text style={styles.changePhotoText}>Đổi ảnh đại diện</Text>
-          </TouchableOpacity>
-
         </View>
 
         {/* Mục tiêu Section */}
@@ -85,7 +75,7 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.goalContent}>
               <Text style={styles.goalLabel}>Cân nặng ban đầu</Text>
-              <Text style={styles.goalValue}>100 kg</Text>
+              <Text style={styles.goalValue}>{user?.startWeight} kg</Text>
             </View>
           </View>
 
@@ -95,7 +85,7 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.goalContent}>
               <Text style={styles.goalLabel}>Cân nặng mục tiêu</Text>
-              <Text style={styles.goalValue}>85 kg</Text>
+              <Text style={styles.goalValue}>{user?.targetWeight} kg</Text>
             </View>
           </View>
         </View>
@@ -106,18 +96,34 @@ export default function ProfileScreen() {
 
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuIcon}>
-              <Ionicons name="document-text-outline" size={20} color={color.icon} />
+              <Ionicons
+                name="document-text-outline"
+                size={20}
+                color={color.icon}
+              />
             </View>
             <Text style={styles.menuText}>Chính sách quyền riêng tư</Text>
-            <MaterialIcons name="keyboard-arrow-right" size={24} color={color.icon} />
+            <MaterialIcons
+              name="keyboard-arrow-right"
+              size={24}
+              color={color.icon}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuIcon}>
-              <Ionicons name="shield-checkmark-outline" size={20} color={color.icon} />
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={20}
+                color={color.icon}
+              />
             </View>
             <Text style={styles.menuText}>Điều khoản sử dụng</Text>
-            <MaterialIcons name="keyboard-arrow-right" size={24} color={color.icon} />
+            <MaterialIcons
+              name="keyboard-arrow-right"
+              size={24}
+              color={color.icon}
+            />
           </TouchableOpacity>
         </View>
 
@@ -130,7 +136,11 @@ export default function ProfileScreen() {
               <Feather name="trash-2" size={20} color={color.icon} />
             </View>
             <Text style={styles.menuText}>Xóa dữ liệu và tài khoản</Text>
-            <MaterialIcons name="keyboard-arrow-right" size={24} color={color.icon} />
+            <MaterialIcons
+              name="keyboard-arrow-right"
+              size={24}
+              color={color.icon}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -138,14 +148,21 @@ export default function ProfileScreen() {
             onPress={() => {
               console.log("Đăng xuất");
               handleLogout();
-              navigateCustom("/login", { flagKey: HAS_LOGGED_IN, value: false });
+              navigateCustom("/login", {
+                flagKey: HAS_LOGGED_IN,
+                value: false,
+              });
             }}
           >
             <View style={styles.menuIcon}>
               <MaterialIcons name="logout" size={20} color={color.icon} />
             </View>
             <Text style={styles.menuText}>Đăng xuất</Text>
-            <MaterialIcons name="keyboard-arrow-right" size={24} color={color.icon} />
+            <MaterialIcons
+              name="keyboard-arrow-right"
+              size={24}
+              color={color.icon}
+            />
           </TouchableOpacity>
         </View>
 

@@ -1,5 +1,4 @@
 import SCButton from "@components/ui/SCButton";
-import CurrentExerciseCard from "@components/ui/currentExcerciseCard";
 import CurrentMenuCard from "@components/ui/currentMenuCard";
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
@@ -8,9 +7,14 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { fetchCurrentUserThunk } from "@features/users";
 import { useRoute } from "@react-navigation/native";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
+import { ensureUserExists } from "@utils/firebaseRealTime";
 import { navigateCustom } from "@utils/navigation";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 
 const recipeData = {
   id: 1,
@@ -57,185 +61,191 @@ const planData = {
 
 export default function ExploreScreen() {
   const route = useRoute();
+  const dispatch = useAppDispatch();
 
-  // 🔹 Biến tạm test UI
-  const hasCurrentMenu = false;
-  const hasCurrentExercise = false;
+  const { user, loading } = useAppSelector((state: RootState) => state.user);
+
+  // 🔹 Chỉ fetch user từ backend 1 lần khi vào component
+  useEffect(() => {
+    dispatch(fetchCurrentUserThunk());
+  }, [dispatch]);
+
+  // 🔹 Khi Redux đã có user → kiểm tra / tạo user trong Firebase
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserFromFirebase(user.id);
+    }
+  }, [user?.id]);
+
+  const fetchUserFromFirebase = async (id: string) => {
+    try {
+      await ensureUserExists(id);
+      console.log("✅ Firebase user ensured:", id);
+    } catch (err) {
+      console.error("❌ Error ensuring Firebase user:", err);
+    }
+  };
 
   const handleRedirect = (url: string) => {
     if (route.name === url) return;
     navigateCustom(url);
   };
 
+  const hasCurrentMenu = false;
+
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.contentContainer}>
-        {/* --- Current Plan --- */}
-        <View style={styles.sectionPlan}>
-          <View style={styles.sectionHeader}>
-            <Feather name="target" size={24} color={color.dark_green} />
-            <Text style={styles.sectionSubtitle}>Kế hoạch đang thực hiện</Text>
+      {loading ? (
+        // ✅ Hiển thị loading khi đang tải
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={color.dark_green} />
+          <Text style={styles.loadingText}>Đang tải...</Text>
+        </View>
+      ) : (
+        <ScrollView style={styles.contentContainer}>
+          {/* --- Current Plan --- */}
+          <View style={styles.sectionPlan}>
+            <View style={styles.sectionHeader}>
+              <Feather name="target" size={24} color={color.dark_green} />
+              <Text style={styles.sectionSubtitle}>
+                Kế hoạch đang thực hiện
+              </Text>
+            </View>
+
+            <Text style={styles.planTitle}>{planData.title}</Text>
+
+            <View style={styles.dateContainer}>
+              <View style={[styles.dateItem, { paddingLeft: 3 }]}>
+                <FontAwesome
+                  style={{ paddingRight: 3 }}
+                  name="calendar"
+                  size={16}
+                  color={color.dark_green}
+                />
+                <Text style={styles.dateText}>
+                  {planData.startDate} - {planData.endDate}
+                </Text>
+              </View>
+              <View style={styles.dateItem}>
+                <Ionicons name="timer" size={20} color={color.dark_green} />
+                <Text style={styles.durationText}>
+                  Thời gian {planData.duration}
+                </Text>
+              </View>
+            </View>
+
+            {/* Weight Info */}
+            <View style={styles.weightContainer}>
+              <View style={styles.weightItem}>
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+                >
+                  <AntDesign name="stock" size={16} color={color.white} />
+                  <Text style={styles.weightLabel}>Ban đầu</Text>
+                </View>
+                <Text style={styles.weightValue}>{user?.startWeight} Kg</Text>
+              </View>
+              <View style={styles.weightItem}>
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+                >
+                  <FontAwesome5 name="weight" size={14} color={color.white} />
+                  <Text style={styles.weightLabel}>Mục tiêu</Text>
+                </View>
+                <Text style={styles.weightValue}>{user?.targetWeight} Kg</Text>
+              </View>
+            </View>
+
+            {/* Progress Section */}
+            <View style={styles.progressSection}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={styles.progressLabel}>Tiến độ</Text>
+                <Text style={styles.labelHundred}>
+                  {planData.progressPercent}%
+                </Text>
+              </View>
+
+              <View style={styles.progressBarContainer}>
+                <View style={styles.progressBar}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      { width: `${planData.progressPercent}%` },
+                    ]}
+                  />
+                </View>
+              </View>
+              <Text style={styles.progressText}>
+                Ngày {planData.daysCompleted} / {planData.totalDays}
+              </Text>
+            </View>
+
+            {/* Streak Section */}
+            <View style={styles.streakContainer}>
+              <View style={styles.streakContent}>
+                <Text style={styles.streakLabel}>Số ngày đã kiên trì</Text>
+                <View style={styles.streakValueContainer}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 4,
+                    }}
+                  >
+                    <View style={styles.streakIcon}>
+                      <FontAwesome5 name="fire" size={24} color={color.white} />
+                    </View>
+                    <Text style={styles.streakValue}>
+                      {planData.streakDays}
+                    </Text>
+                  </View>
+                  <Text style={styles.streakUnit}>ngày liên tiếp</Text>
+                </View>
+              </View>
+            </View>
           </View>
 
-          <Text style={styles.planTitle}>{planData.title}</Text>
-
-          <View style={styles.dateContainer}>
-            <View style={[styles.dateItem, { paddingLeft: 3 }]}>
-              <FontAwesome
-                style={{ paddingRight: 3 }}
-                name="calendar"
-                size={16}
+          {/* --- Current Menu Section --- */}
+          <Text style={styles.sectionTitle}>Thực đơn hiện tại</Text>
+          {hasCurrentMenu ? (
+            <CurrentMenuCard
+              title={recipeData.title}
+              calorie={recipeData.calorie}
+              meals={recipeData.meals}
+              duration={recipeData.duration}
+              image={recipeData.image}
+              onChange={() => console.log("Thay đổi thực đơn")}
+            />
+          ) : (
+            <View style={[styles.emptyBox, { marginBottom: 28 }]}>
+              <Ionicons
+                name="restaurant-outline"
+                size={36}
                 color={color.dark_green}
               />
-              <Text style={styles.dateText}>
-                {planData.startDate} - {planData.endDate}
-              </Text>
+              <Text style={styles.emptyText}>Bạn chưa chọn thực đơn</Text>
+              <SCButton
+                title="Chọn thực đơn ngay"
+                bgColor={color.dark_green}
+                color={color.white}
+                borderRadius={20}
+                width={200}
+                height={45}
+                fontSize={14}
+                fontFamily={FONTS.semiBold}
+                onPress={() => handleRedirect("/tabs/recipe")}
+              />
             </View>
-            <View style={styles.dateItem}>
-              <Ionicons name="timer" size={20} color={color.dark_green} />
-              <Text style={styles.durationText}>
-                Thời gian {planData.duration}
-              </Text>
-            </View>
-          </View>
-
-          {/* Weight Info */}
-          <View style={styles.weightContainer}>
-            <View style={styles.weightItem}>
-              <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-              >
-                <AntDesign name="stock" size={16} color={color.white} />
-                <Text style={styles.weightLabel}>Ban đầu</Text>
-              </View>
-              <Text style={styles.weightValue}>{planData.initialWeight}</Text>
-            </View>
-            <View style={styles.weightItem}>
-              <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-              >
-                <FontAwesome5 name="weight" size={14} color={color.white} />
-                <Text style={styles.weightLabel}>Mục tiêu</Text>
-              </View>
-              <Text style={styles.weightValue}>{planData.targetWeight}</Text>
-            </View>
-          </View>
-
-          {/* Progress Section */}
-          <View style={styles.progressSection}>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Text style={styles.progressLabel}>Tiến độ</Text>
-              <Text style={styles.labelHundred}>
-                {planData.progressPercent}%
-              </Text>
-            </View>
-
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${planData.progressPercent}%` },
-                  ]}
-                />
-              </View>
-            </View>
-            <Text style={styles.progressText}>
-              Ngày {planData.daysCompleted} / {planData.totalDays}
-            </Text>
-          </View>
-
-          {/* Streak Section */}
-          <View style={styles.streakContainer}>
-            <View style={styles.streakContent}>
-              <Text style={styles.streakLabel}>Số ngày đã kiên trì</Text>
-              <View style={styles.streakValueContainer}>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: 4,
-                  }}
-                >
-                  <View style={styles.streakIcon}>
-                    <FontAwesome5 name="fire" size={24} color={color.white} />
-                  </View>
-                  <Text style={styles.streakValue}>{planData.streakDays}</Text>
-                </View>
-                <Text style={styles.streakUnit}>ngày liên tiếp</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* --- Current Menu Section --- */}
-        <Text style={styles.sectionTitle}>Thực đơn hiện tại</Text>
-        {hasCurrentMenu ? (
-          <CurrentMenuCard
-            title={recipeData.title}
-            calorie={recipeData.calorie}
-            meals={recipeData.meals}
-            duration={recipeData.duration}
-            image={recipeData.image}
-            onChange={() => console.log("Thay đổi thực đơn")}
-          />
-        ) : (
-          <View style={styles.emptyBox}>
-            <Ionicons
-              name="restaurant-outline"
-              size={36}
-              color={color.dark_green}
-            />
-            <Text style={styles.emptyText}>Bạn chưa chọn thực đơn</Text>
-            <SCButton
-              title="Chọn thực đơn ngay"
-              bgColor={color.dark_green}
-              color={color.white}
-              borderRadius={20}
-              width={200}
-              height={45}
-              fontSize={14}
-              fontFamily={FONTS.semiBold}
-              onPress={() => handleRedirect("/tabs/recipe")}
-            />
-          </View>
-        )}
-
-        {/* --- Exercise Section --- */}
-        <Text style={styles.excerciseTitle}>Thể dục</Text>
-        {hasCurrentExercise ? (
-          <CurrentExerciseCard
-            title={exerciseData.title}
-            day={exerciseData.day}
-            info={exerciseData.info}
-            progress={exerciseData.progress}
-            image={exerciseData.image}
-          />
-        ) : (
-          <View style={[styles.emptyBox, { marginBottom: 28 }]}>
-            <FontAwesome5 name="dumbbell" size={34} color={color.dark_green} />
-            <Text style={styles.emptyText}>Bạn chưa chọn bài tập</Text>
-            <SCButton
-              title="Chọn bài tập"
-              bgColor={color.dark_green}
-              color={color.white}
-              borderRadius={20}
-              width={200}
-              height={45}
-              fontSize={14}
-              fontFamily={FONTS.semiBold}
-              onPress={() => handleRedirect("/tabs/workouts")}
-            />
-          </View>
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -261,7 +271,18 @@ const styles = StyleSheet.create({
     color: color.dark_green,
     marginVertical: 12,
   },
-
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: color.white,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: color.dark_green,
+    fontFamily: FONTS.medium,
+    fontSize: 15,
+  },
   sectionPlan: {
     backgroundColor: color.white,
     borderRadius: 12,

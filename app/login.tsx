@@ -11,6 +11,7 @@ import {
   saveBooleanData,
   saveStringData,
 } from "@stores";
+import { ensureUserExists, partialUpdateUserStreak } from "@utils/firebaseRealTime";
 import { navigateCustom } from "@utils/navigation";
 import { Image } from "expo-image";
 import React, { useEffect, useState } from "react";
@@ -20,6 +21,8 @@ import SCButton from "../components/ui/SCButton";
 import color from "../constants/color";
 import { FONTS, globalStyles } from "../constants/fonts";
 import { useAuth } from "../contexts/AuthContext";
+import { RegisterANDLoginResponse } from "../types/auth";
+import { UserStatusLabel } from "../types/me";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -72,16 +75,41 @@ export default function LoginScreen() {
       if (email && password && email.trim() !== "" && password.trim() !== "") {
         setIsLoading(true);
         await handleRememberAccount();
+        
         const resultAction = await dispatch(loginThunk({ email, password }));
+  
         if (loginThunk.rejected.match(resultAction)) {
-          const errorMessage =
-            (resultAction.payload as string) ||
-            "Đăng ký thất bại không rõ lý do.";
+          // ... (Giữ nguyên logic lỗi)
+          const errorMessage = (resultAction.payload as string) || "Đăng ký thất bại không rõ lý do.";
           Alert.alert("Lỗi Đăng Ký", errorMessage);
+          setIsLoading(false); // Đảm bảo tắt loading khi có lỗi
           return;
         }
+  
+        // 💥 THAY THẾ LOGIC CŨ BẰNG VIỆC LẤY DỮ LIỆU TỪ resultAction
+        const loginPayload = resultAction.payload as RegisterANDLoginResponse;
+        const loggedInUser = loginPayload?.userDto; // LẤY DỮ LIỆU USER MỚI NHẤT TẠI ĐÂY
+  
         Alert.alert("Thành công", "Đăng nhập thành công!");
-        navigateCustom("/survey");
+        console.log("user từ payload", loggedInUser); 
+        
+        if(loggedInUser){ // Dùng loggedInUser thay cho user cũ
+          const userFromFirebase = await ensureUserExists(loggedInUser.id);
+          await partialUpdateUserStreak(userFromFirebase.userId);
+          if(loggedInUser.status === (UserStatusLabel.PendingOnboarding)){
+            navigateCustom("/survey");
+          }else if(loggedInUser.status === (UserStatusLabel.Active)){
+            navigateCustom("/tabs");
+          }else{
+            Alert.alert("Tài khoản của bạn đang có vấn đề, vui lòng liên hệ qua mail của chúng tôi để giải quyết");
+            navigateCustom("/login");
+          }
+        } else {
+           // Trường hợp không có userDto trong payload (nên không xảy ra)
+           Alert.alert("Lỗi Dữ Liệu", "Đăng nhập thành công nhưng không nhận được thông tin người dùng.");
+        }
+      
+        setIsLoading(false);
       } else {
         Alert.alert("Thông báo", "Vui lòng nhập email và mật khẩu hợp lệ");
       }

@@ -1,4 +1,4 @@
-import apiClient from "@services/apiClient";
+import { apiClient } from "@services/apiClient";
 import { ForgotPasswordRequest, LoginFacebookRequest, LoginGoogleRequest, LoginRequest, LogoutRequest, RefreshTokenRequest, RegisterRequest, ResetPasswordRequest, VerifyOTPRequest } from "../../types/auth";
 import { AUTH_URLS } from "./authUrls";
 

@@ -55,7 +55,7 @@ export const fetchExerciseById = createAsyncThunk<
   try {
     // Gọi API. Giả sử getExcerciseById trả về trực tiếp đối tượng Exercise
     const response = await excerciseApi.getExcerciseById(id);
-    return response.data as Exercise; 
+    return response.data.exercise as Exercise; 
   } catch (error) {
     return rejectWithValue(`Failed to fetch exercise with ID: ${id}.`);
   }

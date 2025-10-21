@@ -72,7 +72,7 @@ export const fetchProgramById = createAsyncThunk<
 >('programs/fetchProgramById', async (id, { rejectWithValue }) => {
   try {
     const response = await programApi.getProgramById(id);
-    return response.data as Program;
+    return response.data.program as Program;
   } catch (error) {
     return rejectWithValue(`Failed to fetch program with ID: ${id}.`);
   }

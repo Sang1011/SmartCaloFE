@@ -1,18 +1,19 @@
-import SCProgressBar from "@components/ui/SCProgressBar";
 import color from "@constants/color";
 import { globalStyles } from "@constants/fonts";
-import Feather from "@expo/vector-icons/Feather";
-import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 interface ScheduleSlotItemProps {
   day: number;
-  isCompleted: boolean;
-  exerciseCount?: number;
+  totalDurationMin?: number;
+  dayOff: boolean;
 }
 
-export default function ScheduleSlotItem({ day, isCompleted, exerciseCount = 0 }: ScheduleSlotItemProps) {
+export default function ScheduleSlotItem({
+  day,
+  totalDurationMin = 10,
+  dayOff,
+}: ScheduleSlotItemProps) {
   return (
     <View style={styles.slotItem}>
       <View style={styles.dayItem}>
@@ -23,7 +24,7 @@ export default function ScheduleSlotItem({ day, isCompleted, exerciseCount = 0 }
       </View>
 
       <View style={styles.completed}>
-        {isCompleted ? (
+        {/* {isCompleted ? (
           <>
             <Text style={[globalStyles.regular, { fontSize: 12 }]}>Đã hoàn thành</Text>
             <SCProgressBar
@@ -35,22 +36,30 @@ export default function ScheduleSlotItem({ day, isCompleted, exerciseCount = 0 }
             />
           </>
         ) : (
-          <>
-            <Text style={[globalStyles.regular, { fontSize: 12 }]}>
-              {exerciseCount} bài tập
-            </Text>
-            <SCProgressBar
+          <> */}
+        {dayOff ? (
+          <Text style={[globalStyles.regular, { fontSize: 12 }]}>
+            NGÀY NGHỈ
+          </Text>
+        ) : (
+          <Text style={[globalStyles.regular, { fontSize: 12 }]}>
+            6 bài tập
+          </Text>
+        )}
+        {/* <SCProgressBar
               color={color.dark_green}
               width={100}
               height={5}
               progress={0}
               duration={100}
-            />
-          </>
-        )}
+            /> */}
+        {/* </>
+        )} */}
       </View>
 
-      <View style={styles.marked}>
+      
+
+      {/* <View style={styles.marked}>
         {isCompleted ? (
           <LinearGradient
             colors={[color.scan_button_inner_left, color.scan_button_inner_right]}
@@ -63,7 +72,7 @@ export default function ScheduleSlotItem({ day, isCompleted, exerciseCount = 0 }
         ) : (
           <></>
         )}
-      </View>
+      </View> */}
     </View>
   );
 }

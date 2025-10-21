@@ -1,4 +1,4 @@
-import apiClient from "@services/apiClient";
+import { apiClient } from "@services/apiClient";
 import { PROGRAMS_URLS } from "./programUrls";
 
 export const programApi = {

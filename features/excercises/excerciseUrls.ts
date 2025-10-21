@@ -1,4 +1,4 @@
 export const EXCERCISE_URLS = {
-    GET_ALL: "/excercises",
-    GET_BY_ID: "/excercises",
+    GET_ALL: "/exercises",
+    GET_BY_ID: "/exercises",
 };

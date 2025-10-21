@@ -1,95 +1,101 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
+import { fetchMenuByDailyCalo } from "@features/menus";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { router } from "expo-router";
+import { useEffect } from "react";
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const recipes = [
-  {
-    id: 1,
-    title: "Eat Clean dành cho dân văn phòng bận rộn cùng Wao",
-    calorie: "1600-1800 cal/ ngày",
-    meals: "4 bữa / ngày",
-    duration: "7 ngày",
-    image: require("../../../assets/images/recipe_1.png"),
-    screen: "RecipeDetail",
-  },
-  {
-    id: 2,
-    title: "Bữa ăn dinh dưỡng dành cho các gymer cường độ cao",
-    calorie: "3000-5000 cal/ ngày",
-    meals: "4 bữa / ngày",
-    duration: "Hàng ngày",
-    image: require("../../../assets/images/recipe_2.png"),
-    screen: "RecipeDetail",
-  },
-  {
-    id: 3,
-    title: "Thực đơn giảm cân nhanh 1500 calo",
-    calorie: "1500 cal/ ngày",
-    meals: "3 bữa / ngày",
-    duration: "7 ngày",
-    image: require("../../../assets/images/recipe_1.png"),
-    screen: "RecipeDetail",
-  },
-];
-
 export default function RecipeScreen() {
+  const dispatch = useAppDispatch();
+  const { listData, loading } = useAppSelector((state: RootState) => state.menu);
+  const { user } = useAppSelector((state: RootState) => state.user);
+
+  useEffect(() => {
+    console.log("user", user);
+    dispatch(fetchMenuByDailyCalo({ dailyCalo: 1600 }));
+  }, []);
+
   return (
     <SafeAreaView edges={["top"]} style={styles.safeArea}>
+      {loading ? (
+        // ✅ Hiển thị loading khi đang tải
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={color.dark_green} />
+          <Text style={styles.loadingText}>Đang tải thực đơn...</Text>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}
+        >
+          {listData && listData.length > 0 ? (
+            listData.map((item) => (
+              <Pressable
+                key={item.id}
+                style={({ pressed }) => [
+                  styles.menuCard,
+                  pressed && { opacity: 0.85 },
+                ]}
+                onPress={() =>
+                  router.push({
+                    pathname: "/tabs/recipe/RecipeDetail",
+                    params: { recipeId: item.id, recipeName: item.menuName, imageUrl: item.imageUrl },
+                  })
+                }
+              >
+                {item.imageUrl ? (
+                  <Image
+                    src={item.imageUrl}
+                    style={styles.menuImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Image
+                    source={require("../../../assets/images/recipe_1.png")}
+                    style={styles.menuImage}
+                    resizeMode="cover"
+                  />
+                )}
 
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-      >
-        {recipes.map((item) => (
-          <Pressable
-            key={item.id}
-            style={({ pressed }) => [
-              styles.menuCard,
-              pressed && { opacity: 0.85 },
-            ]}
-            onPress={() =>
-              router.push({
-                pathname: "/tabs/recipe/RecipeDetail",
-                params: { recipeId: item.id },
-              })
-            }
-          >
-            <Image
-              source={item.image}
-              style={styles.menuImage}
-              resizeMode="cover"
-            />
-            <View style={styles.textContainer}>
-              <Text style={styles.menuTitle}>{item.title}</Text>
-              <Text style={styles.calorieInfo}>{item.calorie}</Text>
-
-              <View style={styles.detailsContainer}>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>{item.meals}</Text>
-                </View>
-                {/* Tag Thời gian - Sử dụng FONTS.bold */}
-                <View style={styles.detailItem}>
-                  <Text
-                    style={[styles.detailLabel, { fontFamily: FONTS.bold }]}
-                  >
-                    {item.duration}
+                <View style={styles.textContainer}>
+                  <Text style={styles.menuTitle}>{item.menuName}</Text>
+                  <Text style={styles.calorieInfo}>
+                    {item.dailyCaloriesMin} - {item.dailyCaloriesMax} calo
                   </Text>
+
+                  <View style={styles.detailsContainer}>
+                    <View style={styles.detailItem}>
+                      <Text style={styles.detailLabel}>4 bữa / ngày</Text>
+                    </View>
+                    <View style={styles.detailItem}>
+                      <Text
+                        style={[styles.detailLabel, { fontFamily: FONTS.bold }]}
+                      >
+                        30 ngày
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-              </View>
-            </View>
-          </Pressable>
-        ))}
-        <View style={{ height: 2 }} />
-      </ScrollView>
+              </Pressable>
+            ))
+          ) : (
+            <Text style={styles.noDataText}>Không có thực đơn phù hợp</Text>
+          )}
+
+          <View style={{ height: 2 }} />
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
@@ -98,12 +104,18 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: color.white,
-
   },
-  menuIconContainer: {
-    position: "absolute",
-    right: 16,
-    padding: 8,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: color.white,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: color.dark_green,
+    fontFamily: FONTS.medium,
+    fontSize: 15,
   },
   container: {
     flex: 1,
@@ -172,5 +184,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: color.white,
     fontFamily: FONTS.medium,
+  },
+  noDataText: {
+    textAlign: "center",
+    marginTop: 40,
+    color: color.grey,
+    fontSize: 15,
+    fontFamily: FONTS.regular,
   },
 });

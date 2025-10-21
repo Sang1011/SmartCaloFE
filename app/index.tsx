@@ -12,7 +12,7 @@ export default function Index() {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
         <Text style={{ fontSize: 24 , fontFamily: FONTS.bold, color: color.dark_green}}>
-          ĐANG KIỂM TRA...
+          ĐANG TẢI...
         </Text>
         <ActivityIndicator size="large" color={color.dark_green} />
       </View>
@@ -21,7 +21,7 @@ export default function Index() {
 
   return (
      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Text style={{ fontSize: 24 , fontFamily: FONTS.bold, color: color.dark_green}}>LOADING...</Text>
+      <Text style={{ fontSize: 24 , fontFamily: FONTS.bold, color: color.dark_green}}>ĐANG TẢI...</Text>
       <ActivityIndicator size="large" color={color.dark_green} />
     </View>
   );

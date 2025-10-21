@@ -23,7 +23,7 @@ const MOCK_MESSAGES = [
 ];
 
 // Component cho 1 tin nhắn
-const MessageBubble = ({ message }) => {
+const MessageBubble = ({ message}: {message: any}) => {
     const isUser = message.sender === 'user';
     return (
         <View style={[

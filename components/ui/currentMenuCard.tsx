@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
+import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import color from "@constants/color";
+import { Image, StyleSheet, Text, View } from "react-native";
 import SCButton from "./SCButton";
 
 type Props = {

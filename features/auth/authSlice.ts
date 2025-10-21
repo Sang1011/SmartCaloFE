@@ -1,24 +1,24 @@
 import { HAS_LOGGED_IN, HAS_OPENED_APP } from "@constants/app";
-import { UserDto } from "@features/users";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
-  deleteTokens,
-  getAccessToken,
-  getRefreshToken,
-  saveBooleanData,
-  saveTokens
+    deleteTokens,
+    getAccessToken,
+    getRefreshToken,
+    saveBooleanData,
+    saveTokens
 } from "@stores";
 import {
-  ForgotPasswordRequest,
-  LoginGoogleRequest,
-  LoginGoogleResponse,
-  LoginRequest,
-  RefreshTokenResponse,
-  RegisterANDLoginResponse,
-  RegisterRequest,
-  ResetPasswordRequest,
-  VerifyOTPRequest,
+    ForgotPasswordRequest,
+    LoginGoogleRequest,
+    LoginGoogleResponse,
+    LoginRequest,
+    RefreshTokenResponse,
+    RegisterANDLoginResponse,
+    RegisterRequest,
+    ResetPasswordRequest,
+    VerifyOTPRequest,
 } from "../../types/auth";
+import { UserDTOLogin } from "../../types/me";
 import { authApi } from "./authApi";
 import { AUTH_URLS } from "./authUrls";
 
@@ -26,7 +26,7 @@ interface AuthState {
     loading: boolean;
     error: string | null;
     isNewUser?: boolean;
-    user?: any | null;
+    user?: UserDTOLogin | null;
     resetToken: string;
 }
 
@@ -67,7 +67,7 @@ export const hydrateUserThunk = createAsyncThunk(
         const payload = decodeToken(accessToken);
         if (payload && payload.userDto) {
             // Cập nhật state user dựa trên dữ liệu giải mã từ token
-            dispatch(setCredentials({ user: payload.userDto }));
+            dispatch(setCredentials({ userDto: payload.userDto }));
             return payload.userDto;
         }
 
@@ -94,6 +94,7 @@ export const loginThunk = createAsyncThunk(
     async ({ email, password }: LoginRequest, { rejectWithValue }) => {
         try {
             const res = await authApi.login({ email, password });
+            console.log("res Login", res.data);
             return res.data as RegisterANDLoginResponse;
         } catch (err: any) {
             return rejectWithValue(handleAuthError(err));
@@ -163,7 +164,7 @@ export const refreshTokenThunk = createAsyncThunk(
 
             const res = await authApi.refresh({ accessToken, refreshToken });
             // API refresh thường trả về user object mới (userDto) cùng với token mới
-            return res.data as RefreshTokenResponse & { userDto: any }; 
+            return res.data as RefreshTokenResponse & { userDto: UserDTOLogin }; 
         } catch (err: any) {
             return rejectWithValue(handleAuthError(err));
         }
@@ -203,8 +204,8 @@ const authSlice = createSlice({
         clearError(state) {
             state.error = null;
         },
-        setCredentials(state, action: PayloadAction<{ user: any }>) {
-            state.user = action.payload.user;
+        setCredentials(state, action: PayloadAction<{ userDto: UserDTOLogin }>) {
+            state.user = action.payload.userDto;
             state.loading = false;
             state.error = null;
         },
@@ -226,7 +227,6 @@ const authSlice = createSlice({
         ) => {
             state.loading = false;
             state.isNewUser = action.payload.isNewUser || false;
-            // FIX: Cập nhật state.user khi đăng nhập/đăng ký thành công
             state.user = action.payload.userDto; 
             saveTokens(action.payload.accessToken, action.payload.refreshToken);
             console.log("✅ getAccessTokens:", getAccessToken);
@@ -257,7 +257,7 @@ const authSlice = createSlice({
             .addCase(refreshTokenThunk.pending, handlePending)
             .addCase(
                 refreshTokenThunk.fulfilled,
-                (state, action: PayloadAction<RefreshTokenResponse & { userDto: UserDto }>) => {
+                (state, action: PayloadAction<RefreshTokenResponse & { userDto: UserDTOLogin }>) => {
                     state.loading = false;
                     if (action.payload.userDto) { 
                         state.user = action.payload.userDto;

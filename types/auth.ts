@@ -1,22 +1,10 @@
+import { UserDTOLogin } from "./me";
+
 export type LoginGoogleResponse = {
   accessToken: string;
   refreshToken: string;
   isNewUser: boolean;
-  userDto: {
-    id: string;
-    email: string;
-    name: string;
-    avatarUrl: string;
-    age: number;
-    weight: number;
-    height: number;
-    gender: string;
-    activityLevel: string;
-    dailyCaloGoal: number;
-    currentPlanId: number;
-    currentSubscriptionExpiresAt: string;
-    roles: string[];
-  };
+  userDto: UserDTOLogin 
 };
 
 export type RefreshTokenResponse = {
@@ -78,35 +66,5 @@ export type RegisterANDLoginResponse = {
   accessToken: string;
   refreshToken: string;
   isNewUser: boolean;
-  userDto: {
-    id: string;
-    email: string;
-    name: string;
-    avatarUrl: string;
-    age: number;
-    weight: number;
-    height: number;
-    gender: string;
-    activityLevel: string;
-    dailyCaloGoal: number;
-    currentPlanId: number;
-    currentSubscriptionExpiresAt: string;
-    roles: string[];
-  };
+  userDto: UserDTOLogin
 };
-
-export type UpdateUserDTO = {
-  id: string;
-  email: string;
-  name: string;
-  avatarUrl: string;
-  age: number;
-  weight: number;
-  height: number;
-  gender: string;
-  activityLevel: string;
-  dailyCaloGoal: number;
-  currentPlanId: number;
-  currentSubscriptionExpiresAt: string;
-  roles: string[];
-}
