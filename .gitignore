@@ -43,3 +43,6 @@ app-example
 /android
 
 smartcalo-release.keystore
+
+.env
+.env*
