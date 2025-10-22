@@ -32,7 +32,7 @@ export default function DefaultScreen() {
         // ✅ Hiển thị loading khi đang tải
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Color.dark_green} />
-          <Text style={styles.loadingText}>Đang tải...</Text>
+          <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
         </View>
       ) : (
         <ScrollView style={styles.scrollView}>

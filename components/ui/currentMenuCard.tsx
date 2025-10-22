@@ -1,23 +1,26 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { navigateCustom } from "@utils/navigation";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import SCButton from "./SCButton";
 
 type Props = {
+  menuId: string;
   title: string;
-  calorie: string;
-  meals: string;
-  duration: string;
-  image: any;
+  minCalorie: number;
+  maxCalorie: number;
+  meals?: string;
+  image: string;
   onChange?: () => void;
 };
 
 export default function CurrentMenuCard({
   title,
-  calorie,
+  minCalorie,
+  maxCalorie,
+  menuId,
   meals,
-  duration,
   image,
   onChange,
 }: Props) {
@@ -47,30 +50,41 @@ export default function CurrentMenuCard({
       </View>
 
       {/* Card */}
-      <View style={styles.card}>
-        <Image source={image} style={styles.image} resizeMode="cover" />
+      <Pressable style={styles.card} onPress={() => {
+        navigateCustom("/tabs/recipe/RecipeDetail", {
+          params: {
+            recipeId: menuId,
+            recipeName: title,
+            imageUrl: image,
+            backExplore: "true"
+          }
+        })
+      }}>
+        <Image src={image} style={styles.image} resizeMode="cover" />
 
         <View style={styles.info}>
           <Text style={styles.cardTitle}>{title}</Text>
-          <Text style={styles.calorie}>{calorie}</Text>
+          <Text style={styles.calorie}>
+            {minCalorie} - {maxCalorie} calo
+          </Text>
 
           <View style={styles.detailRow}>
-            <View style={styles.detailTag}>
+            {/* <View style={styles.detailTag}>
               <Text style={styles.detailText}>{meals}</Text>
-            </View>
-            <View style={styles.detailTag}>
+            </View> */}
+            {/* <View style={styles.detailTag}>
               <Text style={styles.detailText}>{duration}</Text>
-            </View>
+            </View> */}
           </View>
         </View>
-      </View>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 32,
   },
   header: {
     flexDirection: "row",
@@ -80,8 +94,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontFamily: FONTS.semiBold,
-    color: "#000",
+    fontFamily: FONTS.bold,
+    color: color.black
   },
   changeText: {
     fontSize: 14,

@@ -32,7 +32,7 @@ export default function RecipeScreen() {
         // ✅ Hiển thị loading khi đang tải
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={color.dark_green} />
-          <Text style={styles.loadingText}>Đang tải thực đơn...</Text>
+          <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
         </View>
       ) : (
         <ScrollView

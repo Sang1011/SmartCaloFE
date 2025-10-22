@@ -1,3 +1,4 @@
+import { chatReducer } from "@features/chat";
 import { dishesReducer } from "@features/dishes";
 import { excerciseReducer } from "@features/excercises";
 import { menuReducer } from "@features/menus";
@@ -21,7 +22,8 @@ export const store = configureStore({
     dish: dishesReducer,
     workout: workoutReducer,
     payment: paymentReducer,
-    workoutExcercise: workoutExcerciseReducer
+    workoutExcercise: workoutExcerciseReducer,
+    chat: chatReducer
   },
 });
 

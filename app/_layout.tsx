@@ -6,6 +6,7 @@ import { Stack } from "expo-router";
 import React from "react";
 import { StatusBar } from "react-native";
 import { LocaleConfig } from "react-native-calendars";
+import 'react-native-get-random-values';
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Provider } from "react-redux";
 import { store } from "../redux";

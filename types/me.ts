@@ -4,6 +4,9 @@ export interface UserStatsDto {
     bmi: number;
     bmr: number;
     tdee: number;
+    proteinGrams: number;
+    carbsGrams: number;
+    fatGrams: number;
     healthGoal: HealthGoal;
     recordDate: string; // ISO 8601 Date String
 }
@@ -106,6 +109,18 @@ export const activityLevelMap: Record<string, ActivityLevel> = {
     VeryActive: ActivityLevel.VeryActive,
     ExtraActive: ActivityLevel.ExtraActive,
   };
+
+  export const activityLevelVNMap: Record<string, string> = {
+    Sedentary: "Ít vận động",
+    LightlyActive: "Vận động nhẹ",
+    ModeratelyActive: "Vận động vừa phải",
+    VeryActive: "Vận động nhiều",
+    ExtraActive: "Vận động rất nhiều",
+  };
+
+  export const activityLevelENMap: Record<string, string> = Object.fromEntries(
+    Object.entries(activityLevelVNMap).map(([en, vn]) => [vn, en])
+  );
 
 export const genderLabelMap: Record<Gender, string> = {
     [Gender.Male]: "Male",

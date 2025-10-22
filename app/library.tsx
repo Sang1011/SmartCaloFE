@@ -72,19 +72,19 @@ export default function LibraryScreen() {
   };
 
   if (loading) {
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text
-          style={{
-            fontSize: 24,
-            fontFamily: FONTS.bold,
-            color: color.dark_green,
-          }}
-        >
-          LOADING...
-        </Text>
-        <ActivityIndicator size="large" color={color.dark_green} />
-      </View>;
-    }
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text
+        style={{
+          fontSize: 24,
+          fontFamily: FONTS.bold,
+          color: color.dark_green,
+        }}
+      >
+        LOADING...
+      </Text>
+      <ActivityIndicator size="large" color={color.dark_green} />
+    </View>;
+  }
 
   return (
     <View style={styles.container}>
@@ -169,6 +169,13 @@ export default function LibraryScreen() {
           </View>
         </View>
       </Modal>
+      {loading ? (
+        // ✅ Hiển thị loading khi đang tải
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={color.dark_green} />
+          <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
+        </View>
+      ) : (
         <FlatList
           data={filteredFoods}
           numColumns={2}
@@ -218,6 +225,7 @@ export default function LibraryScreen() {
             </TouchableOpacity>
           )}
         />
+      )}
     </View>
   );
 }
@@ -228,6 +236,18 @@ const styles = StyleSheet.create({
     backgroundColor: color.background,
     paddingHorizontal: 16,
     paddingTop: 60,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: color.white,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: color.dark_green,
+    fontFamily: FONTS.medium,
+    fontSize: 15,
   },
   header: {
     flexDirection: "row",

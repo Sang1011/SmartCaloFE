@@ -40,10 +40,12 @@ export default function SubscriptionScreen() {
 
   // Cập nhật: Chỉ tạo QR và mở Modal. Logic Polling sẽ chạy trong useEffect.
   const handlePaymentURlCreate = async () => {
-    // 1. Tạo QR và transactionId
-    await dispatch(fetchPaymentQRUrl({ planId: selectedPlanId }));
-    // 2. Mở Modal
-    setIsModalVisible(true);
+    const res = await dispatch(fetchPaymentQRUrl({ planId: selectedPlanId })).unwrap();
+    if (res?.transactionId) {
+      setIsModalVisible(true);
+    } else {
+      Alert.alert("Lỗi", "Không thể tạo QR. Vui lòng thử lại!");
+    }
   };
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export default function SubscriptionScreen() {
     // Hàm xử lý khi trạng thái App thay đổi
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       // Nếu trạng thái chuyển từ background/inactive sang active (người dùng quay lại app)
-      if (nextAppState === 'active' && isModalVisible && transactionId && paymentStatus !== 'SUCCESS') {
+      if (nextAppState === 'active' && isModalVisible && transactionId && paymentStatus?.toString().toLowerCase() !== 'completed') {
         console.log("App returned to foreground. Force checking payment status.");
         
         // Buộc dispatch ngay lập tức để cập nhật trạng thái sau khi quay lại
@@ -94,7 +96,7 @@ export default function SubscriptionScreen() {
     const POLLING_INTERVAL = 1000; // 1 giây
     
     // 1. Dừng Polling nếu đã thành công
-    if (paymentStatus === 'SUCCESS') {
+    if (paymentStatus?.toString().toLowerCase() === 'completed') {
         if (intervalId) clearInterval(intervalId);
         Alert.alert("Thành công! 🎉", "Tài khoản của bạn đã được nâng cấp!");
         return; 
@@ -102,18 +104,19 @@ export default function SubscriptionScreen() {
 
     // 2. Bắt đầu Polling: Chỉ Polling khi Modal mở, có ID giao dịch và chưa thành công
     if (isModalVisible && transactionId) {
-      
-      intervalId = setInterval(() => {
-        dispatch(fetchPaymentStatus(transactionId)); 
-        console.log("Checking payment status for transaction:", transactionId);
-      }, POLLING_INTERVAL);
+      setTimeout(() => {
+        intervalId = setInterval(() => {
+          dispatch(fetchPaymentStatus(transactionId));
+          console.log("⏳ Checking payment status for:", transactionId);
+        }, POLLING_INTERVAL);
+      }, 2000);
     }
 
     // 3. Cleanup Function: Dọn dẹp Interval
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
-        console.log("Payment status check stopped.");
+        console.log("🛑Payment status check stopped.");
       }
     };
   }, [isModalVisible, transactionId, paymentStatus, dispatch]);
@@ -339,7 +342,7 @@ export default function SubscriptionScreen() {
                         <Text style={styles.statusTextPending}>Đang chờ xác nhận từ ngân hàng...</Text>
                     </View>
                 )}
-                {paymentStatus === 'Success' && (
+                {paymentStatus === 'Completed' && (
                     <View style={styles.statusRow}>
                         <Ionicons name="checkmark-circle" size={20} color={color.green} />
                         <Text style={styles.statusTextSuccess}>Thanh toán thành công!</Text>

@@ -1,5 +1,6 @@
 import { authApi } from "@features/auth";
-import { getAccessToken, getRefreshToken, saveTokens } from "@stores";
+import { deleteTokens, getAccessToken, getRefreshToken, saveTokens } from "@stores";
+import { navigateCustom } from "@utils/navigation";
 import axios, { AxiosResponse } from "axios";
 import { RefreshTokenResponse } from "../../types/auth";
 
@@ -34,6 +35,14 @@ export const responseInterceptor = {
     const originalRequest = error.config;
     const baseURL = originalRequest?.baseURL || "";
     const url = originalRequest?.url || "";
+
+    // 🧱 Nếu lỗi nằm ở route refresh => không retry nữa
+    if (url.includes("/auth/refresh")) {
+      console.warn("🔒 Refresh token đã hết hạn hoặc không hợp lệ -> logout");
+      await deleteTokens(); // xoá token
+      navigateCustom("/login");
+      return Promise.reject(error);
+    }
 
     console.log("❌ API ERROR:", {
       url: url,

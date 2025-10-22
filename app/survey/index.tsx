@@ -167,7 +167,7 @@ export default function SurveyScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={color.dark_green || "#6C9C39"} />
           <Text style={[styles.loadingText, globalStyles.semiBold]}>
-            Đang khởi tạo dữ liệu cho bạn...
+            Đang tải dữ liệu...
           </Text>
         </View>
       ) : (

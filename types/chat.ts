@@ -3,6 +3,10 @@ export type CreateChatStreamBodyRequest = {
   question: string;
 }
 
+export type CreateChatStreamBodyResponse = {
+  streamedResponse: string[]
+}
+
 export type GetAllMessageResponse = {
   pageIndex: 0;
   pageSize: 0;

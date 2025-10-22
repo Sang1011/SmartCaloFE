@@ -1,43 +1,59 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
-import React, { Dispatch, SetStateAction, useEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import Entypo from '@expo/vector-icons/Entypo';
+import React, { Dispatch, SetStateAction } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Meal, MealDish } from "../../types/menu";
 import { MealDishItem } from "./MealItem";
 
 interface DayMealSectionProps {
   menuId: string;
   meal: Meal;
-  // These props are passed down but not directly used in the section
-  dishList: MealDish[] | []; 
-  setDishList: Dispatch<SetStateAction<MealDish[] | []>>;
+  isOpenModal: boolean;
+  setIsOpenModal: Dispatch<SetStateAction<boolean>>;
+  onDeleteDish: (mealId: string, dishId: string) => void;
+  onOpenAddDishModal: (mealId: string, mealType: string) => void; // ✅ Thêm prop này
 }
 
-export const DayMealSection: React.FC<DayMealSectionProps> = ({ menuId, meal, dishList, setDishList }) => {
-    useEffect(() => {
-      if (meal?.mealDishes && meal.mealDishes.length > 0) {
-        setDishList(meal.mealDishes);
-      }
-    }, [meal, setDishList]);
+export const DayMealSection: React.FC<DayMealSectionProps> = ({ 
+  menuId, 
+  meal, 
+  isOpenModal, 
+  setIsOpenModal,
+  onDeleteDish,
+  onOpenAddDishModal 
+}) => {
   
-    return (
-      <View style={styles.mealSectionContainer}>
-        <View style={styles.mealSectionHeader}>
-          <Text style={styles.mealSectionTitle}>{meal.mealType}</Text>
+  return (
+    <View style={styles.mealSectionContainer}>
+      <View style={styles.mealSectionHeader}>
+        <Text style={styles.mealSectionTitle}>{meal.mealType}</Text>
+        <View style={styles.headerRight}>
           <Text style={styles.mealSectionCalories}>{meal.totalCalories} calo</Text>
+          {isOpenModal && (
+            <Pressable 
+              style={styles.addButton}
+              onPress={() => onOpenAddDishModal(meal.id, meal.mealType)}
+            >
+              <Text style={styles.addButtonText}>Thêm</Text>
+              <Entypo name="circle-with-plus" size={20} color={color.dark_green} />
+            </Pressable>
+          )}
         </View>
-        {dishList.map((item: MealDish) => (
-          <MealDishItem 
-            key={item.id} 
-            item={item}
-            menuId={menuId}
-          />
-        ))}
       </View>
-    );
-  };
+      {meal.mealDishes.map((item: MealDish) => (
+        <MealDishItem 
+          key={item.id} 
+          item={item}
+          isOpenModal={isOpenModal}
+          menuId={menuId}
+          onDelete={(dishId) => onDeleteDish(meal.id, dishId)}
+        />
+      ))}
+    </View>
+  );
+};
 
-// Reuse the relevant styles here
 const styles = StyleSheet.create({
   mealSectionContainer: {
     marginTop: 24,
@@ -53,9 +69,28 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: color.black,
   },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
   mealSectionCalories: {
     fontFamily: FONTS.medium,
     fontSize: 14,
-    color: color.light_gray,
+    color: color.grey,
+  },
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: color.light_green || "#E8F5E9",
+  },
+  addButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 13,
+    color: color.dark_green,
   },
 });

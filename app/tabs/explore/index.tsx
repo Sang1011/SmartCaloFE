@@ -7,24 +7,15 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { fetchMenuByUserId } from "@features/menus";
 import { fetchCurrentUserThunk } from "@features/users";
 import { useRoute } from "@react-navigation/native";
 import { RootState } from "@redux";
 import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { ensureUserExists } from "@utils/firebaseRealTime";
 import { navigateCustom } from "@utils/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
-
-const recipeData = {
-  id: 1,
-  title:
-    "Eat Clean dành cho dân văn phòng bận rộn cùng SmartCalo (1600-1800 calo)",
-  calorie: "1600-1800 cal/ ngày",
-  meals: "4 bữa / ngày",
-  duration: "7 ngày",
-  image: require("../../../assets/images/recipe_1.png"),
-};
 
 type ExerciseType = {
   title: string;
@@ -64,6 +55,8 @@ export default function ExploreScreen() {
   const dispatch = useAppDispatch();
 
   const { user, loading } = useAppSelector((state: RootState) => state.user);
+  const { menuByUserId } = useAppSelector((state: RootState) => state.menu);
+  const [hasCurrentMenu, setHasCurrentMenu] = useState<boolean>(false);
 
   // 🔹 Chỉ fetch user từ backend 1 lần khi vào component
   useEffect(() => {
@@ -74,8 +67,23 @@ export default function ExploreScreen() {
   useEffect(() => {
     if (user?.id) {
       fetchUserFromFirebase(user.id);
+      fetchCurrentMenu(user.id);
     }
-  }, [user?.id]);
+  }, [user]);
+
+  useEffect(() => {
+    if(menuByUserId){
+      setHasCurrentMenu(true);
+    }
+  }, [menuByUserId])
+
+  const fetchCurrentMenu = async (id: string) => {
+    try{
+      await dispatch(fetchMenuByUserId({userId: id}));
+    } catch (err) {
+      console.error("❌ Error ensuring Firebase user:", err);
+    }
+  }
 
   const fetchUserFromFirebase = async (id: string) => {
     try {
@@ -91,15 +99,13 @@ export default function ExploreScreen() {
     navigateCustom(url);
   };
 
-  const hasCurrentMenu = false;
-
   return (
     <View style={styles.container}>
       {loading ? (
         // ✅ Hiển thị loading khi đang tải
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={color.dark_green} />
-          <Text style={styles.loadingText}>Đang tải...</Text>
+          <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
         </View>
       ) : (
         <ScrollView style={styles.contentContainer}>
@@ -213,14 +219,13 @@ export default function ExploreScreen() {
           </View>
 
           {/* --- Current Menu Section --- */}
-          <Text style={styles.sectionTitle}>Thực đơn hiện tại</Text>
-          {hasCurrentMenu ? (
+          {hasCurrentMenu && menuByUserId ? (
             <CurrentMenuCard
-              title={recipeData.title}
-              calorie={recipeData.calorie}
-              meals={recipeData.meals}
-              duration={recipeData.duration}
-              image={recipeData.image}
+              menuId={menuByUserId?.id}
+              title={menuByUserId?.menuName}
+              minCalorie={menuByUserId.dailyCaloriesMin}
+              maxCalorie={menuByUserId.dailyCaloriesMax}
+              image={menuByUserId.imageUrl}
               onChange={() => console.log("Thay đổi thực đơn")}
             />
           ) : (

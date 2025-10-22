@@ -22,6 +22,14 @@ export default function ProfileLayout() {
           headerTitleAlign: "center",
         }}
       />
+      <Stack.Screen
+        name="reviewApp"
+        options={{
+          headerTitle: "Đánh giá App",
+          headerTitleStyle: styles.headerTitle,
+          headerTitleAlign: "center",
+        }}
+      />
     </Stack>
   );
 }

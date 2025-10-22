@@ -131,6 +131,22 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>TÀI KHOẢN</Text>
 
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigateCustom("/tabs/profile/reviewApp")}
+          >
+            <View style={styles.menuIcon}>
+              {/* Chọn icon phù hợp, ví dụ Star hoặc Edit */}
+              <MaterialIcons name="star-outline" size={20} color={color.icon} />
+            </View>
+            <Text style={styles.menuText}>Đánh giá ứng dụng</Text>
+            <MaterialIcons
+              name="keyboard-arrow-right"
+              size={24}
+              color={color.icon}
+            />
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuIcon}>
               <Feather name="trash-2" size={20} color={color.icon} />
