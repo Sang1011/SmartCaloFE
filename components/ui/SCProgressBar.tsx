@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from "react";
-import { View, Animated, StyleSheet } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
 import Color from "../../constants/color";
 
 interface ISCProgressBarProps {
-  progress: number;          // giá trị % từ 0–100
+  progress: number;          // giá trị hiện tại
+  maxProgress?: number;      // giá trị tối đa (mặc định 100)
   color?: string;            // màu thanh tiến trình
   height?: number;           // chiều cao
   width?: number | string;   // chiều rộng
@@ -12,6 +13,7 @@ interface ISCProgressBarProps {
 
 export default function SCProgressBar({
   progress,
+  maxProgress = 100,
   color = Color.progress_default,
   height = 4,
   width = "100%",
@@ -19,13 +21,17 @@ export default function SCProgressBar({
 }: ISCProgressBarProps) {
   const animatedWidth = useRef(new Animated.Value(0)).current;
 
+  // ✅ Tính phần trăm an toàn
+  const safePercent =
+    maxProgress > 0 ? Math.min((progress / maxProgress) * 100, 100) : 0;
+
   useEffect(() => {
     Animated.timing(animatedWidth, {
-      toValue: progress,
-      duration: duration,
+      toValue: safePercent,
+      duration,
       useNativeDriver: false,
     }).start();
-  }, [progress, duration, animatedWidth]);
+  }, [safePercent, duration, animatedWidth]);
 
   const barWidth = animatedWidth.interpolate({
     inputRange: [0, 100],
@@ -33,7 +39,15 @@ export default function SCProgressBar({
   });
 
   return (
-    <View style={[styles.container, { height: height, width: width as import("react-native").DimensionValue }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          height,
+          width: width as import("react-native").DimensionValue,
+        },
+      ]}
+    >
       <Animated.View
         style={[
           styles.progressBar,

@@ -6,6 +6,7 @@ import { Stack } from "expo-router";
 import React from "react";
 import { StatusBar } from "react-native";
 import { LocaleConfig } from "react-native-calendars";
+import 'react-native-get-random-values';
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Provider } from "react-redux";
 import { store } from "../redux";
@@ -97,7 +98,7 @@ export default function RootLayout() {
               <Stack.Screen name="login" />
               <Stack.Screen name="survey/index" />
               <Stack.Screen name="tabs" />
-              <Stack.Screen name="/schedule/workout/index" />
+              <Stack.Screen name="/schedule/workout" />
               <Stack.Screen name="+not-found" />
             </Stack>
             </SafeAreaView>

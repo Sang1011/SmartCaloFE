@@ -1,6 +1,7 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import SCButton from "../../components/ui/SCButton";
 import color from "../../constants/color";
@@ -17,7 +18,6 @@ interface SurveyLayoutProps {
   isNextDisabled?: boolean;
 }
 
-
 export default function SurveyLayout({
   children,
   currentStep,
@@ -28,46 +28,48 @@ export default function SurveyLayout({
   isNextDisabled = false,
 }: SurveyLayoutProps) {
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
-      </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
+        </View>
 
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {children}
-      </ScrollView>
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </ScrollView>
 
-      <View style={styles.footer}>
-        {currentStep > 1 && (
+        <View style={styles.footer}>
+          {currentStep > 1 && (
+            <SCButton
+              title=""
+              onPress={onBack}
+              style={styles.backButton}
+              icon={<AntDesign name="left" size={20} color={color.dark_green} />}
+            />
+          )}
           <SCButton
-            title=""
-            onPress={onBack}
-            style={styles.backButton}
-            icon={<AntDesign name="left" size={20} color={color.dark_green} />}
+            title={isFinalStep ? "Hoàn thành" : "Tiếp tục"}
+            onPress={isNextDisabled ? () => {} : onNext}
+            fontFamily={FONTS.semiBold}
+            style={[
+              styles.nextButton,
+              currentStep === 1 && { width: "100%" },
+              isNextDisabled && styles.disabledButton,
+            ]}
+            iconPos="right"
+            icon={
+              !isFinalStep && (
+                <AntDesign name="right" size={16} color={color.white} />
+              )
+            }
           />
-        )}
-        <SCButton
-          title={isFinalStep ? "Hoàn thành" : "Tiếp tục"}
-          onPress={isNextDisabled ? () => {} : onNext}
-          fontFamily={FONTS.semiBold}
-          style={[
-            styles.nextButton,
-            currentStep === 1 && { width: "100%" },
-            isNextDisabled && styles.disabledButton,
-          ]}
-          iconPos="right"
-          icon={
-            !isFinalStep && (
-              <AntDesign name="right" size={16} color={color.white} />
-            )
-          }
-        />
+        </View>
       </View>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 

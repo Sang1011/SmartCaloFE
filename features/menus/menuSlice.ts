@@ -3,7 +3,7 @@ import {
   AdopMenuBodyRequest,
   AdoptCustomMenuResponse,
   MenuDay,
-  MenuItemResponse
+  MenuItemResponse,
 } from "../../types/menu";
 import { menuApi } from "./menuApi";
 
@@ -14,6 +14,8 @@ interface MenuState {
   adoptedMenu: AdoptCustomMenuResponse | null;
   loading: boolean;
   error: string | null;
+  editedMenuDays: Record<number, MenuDay>; // ✅ dùng object thay vì Map
+  hasUnsavedChanges: boolean;
 }
 
 const initialState: MenuState = {
@@ -23,11 +25,12 @@ const initialState: MenuState = {
   adoptedMenu: null,
   loading: false,
   error: null,
+  editedMenuDays: {},
+  hasUnsavedChanges: false,
 };
 
 // ==================== ASYNC THUNKS ====================
 
-// Lấy menu theo ID và ngày
 export const fetchMenuByIdAndDay = createAsyncThunk<
   MenuDay,
   { menuId: string; dayNumber: number },
@@ -42,7 +45,6 @@ export const fetchMenuByIdAndDay = createAsyncThunk<
   }
 });
 
-// Lấy menu theo lượng calo mỗi ngày
 export const fetchMenuByDailyCalo = createAsyncThunk<
   MenuItemResponse[],
   { dailyCalo: number },
@@ -75,8 +77,6 @@ export const fetchMenuByUserId = createAsyncThunk<
   }
 });
 
-
-// Áp dụng custom menu
 export const adoptCustomMenu = createAsyncThunk<
   AdoptCustomMenuResponse,
   AdopMenuBodyRequest,
@@ -87,7 +87,9 @@ export const adoptCustomMenu = createAsyncThunk<
     return res.data;
   } catch (err: any) {
     console.error("❌ Lỗi adoptCustomMenu:", err);
-    return rejectWithValue(err.response?.data?.message || "Không thể áp dụng menu tuỳ chỉnh");
+    return rejectWithValue(
+      err.response?.data?.message || "Không thể áp dụng menu tuỳ chỉnh"
+    );
   }
 });
 
@@ -102,8 +104,41 @@ const menuSlice = createSlice({
       state.adoptedMenu = null;
       state.error = null;
       state.loading = false;
+      state.editedMenuDays = {}; // ✅ reset về object trống
+      state.hasUnsavedChanges = false;
+    },
+
+    // ✅ Lưu thay đổi của một ngày cụ thể
+    saveEditedDay: (
+      state,
+      action: PayloadAction<{ dayNumber: number; menuDay: MenuDay }>
+    ) => {
+      const { dayNumber, menuDay } = action.payload;
+      state.editedMenuDays[dayNumber] = menuDay; // ✅ object assign
+      state.hasUnsavedChanges = true;
+    },
+
+    // ✅ Lấy dữ liệu đã chỉnh sửa của một ngày (nếu có)
+    loadEditedDay: (state, action: PayloadAction<number>) => {
+      const dayNumber = action.payload;
+      const editedDay = state.editedMenuDays[dayNumber];
+      if (editedDay) {
+        state.data = editedDay;
+      }
+    },
+
+    // ✅ Xóa tất cả thay đổi chưa lưu
+    discardChanges: (state) => {
+      state.editedMenuDays = {};
+      state.hasUnsavedChanges = false;
+    },
+
+    // ✅ Đánh dấu là đã lưu thành công
+    markChangesSaved: (state) => {
+      state.hasUnsavedChanges = false;
     },
   },
+
   extraReducers: (builder) => {
     // --- fetchMenuByUserId ---
     builder
@@ -111,7 +146,7 @@ const menuSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchMenuByUserId.fulfilled, (state, action: PayloadAction<MenuItemResponse>) => {
+      .addCase(fetchMenuByUserId.fulfilled, (state, action) => {
         state.loading = false;
         state.menuByUserId = action.payload;
       })
@@ -126,9 +161,10 @@ const menuSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchMenuByIdAndDay.fulfilled, (state, action: PayloadAction<MenuDay>) => {
+      .addCase(fetchMenuByIdAndDay.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
+        const editedDay = state.editedMenuDays[action.payload.dayNumber];
+        state.data = editedDay || action.payload;
       })
       .addCase(fetchMenuByIdAndDay.rejected, (state, action) => {
         state.loading = false;
@@ -141,7 +177,7 @@ const menuSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchMenuByDailyCalo.fulfilled, (state, action: PayloadAction<MenuItemResponse[]>) => {
+      .addCase(fetchMenuByDailyCalo.fulfilled, (state, action) => {
         state.loading = false;
         state.listData = action.payload;
       })
@@ -156,9 +192,11 @@ const menuSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(adoptCustomMenu.fulfilled, (state, action: PayloadAction<AdoptCustomMenuResponse>) => {
+      .addCase(adoptCustomMenu.fulfilled, (state, action) => {
         state.loading = false;
         state.adoptedMenu = action.payload;
+        state.editedMenuDays = {}; // ✅ clear object
+        state.hasUnsavedChanges = false;
       })
       .addCase(adoptCustomMenu.rejected, (state, action) => {
         state.loading = false;
@@ -167,5 +205,12 @@ const menuSlice = createSlice({
   },
 });
 
-export const { clearMenu } = menuSlice.actions;
+export const {
+  clearMenu,
+  saveEditedDay,
+  loadEditedDay,
+  discardChanges,
+  markChangesSaved,
+} = menuSlice.actions;
+
 export default menuSlice.reducer;

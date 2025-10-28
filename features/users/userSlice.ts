@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { getAccessToken } from "@stores";
-import { UpdateProfileDto, UserDTO } from "../../types/me";
+import { AllStatsResponse, UpdateProfileDto, UserDTO, UserStatsDto } from "../../types/me";
 import { userApi } from "./userApi";
 import { USER_URLS } from "./userUrls";
 
@@ -9,6 +9,7 @@ interface UserState {
   user: UserDTO | null;
   loading: boolean;
   error: string | null;
+  allStats: UserStatsDto[] | null
 }
 
 // ========== Initial State ==========
@@ -16,6 +17,7 @@ const initialState: UserState = {
   user: null,
   loading: false,
   error: null,
+  allStats: null
 };
 
 // ========== Helper ==========
@@ -42,6 +44,24 @@ export const fetchCurrentUserThunk = createAsyncThunk(
   }
 );
 
+export const getAllStatsThunk = createAsyncThunk(
+  USER_URLS.All_HISTORY_STATS,
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = await getAccessToken();
+      if (!token) throw new Error("Không có token, vui lòng đăng nhập lại");
+
+      const res = await userApi.allHistoryStats();
+      console.log("📊 AllStats API response:", res.data);
+
+      return res.data as AllStatsResponse;
+    } catch (err: any) {
+      console.error("❌ getAllStatsThunk error:", err);
+      return rejectWithValue(handleError(err));
+    }
+  }
+);
+
 // ✅ Cập nhật thông tin hồ sơ người dùng
 export const updateProfileThunk = createAsyncThunk(
   USER_URLS.UPDATE_PROFILE + "/update",
@@ -53,6 +73,22 @@ export const updateProfileThunk = createAsyncThunk(
 
       const res = await userApi.updateProfile(body);
       return res.data;
+    } catch (err: any) {
+      return rejectWithValue(handleError(err));
+    }
+  }
+);
+
+// ❌ Xóa tài khoản người dùng
+export const deleteAccountThunk = createAsyncThunk(
+  USER_URLS.DELETE_ACCOUNT + "/delete",
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      const token = await getAccessToken();
+      if (!token) throw new Error("Không có token, vui lòng đăng nhập lại");
+
+      await userApi.deleteAccount(userId);
+      return userId; // Trả về userId vừa bị xóa (đề phòng cần dùng)
     } catch (err: any) {
       return rejectWithValue(handleError(err));
     }
@@ -101,13 +137,47 @@ const userSlice = createSlice({
       })
       .addCase(
         updateProfileThunk.fulfilled,
-        (state, action: PayloadAction<{userDto : UserDTO}>) => {
+        (state, action: PayloadAction<{ userDto: UserDTO }>) => {
           state.loading = false;
           state.user = action.payload.userDto;
           console.log("updatedUser", state.user);
         }
       )
       .addCase(updateProfileThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    // --- Get all stats history ---
+    builder
+      .addCase(getAllStatsThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        getAllStatsThunk.fulfilled,
+        (state, action: PayloadAction<AllStatsResponse>) => {
+          state.loading = false;
+          state.allStats = action.payload.userStats
+          console.log("✅ Loaded all stats:", action.payload.userStats);
+        }
+      )
+      .addCase(getAllStatsThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+
+    // --- Delete account ---
+    builder
+      .addCase(deleteAccountThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteAccountThunk.fulfilled, (state) => {
+        state.loading = false;
+        state.user = null; // Sau khi xóa tài khoản, clear user info
+      })
+      .addCase(deleteAccountThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

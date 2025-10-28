@@ -10,8 +10,9 @@ type NutrientType = "carbs" | "protein" | "fat";
 interface NutritionInfoCardProps {
   icon: keyof typeof Feather.glyphMap;
   label: string;
-  dishList: MealDish[];
-  nutrientType: NutrientType;
+  nutrientType: "carbs" | "protein" | "fat";
+  dishList?: MealDish[];        // không bắt buộc
+  nutrientValue?: number;       // ✅ thêm prop mới
 }
 
 const NutritionInfoCard: React.FC<NutritionInfoCardProps> = ({
@@ -19,23 +20,13 @@ const NutritionInfoCard: React.FC<NutritionInfoCardProps> = ({
   label,
   dishList,
   nutrientType,
+  nutrientValue, // 👈 nếu có sẵn thì xài luôn
 }) => {
-  const nutrientValue = useMemo(() => {
+  const value = useMemo(() => {
+    if (nutrientValue !== undefined) return nutrientValue; 
     if (!dishList || dishList.length === 0) return 0;
-
-    return dishList.reduce((sum, item) => {
-      switch (nutrientType) {
-        case "carbs":
-          return sum + (item.carbs ?? 0);
-        case "protein":
-          return sum + (item.protein ?? 0);
-        case "fat":
-          return sum + (item.fat ?? 0);
-        default:
-          return sum;
-      }
-    }, 0);
-  }, [dishList, nutrientType]);
+    return dishList.reduce((sum, item) => sum + (item[nutrientType] ?? 0), 0);
+  }, [dishList, nutrientType, nutrientValue]);
 
   return (
     <View style={styles.card}>
@@ -43,10 +34,11 @@ const NutritionInfoCard: React.FC<NutritionInfoCardProps> = ({
         <Feather name={icon} size={18} color={color.white} />
         <Text style={styles.label}>{label}</Text>
       </View>
-      <Text style={styles.value}>{nutrientValue.toFixed(1)}g</Text>
+      <Text style={styles.value}>{value.toFixed(1)}g</Text>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   card: {

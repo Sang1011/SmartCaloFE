@@ -1,9 +1,19 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { Ionicons } from "@expo/vector-icons";
+import { getAllStatsThunk } from "@features/users";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
-import React, { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { LineChart } from "react-native-gifted-charts";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,28 +30,12 @@ const formatDate = (date) => {
     .padStart(2, "0")}`;
 };
 
-
-const weightData = [
-  { value: 65.5, date: "2025-07-01" },
-  { value: 65.2, date: "2025-07-15" },
-  { value: 64.9, date: "2025-08-01" },
-  { value: 64.6, date: "2025-08-15" },
-  { value: 64.3, date: "2025-09-01" },
-  { value: 64.0, date: "2025-09-15" },
-  { value: 63.8, date: "2025-09-30" },
-];
-
-const heightData = [
-  { value: 160, date: "2025-07-01" },
-  { value: 160.1, date: "2025-07-15" },
-  { value: 160.1, date: "2025-08-01" },
-  { value: 160.2, date: "2025-08-15" },
-  { value: 160.2, date: "2025-09-01" },
-  { value: 160.3, date: "2025-09-15" },
-  { value: 160.3, date: "2025-09-30" },
-];
-
 export default function BodyHistory() {
+  const dispatch = useAppDispatch();
+  const { allStats, loading } = useAppSelector(
+    (state: RootState) => state.user
+  );
+
   // 🟩 Lấy ngày hiện tại
   const today = new Date();
 
@@ -54,6 +48,11 @@ export default function BodyHistory() {
   const [timeRange, setTimeRange] = useState<"1w" | "1m" | "3m" | null>("1w");
   const [isDatePickerVisible, setDatePickerVisible] = useState(false);
   const [selecting, setSelecting] = useState<"start" | "end">("start");
+
+  // Fetch data khi component mount
+  useEffect(() => {
+    dispatch(getAllStatsThunk());
+  }, [dispatch]);
 
   const handleQuickRange = (range: "1w" | "1m" | "3m") => {
     setTimeRange(range);
@@ -98,47 +97,91 @@ export default function BodyHistory() {
       setEndDate(date);
     }
     setDatePickerVisible(false);
-    setTimeRange(null); 
+    setTimeRange(null);
   };
 
-  const getFilteredData = (data) =>
-    data
-      .filter(
-        (d) => new Date(d.date) >= startDate && new Date(d.date) <= endDate
-      )
-      .map((d) => ({
-        value: d.value,
-        label: formatDate(d.date),
-      }));
+  const getFilteredData = (field: "weight" | "height") => {
+    if (!allStats || allStats.length === 0) return [];
+  
+    // 1️⃣ Chuyển recordDate về giờ VN để so sánh chính xác
+    const convertToVietnamTime = (isoString: string) => {
+      const date = new Date(isoString);
+      return new Date(date.getTime() + 7 * 60 * 60 * 1000);
+    };
+  
+    // 2️⃣ Gom các record theo ngày (yyyy-MM-dd), chọn record mới nhất trong ngày
+    const latestPerDayMap = new Map<string, (typeof allStats)[0]>();
+  
+    allStats.forEach((stat) => {
+      const statDateVN = convertToVietnamTime(stat.recordDate);
+      const dayKey = statDateVN.toISOString().split("T")[0]; // ví dụ "2025-10-26"
+  
+      const existing = latestPerDayMap.get(dayKey);
+      if (!existing || new Date(stat.recordDate) > new Date(existing.recordDate)) {
+        latestPerDayMap.set(dayKey, stat);
+      }
+    });
+  
+    // 3️⃣ Lọc trong khoảng thời gian mong muốn
+    const filteredStats = Array.from(latestPerDayMap.values()).filter((stat) => {
+      const statDate = convertToVietnamTime(stat.recordDate);
+      return statDate >= startDate && statDate <= endDate;
+    });
+  
+    // 4️⃣ Chuẩn hóa dữ liệu cho chart
+    return filteredStats
+      .map((stat) => ({
+        value: field === "weight" ? stat.weight : stat.height,
+        label: formatDate(stat.recordDate),
+        date: stat.recordDate,
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  };
+  
 
   const filteredWeightData = useMemo(
-    () => downsampleData(getFilteredData(weightData)),
-    [startDate, endDate]
-  );
-  const filteredHeightData = useMemo(
-    () => downsampleData(getFilteredData(heightData)),
-    [startDate, endDate]
+    () => downsampleData(getFilteredData("weight")),
+    [allStats, startDate, endDate]
   );
 
-  const renderChartOrEmpty = (data, title : string) => (
+  const filteredHeightData = useMemo(
+    () => downsampleData(getFilteredData("height")),
+    [allStats, startDate, endDate]
+  );
+
+  const renderChartOrEmpty = (data, title: string) => (
     <View style={styles.chartBox}>
       <Text style={styles.chartTitle}>{title}</Text>
-      {data.length > 0 ? (
-        <LineChart
-          data={data}
-          color={color.dark_green}
-          thickness={3}
-          curved
-          hideDataPoints={false}
-          yAxisColor={color.dark_green}
-          xAxisColor={color.dark_green}
-          initialSpacing={20}
-          spacing={50}
-          showValuesAsDataPointsText
-          textColor={color.dark_green} // màu chữ
-          textFontSize={12}
-          dataPointsHeight={12}
-        />
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={color.dark_green} />
+          <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
+        </View>
+      ) : data.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingRight: 20 }}
+        >
+          <View style={{ minWidth: 400 }}>
+            <LineChart
+              data={data}
+              color="#4CAF50"
+              thickness={2}
+              curved
+              hideDataPoints={false}
+              yAxisColor="#ccc"
+              xAxisColor="#ccc"
+              initialSpacing={20}
+              spacing={50}
+              showValuesAsDataPointsText
+              textColor="#000"
+              textFontSize={10}
+              dataPointsHeight={6}
+            />
+          </View>
+        </ScrollView>
       ) : (
         <Text style={styles.noDataText}>
           Không có dữ liệu trong khoảng thời gian này
@@ -286,7 +329,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     elevation: 2,
-    minHeight: 180, // luôn có khung để bố cục không nhảy
+    minHeight: 180,
     justifyContent: "center",
   },
   chartTitle: {
@@ -300,5 +343,16 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     color: "#888",
     marginTop: 30,
+  },
+  loadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontFamily: FONTS.medium,
+    color: color.dark_green,
+    fontSize: 14,
   },
 });

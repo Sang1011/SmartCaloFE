@@ -10,7 +10,7 @@ export const apiClient = axios.create({
 
 export const apiClientFoodPrediction = axios.create({
   baseURL: Config.API_PREDICTION_AI_URL,
-  timeout: 50000,
+  timeout: 80000,
 });
 
 apiClient.interceptors.request.use(requestInterceptor.onFulfilled, requestInterceptor.onRejected);

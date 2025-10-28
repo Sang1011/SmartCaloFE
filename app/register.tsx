@@ -6,10 +6,6 @@ import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { loginThunk, registerThunk } from "@features/auth";
 import { useAppDispatch } from "@redux/hooks";
-import {
-  ensureUserExists,
-  partialUpdateUserStreak,
-} from "@utils/firebaseRealTime";
 import { navigateCustom } from "@utils/navigation";
 import { Image } from "expo-image";
 import React, { useState } from "react";
@@ -44,11 +40,8 @@ export default function RegisterScreen() {
 
     try {
       const resultAction = await dispatch(
-        registerThunk({ email, password, name: "" })
+        registerThunk({ email, password, name: "register" })
       );
-
-      let userId = "";
-
       if (registerThunk.rejected.match(resultAction)) {
         const errorMessage =
           (resultAction.payload as string) ||
@@ -56,12 +49,7 @@ export default function RegisterScreen() {
         Alert.alert("Lỗi Đăng Ký", errorMessage);
         return;
       }
-      const payload = resultAction.payload;
-      const data = payload.userDto;
-      userId = data.id;
       await dispatch(loginThunk({ email, password }));
-      const userFromFirebase = await ensureUserExists(userId);
-      await partialUpdateUserStreak(userFromFirebase.userId);
       Alert.alert("Thành công", "Đăng ký thành công!");
       navigateCustom("/survey");
     } catch (e) {

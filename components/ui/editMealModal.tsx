@@ -6,25 +6,33 @@ import { FONTS } from "@constants/fonts";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useState } from "react";
 import {
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableWithoutFeedback,
-    View,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import { scale } from "react-native-size-matters";
 export interface EditMealModalProps {
-    isVisible: boolean;
-    onClose: () => void;
-    items: MealItem[];
-    onDelete: (idsToRemove: number[]) => void;
-  }
-const EditMealModal = ({ isVisible, onClose, items, onDelete }: EditMealModalProps) => {
-  const [itemsToDelete, setItemsToDelete] = useState({});
+  isVisible: boolean;
+  onClose: () => void;
+  items: MealItem[];
+  onDelete: (idsToRemove: string[]) => void;
+}
+const EditMealModal = ({
+  isVisible,
+  onClose,
+  items,
+  onDelete,
+}: EditMealModalProps) => {
+  // Sử dụng Record<string, boolean> để lưu trạng thái chọn dựa trên ID string
+  const [itemsToDelete, setItemsToDelete] = useState<Record<string, boolean>>(
+    {}
+  ); // Cập nhật: ID phải là string
 
-  const toggleSelect = (id : number) => {
+  const toggleSelect = (id: string) => {
     setItemsToDelete((prev) => ({
       ...prev,
       [id]: !prev[id],
@@ -32,17 +40,19 @@ const EditMealModal = ({ isVisible, onClose, items, onDelete }: EditMealModalPro
   };
 
   const handleConfirm = () => {
-    const idsToRemove = Object.keys(itemsToDelete)
-      .filter((id) => itemsToDelete[id])
-      .map((id) => parseInt(id));
+    // Lấy ID dưới dạng string và bỏ qua parseInt()
+    const idsToRemove = Object.keys(itemsToDelete).filter(
+      (id) => itemsToDelete[id]
+    ); // Truyền mảng string ID
 
-    onDelete(idsToRemove); // Truyền ID cần xóa lên component cha
+    onDelete(idsToRemove);
     setItemsToDelete({});
     onClose();
   };
 
-  const selectedCount = Object.keys(itemsToDelete).filter((id) => itemsToDelete[id]).length;
-
+  const selectedCount = Object.keys(itemsToDelete).filter(
+    (id) => itemsToDelete[id]
+  ).length;
   return (
     <Modal
       visible={isVisible}
@@ -96,7 +106,10 @@ const EditMealModal = ({ isVisible, onClose, items, onDelete }: EditMealModalPro
               </ScrollView>
 
               <Pressable
-                style={[modalStyles.confirmButton, selectedCount === 0 && modalStyles.confirmButtonDisabled]}
+                style={[
+                  modalStyles.confirmButton,
+                  selectedCount === 0 && modalStyles.confirmButtonDisabled,
+                ]}
                 onPress={handleConfirm}
                 disabled={selectedCount === 0}
               >

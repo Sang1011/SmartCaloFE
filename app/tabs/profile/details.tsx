@@ -285,7 +285,7 @@ export default function ProfileDetailsScreen() {
             </Text>
             <Text style={[styles.targetValue, globalStyles.bold]}>
               {user?.dailyCaloGoal !== undefined
-                ? Math.ceil(user.dailyCaloGoal).toLocaleString()
+                ? Math.round(user.dailyCaloGoal).toLocaleString()
                 : "—"}
             </Text>
             <Text style={[styles.unit, globalStyles.light]}>calo / ngày</Text>
@@ -296,7 +296,7 @@ export default function ProfileDetailsScreen() {
             </Text>
             <Text style={[styles.targetValue, globalStyles.bold]}>
               {user?.dailyCaloGoal !== undefined
-                ? Math.ceil(user.dailyCaloGoal * 7).toLocaleString()
+                ? Math.round(user.dailyCaloGoal * 7).toLocaleString()
                 : "—"}
             </Text>
             <Text style={[styles.unit, globalStyles.light]}>calo / tuần</Text>

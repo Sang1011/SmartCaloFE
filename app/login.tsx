@@ -4,18 +4,25 @@ import { REMEMBER_ME, SAVED_EMAIL, SAVED_PASSWORD } from "@constants/app";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { loginThunk } from "@features/auth";
-import { useAppDispatch } from "@redux/hooks";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import {
   getBooleanData,
   getStringData,
   saveBooleanData,
   saveStringData,
 } from "@stores";
-import { ensureUserExists, partialUpdateUserStreak } from "@utils/firebaseRealTime";
 import { navigateCustom } from "@utils/navigation";
 import { Image } from "expo-image";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SCButton from "../components/ui/SCButton";
 import color from "../constants/color";
@@ -28,8 +35,10 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const { loginWithGoogle, clearError } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { loginWithGoogle, clearError, isLoading } = useAuth();
+  const { user: userLogin, loading: loadingLogin } = useAppSelector(
+    (state: RootState) => state.auth
+  );
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -73,199 +82,186 @@ export default function LoginScreen() {
     console.log("login");
     try {
       if (email && password && email.trim() !== "" && password.trim() !== "") {
-        setIsLoading(true);
         await handleRememberAccount();
-        
+
         const resultAction = await dispatch(loginThunk({ email, password }));
-  
+
         if (loginThunk.rejected.match(resultAction)) {
           // ... (Giữ nguyên logic lỗi)
-          const errorMessage = (resultAction.payload as string) || "Đăng ký thất bại không rõ lý do.";
+          const errorMessage =
+            (resultAction.payload as string) ||
+            "Đăng ký thất bại không rõ lý do.";
           Alert.alert("Lỗi Đăng Ký", errorMessage);
-          setIsLoading(false); // Đảm bảo tắt loading khi có lỗi
           return;
         }
-  
+
         // 💥 THAY THẾ LOGIC CŨ BẰNG VIỆC LẤY DỮ LIỆU TỪ resultAction
         const loginPayload = resultAction.payload as RegisterANDLoginResponse;
         const loggedInUser = loginPayload?.userDto; // LẤY DỮ LIỆU USER MỚI NHẤT TẠI ĐÂY
-  
+
         Alert.alert("Thành công", "Đăng nhập thành công!");
-        console.log("user từ payload", loggedInUser); 
-        
-        if(loggedInUser){ // Dùng loggedInUser thay cho user cũ
-          const userFromFirebase = await ensureUserExists(loggedInUser.id);
-          await partialUpdateUserStreak(userFromFirebase.userId);
-          if(loggedInUser.status === (UserStatusLabel.PendingOnboarding)){
+        console.log("user từ payload", loggedInUser);
+
+        if (loggedInUser) {
+          if (loggedInUser.status === UserStatusLabel.PendingOnboarding) {
             navigateCustom("/survey");
-          }else if(loggedInUser.status === (UserStatusLabel.Active)){
+          } else if (loggedInUser.status === UserStatusLabel.Active) {
             navigateCustom("/tabs");
-          }else{
-            Alert.alert("Tài khoản của bạn đang có vấn đề, vui lòng liên hệ qua mail của chúng tôi để giải quyết");
+          } else {
+            Alert.alert(
+              "Tài khoản của bạn đang có vấn đề, vui lòng liên hệ qua mail của chúng tôi để giải quyết"
+            );
             navigateCustom("/login");
           }
         } else {
-           // Trường hợp không có userDto trong payload (nên không xảy ra)
-           Alert.alert("Lỗi Dữ Liệu", "Đăng nhập thành công nhưng không nhận được thông tin người dùng.");
+          // Trường hợp không có userDto trong payload (nên không xảy ra)
+          Alert.alert(
+            "Lỗi Dữ Liệu",
+            "Đăng nhập thành công nhưng không nhận được thông tin người dùng."
+          );
         }
-      
-        setIsLoading(false);
       } else {
         Alert.alert("Thông báo", "Vui lòng nhập email và mật khẩu hợp lệ");
       }
-      setIsLoading(false);
     } catch (error: any) {
       Alert.alert(
         "Lỗi",
         error.message || "Đăng nhập thất bại. Vui lòng thử lại."
       );
-      setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
-      setIsLoading(true);
-      await loginWithGoogle();
-      navigateCustom("/survey");
-      setIsLoading(false);
+      const success = await loginWithGoogle();
+      if (success) {
+        navigateCustom("/survey"); // chỉ navigate khi login thành công
+      }
     } catch (error: any) {
       console.error("Google login error from LOGIN:", error);
-
-      if (error.message.includes("đã bị hủy")) {
-        Alert.alert("Thông báo", "Bạn đã hủy đăng nhập bằng Google");
-      } else if (error.message.includes("Google Play")) {
-        Alert.alert("Lỗi", "Dịch vụ Google Play không khả dụng");
-      } else {
-        Alert.alert(
-          "Lỗi",
-          error.message || "Đăng nhập thất bại. Vui lòng thử lại."
-        );
-      }
+      Alert.alert("Lỗi", error.message || "Đăng nhập thất bại");
     }
   };
-
-  if (isLoading) {
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text
-          style={{
-            fontSize: 24,
-            fontFamily: FONTS.bold,
-            color: color.dark_green,
-          }}
-        >
-          LOADING...
-        </Text>
-        <ActivityIndicator size="large" color={color.dark_green} />
-      </View>;
-    }
 
   return (
     <SafeAreaView
       style={styles.screen}
       edges={["top", "left", "right", "bottom"]}
     >
-      <Image
-        source={require("../assets/images/logo.png")}
-        style={styles.logo}
-        contentFit="contain" // giống resizeMode="contain"
-        transition={500} // hiệu ứng fade-in
-      />
-      <Text style={[styles.title, globalStyles.semiBold]}>Đăng nhập</Text>
-      <View style={styles.form}>
-        <View style={styles.inputContainer}>
-          <SCInput
-            fontFamily={FONTS.regular}
-            placeholder="Nhập email"
-            variant="email"
-            icon={<Fontisto name="email" size={12} color="black" />}
-            onChangeText={(text) => setEmail(text)}
-            value={email}
-          />
-          <SCInput
-            fontFamily={FONTS.regular}
-            placeholder="Nhập mật khẩu"
-            variant="password"
-            onChangeText={(text) => setPassword(text)}
-            secureTextEntry={true}
-            value={password}
-            icon={<MaterialIcons name="password" size={12} color="black" />}
-          />
+      {isLoading || loadingLogin ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={color.dark_green} />
+          <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
         </View>
-        <View style={styles.checkboxContainer}>
-          <SCCheckBox
-            fontFamily={FONTS.medium}
-            fontSize={12}
-            label="Duy trì đăng nhập"
-            labelPos="right"
-            checked={rememberMe}
-            onChange={(value) => setRememberMe(value)}
+      ) : (
+        <>
+          <Image
+            source={require("../assets/images/logo.png")}
+            style={styles.logo}
+            contentFit="contain" // giống resizeMode="contain"
+            transition={500} // hiệu ứng fade-in
           />
-          <Pressable onPress={() => navigateCustom("/forgotPassword")}>
-            <Text
-              style={{
-                fontSize: 12,
-                color: color.dark_green,
-                fontFamily: FONTS.semiBold,
-              }}
-            >
-              Quên mật khẩu?
+          <Text style={[styles.title, globalStyles.semiBold]}>Đăng nhập</Text>
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <SCInput
+                fontFamily={FONTS.regular}
+                placeholder="Nhập email"
+                variant="email"
+                icon={<Fontisto name="email" size={12} color="black" />}
+                onChangeText={(text) => setEmail(text)}
+                value={email}
+              />
+              <SCInput
+                fontFamily={FONTS.regular}
+                placeholder="Nhập mật khẩu"
+                variant="password"
+                onChangeText={(text) => setPassword(text)}
+                secureTextEntry={true}
+                value={password}
+                icon={<MaterialIcons name="password" size={12} color="black" />}
+              />
+            </View>
+            <View style={styles.checkboxContainer}>
+              <SCCheckBox
+                fontFamily={FONTS.medium}
+                fontSize={12}
+                label="Duy trì đăng nhập"
+                labelPos="right"
+                checked={rememberMe}
+                onChange={(value) => setRememberMe(value)}
+              />
+              <Pressable onPress={() => navigateCustom("/forgotPassword")}>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: color.dark_green,
+                    fontFamily: FONTS.semiBold,
+                  }}
+                >
+                  Quên mật khẩu?
+                </Text>
+              </Pressable>
+            </View>
+            <View style={styles.button}>
+              <SCButton
+                title="Đăng nhập"
+                onPress={() => {
+                  console.log("Đăng nhập với:", {
+                    email,
+                    password,
+                    rememberMe,
+                  });
+                  handleLogin();
+                }}
+              />
+            </View>
+          </View>
+          <View style={styles.registerContainer}>
+            <Text style={{ fontFamily: FONTS.medium }}>
+              Chưa có tài khoản?{" "}
+              <Text
+                style={{ color: color.dark_green, fontFamily: FONTS.medium }}
+                onPress={() => navigateCustom("/register")}
+              >
+                Đăng ký ngay
+              </Text>
             </Text>
-          </Pressable>
-        </View>
-        <View style={styles.button}>
-          <SCButton
-            title="Đăng nhập"
-            onPress={() => {
-              console.log("Đăng nhập với:", { email, password, rememberMe });
-              handleLogin();
-            }}
-          />
-        </View>
-      </View>
-      <View style={styles.registerContainer}>
-        <Text style={{ fontFamily: FONTS.medium }}>
-          Chưa có tài khoản?{" "}
-          <Text
-            style={{ color: color.dark_green, fontFamily: FONTS.medium }}
-            onPress={() => navigateCustom("/register")}
-          >
-            Đăng ký ngay
-          </Text>
-        </Text>
-        <View style={styles.ORContainer}>
-          <View style={styles.divider}></View>
-          <Text style={styles.OR}>hoặc</Text>
-          <View style={styles.divider}></View>
-        </View>
-        <View style={styles.groupButton}>
-          <View style={styles.google}>
-            <SCButton
-              variant="outline"
-              iconPos="left"
-              style={styles.buttonCus}
-              borderRadius={50}
-              icon={
-                <Image
-                  source={require("../assets/images/googleIcon.png")}
-                  style={{ width: 20, height: 20 }}
+            <View style={styles.ORContainer}>
+              <View style={styles.divider}></View>
+              <Text style={styles.OR}>hoặc</Text>
+              <View style={styles.divider}></View>
+            </View>
+            {/* <View style={styles.groupButton}>
+              <View style={styles.google}>
+                <SCButton
+                  variant="outline"
+                  iconPos="left"
+                  style={styles.buttonCus}
+                  borderRadius={50}
+                  icon={
+                    <Image
+                      source={require("../assets/images/googleIcon.png")}
+                      style={{ width: 20, height: 20 }}
+                    />
+                  }
+                  title="Tiếp tục với google"
+                  onPress={() => handleGoogleLogin()}
                 />
-              }
-              title="Tiếp tục với google"
-              onPress={() => handleGoogleLogin()}
+              </View>
+            </View> */}
+            <Text style={styles.text}>
+              Chúng tôi chỉ chia sẻ thông tin khi có sự đồng ý của bạn
+            </Text>
+          </View>
+          <View style={styles.groupImageContainer}>
+            <Image
+              source={require("../assets/images/logo_group.png")}
+              style={styles.logoGroup}
             />
           </View>
-        </View>
-        <Text style={styles.text}>
-          Chúng tôi chỉ chia sẻ thông tin khi có sự đồng ý của bạn
-        </Text>
-      </View>
-      <View style={styles.groupImageContainer}>
-        <Image
-          source={require("../assets/images/logo_group.png")}
-          style={styles.logoGroup}
-        />
-      </View>
+        </>
+      )}
     </SafeAreaView>
   );
 }
@@ -296,6 +292,18 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 20,
     marginTop: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: color.white,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: color.dark_green,
+    fontFamily: FONTS.medium,
+    fontSize: 15,
   },
   inputContainer: {
     gap: 12,
@@ -355,7 +363,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: color.black,
     textAlign: "center",
-    marginTop: 5,
+    marginTop: 10,
   },
   groupImageContainer: {
     position: "absolute",

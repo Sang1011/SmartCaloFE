@@ -1,8 +1,11 @@
 import color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
 import { Ionicons } from "@expo/vector-icons";
+import { fetchCurrentUserThunk } from "@features/users";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Image,
   Pressable,
@@ -10,16 +13,24 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  activityLevelENMap,
+  activityLevelMap,
+  activityLevelVNMap
+} from "../types/me";
 
 export default function BodyInfo() {
-  type genderType = "male" | "female";
-  const [gender, setGender] = useState<genderType>("male");
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state: RootState) => state.user);
+
+  const [gender, setGender] = useState<"Male" | "Female">("Male");
   const [showDropdown, setShowDropdown] = useState(false);
   const [activity, setActivity] = useState("Vận động nhẹ");
 
+  // Danh sách tiếng Việt cho dropdown
   const activities = [
     "Ít vận động",
     "Vận động nhẹ",
@@ -28,23 +39,71 @@ export default function BodyInfo() {
     "Vận động rất nhiều",
   ];
 
-  const weight = 65;
-  const height = 160;
-  const bmi = 27.7;
-  const bmr = 2088;
-  const tdee = 2871;
+  // 🔹 Lấy thông tin user khi vào trang
+  useEffect(() => {
+    dispatch(fetchCurrentUserThunk());
+  }, []);
+
+  // 🔹 Gán dữ liệu user
+  useEffect(() => {
+    if (!user) return;
+
+    if (user.gender === "Male") setGender("Male");
+    if (user.gender === "Female") setGender("Female");
+
+    // Map từ EN sang VN
+    if (user.activityLevel) {
+      const viLabel = activityLevelVNMap[user.activityLevel];
+      if (viLabel) setActivity(viLabel);
+    }
+  }, [user]);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Khi chọn giới tính
+  const handleGenderSelect = (value: "Male" | "Female") => {
+    if (!isEditing) return;
+    setGender(value);
+    setHasChanges(true);
+  };
+
+  // Khi chọn hoạt động trong dropdown
+  const handleSelectActivity = (vnLabel: string) => {
+    if (!isEditing) return;
+    setActivity(vnLabel);
+    setHasChanges(true);
+
+    const enLabel = activityLevelENMap[vnLabel];
+    const levelValue = activityLevelMap[enLabel];
+
+    console.log("✅ Activity chọn:");
+    console.log("Tiếng Việt:", vnLabel);
+    console.log("Tiếng Anh:", enLabel);
+    console.log("Value:", levelValue);
+  };
+
+  // Khi nhấn lưu
+  const handleSave = () => {
+    console.log("🚀 Dữ liệu lưu:", { gender, activity });
+    setIsEditing(false);
+    setHasChanges(false);
+  };
 
   return (
-    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: color.background }}>
-    {/* Nút quay về */}
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{
-        paddingHorizontal: 16,
-        paddingTop: 16,
-        paddingBottom: 20, // thêm padding dưới để tránh bị cắt
-      }}
+    <SafeAreaView
+      edges={["top"]}
+      style={{ flex: 1, backgroundColor: color.background }}
     >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          paddingBottom: 20,
+        }}
+      >
+        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => navigateCustom("/tabs")}
@@ -54,20 +113,22 @@ export default function BodyInfo() {
           </TouchableOpacity>
           <Text style={styles.title}>Thông tin của bạn</Text>
         </View>
+
+        {/* Thông tin */}
         <View style={styles.card}>
           {/* Giới tính */}
           <View style={styles.genderContainer}>
             <Pressable
               style={[
                 styles.genderBox,
-                gender === "female" && styles.activeGender,
+                gender === "Female" && styles.activeGender,
               ]}
-              onPress={() => setGender("female")}
+              onPress={() => handleGenderSelect("Female")}
             >
               <Text
                 style={[
                   styles.genderText,
-                  gender === "female" && styles.activeGenderText,
+                  gender === "Female" && styles.activeGenderText,
                 ]}
               >
                 Female
@@ -81,14 +142,14 @@ export default function BodyInfo() {
             <Pressable
               style={[
                 styles.genderBox,
-                gender === "male" && styles.activeGender,
+                gender === "Male" && styles.activeGender,
               ]}
-              onPress={() => setGender("male")}
+              onPress={() => handleGenderSelect("Male")}
             >
               <Text
                 style={[
                   styles.genderText,
-                  gender === "male" && styles.activeGenderText,
+                  gender === "Male" && styles.activeGenderText,
                 ]}
               >
                 Male
@@ -103,12 +164,12 @@ export default function BodyInfo() {
           {/* Cân nặng & chiều cao */}
           <View style={styles.infoRow}>
             <View style={styles.infoBox}>
-              <Text style={styles.label}>Cân nặng</Text>
-              <Text style={styles.value}>{weight} kg</Text>
+              <Text style={styles.label}>Cân nặng hiện tại</Text>
+              <Text style={styles.value}>{user?.userStats.weight} kg</Text>
             </View>
             <View style={styles.infoBox}>
               <Text style={styles.label}>Chiều cao</Text>
-              <Text style={styles.value}>{height} cm</Text>
+              <Text style={styles.value}>{user?.userStats.height} cm</Text>
             </View>
           </View>
 
@@ -117,7 +178,7 @@ export default function BodyInfo() {
             <Text style={styles.label}>Mức độ vận động</Text>
             <Pressable
               style={styles.activityDropdown}
-              onPress={() => setShowDropdown(!showDropdown)}
+              onPress={() => isEditing && setShowDropdown(!showDropdown)}
             >
               <Text style={styles.dropdownText}>{activity}</Text>
               <Ionicons
@@ -132,10 +193,7 @@ export default function BodyInfo() {
                 {activities.map((item) => (
                   <TouchableOpacity
                     key={item}
-                    onPress={() => {
-                      setActivity(item);
-                      setShowDropdown(false);
-                    }}
+                    onPress={() => handleSelectActivity(item)}
                     style={[
                       styles.dropdownItem,
                       activity === item && styles.dropdownItemActive,
@@ -155,106 +213,136 @@ export default function BodyInfo() {
             )}
           </View>
 
-          <Pressable style={styles.saveButton}>
-            <Text style={styles.saveText}>Lưu thông tin</Text>
-          </Pressable>
+          {/* Nút lưu */}
+          {!isEditing ? (
+            <Pressable
+              style={[
+                styles.saveButton,
+                {
+                  backgroundColor: color.white,
+                  borderWidth: 1,
+                  borderColor: color.dark_green,
+                },
+              ]}
+              onPress={() => setIsEditing(true)}
+            >
+              <Text style={[styles.saveText, { color: color.dark_green }]}>
+                Chỉnh sửa thông tin
+              </Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={[
+                styles.saveButton,
+                {
+                  backgroundColor: hasChanges
+                    ? color.dark_green
+                    : color.black_30,
+                },
+              ]}
+              onPress={hasChanges ? handleSave : undefined}
+            >
+              <Text style={styles.saveText}>Lưu thông tin</Text>
+            </Pressable>
+          )}
 
+          {/* Nút xem lịch sử */}
           <Pressable
             style={styles.historyButton}
             onPress={() => navigateCustom("/bodyHistory")}
           >
-            <Ionicons
-              name="bar-chart-outline"
-              size={18}
-              color={color.dark_green}
-            />
-            <Text style={styles.historyText}>Xem lịch sử thay đổi</Text>
+            <Text style={styles.historyText}>
+              Xem tổng quan lịch sử thay đổi
+            </Text>
           </Pressable>
         </View>
 
         {/* BMI */}
-        {/* BMI */}
-        <View style={styles.bmiCard}>
-          <Text style={styles.bmiTitle}>BMI</Text>
-          <Text style={styles.bmiDesc}>
-            Chỉ số BMI của bạn là {bmi} —{" "}
-            <Text style={{ fontWeight: "bold" }}>
-              {bmi < 18.5
-                ? "Thiếu cân"
-                : bmi < 22.9
-                ? "Bình thường"
-                : bmi < 24.9
-                ? "Thừa cân"
-                : bmi < 29.9
-                ? "Béo phì độ 1"
-                : bmi < 35
-                ? "Béo phì độ 2"
-                : "Béo phì độ 3"}
+        {user && user?.userStats && (
+          <View style={styles.bmiCard}>
+            <Text style={styles.bmiTitle}>BMI</Text>
+            <Text style={styles.bmiDesc}>
+              Chỉ số BMI của bạn là {user?.userStats.bmi.toFixed(1)} —{" "}
+              <Text style={{ fontWeight: "bold" }}>
+                {user?.userStats.bmi < 18.5
+                  ? "Thiếu cân"
+                  : user?.userStats.bmi < 22.9
+                  ? "Bình thường"
+                  : user?.userStats.bmi < 24.9
+                  ? "Thừa cân"
+                  : user?.userStats.bmi < 29.9
+                  ? "Béo phì độ 1"
+                  : user?.userStats.bmi < 35
+                  ? "Béo phì độ 2"
+                  : "Béo phì độ 3"}
+              </Text>
             </Text>
-          </Text>
 
-          {/* Thanh BMI chia mốc */}
-          <View style={styles.bmiBarContainer}>
-            <View style={styles.bmiBar}>
+            {/* Thanh BMI chia mốc */}
+            <View style={styles.bmiBarContainer}>
+              <View style={styles.bmiBar}>
+                <View
+                  style={[
+                    styles.bmiSegment,
+                    { flex: 3, backgroundColor: "#4FC3F7" },
+                  ]}
+                />
+                {/* <18.5 */}
+                <View
+                  style={[
+                    styles.bmiSegment,
+                    { flex: 4.4, backgroundColor: "#81C784" },
+                  ]}
+                />
+                {/* 18.5–22.9 */}
+                <View
+                  style={[
+                    styles.bmiSegment,
+                    { flex: 2, backgroundColor: "#FFF176" },
+                  ]}
+                />
+                {/* 23–24.9 */}
+                <View
+                  style={[
+                    styles.bmiSegment,
+                    { flex: 5, backgroundColor: "#FFB74D" },
+                  ]}
+                />
+                {/* 25–29.9 */}
+                <View
+                  style={[
+                    styles.bmiSegment,
+                    { flex: 5.1, backgroundColor: "#E57373" },
+                  ]}
+                />
+                {/* 30–35 */}
+              </View>
+
+              {/* Dấu chỉ vị trí BMI */}
               <View
                 style={[
-                  styles.bmiSegment,
-                  { flex: 3, backgroundColor: "#4FC3F7" },
+                  styles.bmiIndicator,
+                  {
+                    left: `${((user?.userStats.bmi - 15) / (35 - 15)) * 100}%`,
+                  },
                 ]}
               />
-              {/* <18.5 */}
-              <View
-                style={[
-                  styles.bmiSegment,
-                  { flex: 4.4, backgroundColor: "#81C784" },
-                ]}
-              />
-              {/* 18.5–22.9 */}
-              <View
-                style={[
-                  styles.bmiSegment,
-                  { flex: 2, backgroundColor: "#FFF176" },
-                ]}
-              />
-              {/* 23–24.9 */}
-              <View
-                style={[
-                  styles.bmiSegment,
-                  { flex: 5, backgroundColor: "#FFB74D" },
-                ]}
-              />
-              {/* 25–29.9 */}
-              <View
-                style={[
-                  styles.bmiSegment,
-                  { flex: 5.1, backgroundColor: "#E57373" },
-                ]}
-              />
-              {/* 30–35 */}
             </View>
 
-            {/* Dấu chỉ vị trí BMI */}
-            <View
-              style={[
-                styles.bmiIndicator,
-                { left: `${((bmi - 15) / (35 - 15)) * 100}%` },
-              ]}
-            />
-          </View>
+            {/* Mốc giá trị dưới thanh */}
+            <View style={styles.bmiLabels}>
+              {[15, 18.5, 22.9, 24.9, 29.9, 35].map((v) => (
+                <Text key={v} style={styles.bmiLabelText}>
+                  {v}
+                </Text>
+              ))}
+            </View>
 
-          {/* Mốc giá trị dưới thanh */}
-          <View style={styles.bmiLabels}>
-            {[15, 18.5, 22.9, 24.9, 29.9, 35].map((v) => (
-              <Text key={v} style={styles.bmiLabelText}>
-                {v}
-              </Text>
-            ))}
+            <Text style={styles.bmiIdeal}>
+              Cân nặng lý tưởng ước tính: {(user?.userStats.bmi * Number((user.userStats.height/ 100).toFixed(2)) * Number((user.userStats.height/ 100).toFixed(2))).toFixed(1)} Kg
+            </Text>
           </View>
-
-          <Text style={styles.bmiIdeal}>
-            Cân nặng lý tưởng ước tính: 77.1 - 88 kg
-          </Text>
-        </View>
+        )}
 
         {/* BMR & TDEE */}
         <View style={styles.calcBox}>
@@ -263,7 +351,7 @@ export default function BodyInfo() {
               Tỉ lệ chuyển hóa cơ bản (BMR)
             </Text>
             <Text style={[styles.calcValue, globalStyles.bold]}>
-              2,088 calo / ngày
+              {user?.userStats.bmr.toLocaleString()} calo / ngày
             </Text>
             <Text style={[styles.calcDesc, globalStyles.light]}>
               Năng lượng cần thiết
@@ -274,7 +362,7 @@ export default function BodyInfo() {
               Tổng năng lượng tiêu hao (TDEE)
             </Text>
             <Text style={[styles.calcValue, globalStyles.bold]}>
-              2,871 calo / ngày
+              {user?.userStats.tdee.toLocaleString()} calo / ngày
             </Text>
             <Text style={[styles.calcDesc, globalStyles.light]}>
               Bao gồm hoạt động hằng ngày
@@ -292,17 +380,25 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start"
+    justifyContent: "flex-start",
   },
-  backButton: { flexDirection: "row", alignItems: "center", gap: 6,justifyContent: "center" },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    justifyContent: "center",
+  },
   backText: {
     color: color.dark_green,
     fontFamily: FONTS.medium,
     fontSize: 16,
   },
-  container: { flex: 1, backgroundColor: color.background, paddingHorizontal: 16, 
-    paddingTop: 16
-   },
+  container: {
+    flex: 1,
+    backgroundColor: color.background,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
   card: {
     backgroundColor: color.white,
     borderRadius: 16,

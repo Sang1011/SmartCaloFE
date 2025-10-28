@@ -1,44 +1,74 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { Ionicons } from "@expo/vector-icons";
+import Feather from '@expo/vector-icons/Feather';
 import { navigateCustom } from "@utils/navigation";
 import React from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { MealDish } from "../../types/menu";
 
 interface MealDishItemProps {
   menuId: string;
+  isOpenModal: boolean;
   item: MealDish;
+  onDelete: (dishId: string) => void; // Thay setIsOpenModal bằng onDelete
 }
 
-export const MealDishItem: React.FC<MealDishItemProps> = ({ menuId, item }) => {
+export const MealDishItem: React.FC<MealDishItemProps> = ({
+  menuId,
+  item,
+  isOpenModal,
+  onDelete // Nhận hàm xóa
+}) => {
+  const handleDeleteFromMenu = () => {
+    Alert.alert(
+      "Xóa món ăn",
+      `Bạn có chắc muốn xóa "${item.name}" khỏi thực đơn?`,
+      [
+        { text: "Hủy", style: "cancel" },
+        { text: "Xóa", onPress: () => onDelete(item.id), style: "destructive" }
+      ]
+    );
+  };
   return (
     <Pressable style={styles.mealItemContainer}>
-      <Image src={item.imageUrl} style={styles.mealItemImage} />
+      {item.imageUrl ? (
+        <Image src={item.imageUrl} style={styles.mealItemImage} />
+      ) : (
+        <Image source={require("../../assets/images/salad.png")} style={styles.mealItemImage} />
+      )}
       <View style={styles.mealItemDetails}>
         <View style={styles.mealItemDetailsUpper}>
-          <View style={{ flexDirection: "column", justifyContent: "center" }}>
+          <View style={{ flexDirection: "column", justifyContent: "center", position: "relative" }}>
             <Text style={styles.mealItemName} numberOfLines={1}>
               {item.name}
             </Text>
             <Text style={styles.mealItemCalories}>Calo: {item.calories}</Text>
           </View>
-          <Pressable
-            style={styles.viewDetailContainer}
-            onPress={() => navigateCustom("/dishes", {
-                params: {
+          {isOpenModal ? (
+            <TouchableOpacity style={styles.deleteExpand} onPress={() => handleDeleteFromMenu()}>
+              <Feather name="x" size={24} color={color.white} />
+            </TouchableOpacity>
+          ) : (
+            <Pressable
+              style={styles.viewDetailContainer}
+              onPress={() =>
+                navigateCustom("/dishes", {
+                  params: {
                     id: item.dishId,
-                    menuId: menuId
-                }
-            })}
-          >
-            <Text style={styles.viewDetailText}>Xem chi tiết</Text>
-            <Ionicons
-              name="chevron-forward"
-              size={16}
-              color={color.light_gray}
-            />
-          </Pressable>
+                    menuId: menuId,
+                  },
+                })
+              }
+            >
+              <Text style={styles.viewDetailText}>Xem chi tiết</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={color.light_gray}
+              />
+            </Pressable>
+          )}
         </View>
         <View style={styles.mealItemMacros}>
           <Text style={[styles.macroText, styles.carb]}>{item.carbs} Carb</Text>
@@ -82,7 +112,7 @@ const styles = StyleSheet.create({
   mealItemDetailsUpper: {
     flexDirection: "row",
     display: "flex",
-    justifyContent: "space-around",
+    justifyContent: "flex-start",
     alignItems: "center",
   },
   mealItemName: {
@@ -99,7 +129,7 @@ const styles = StyleSheet.create({
   },
   mealItemMacros: {
     flexDirection: "row",
-    gap: 8,
+    gap: 5,
   },
   macroText: {
     fontFamily: FONTS.medium,
@@ -119,6 +149,17 @@ const styles = StyleSheet.create({
   fat: {
     backgroundColor: color.macro_span_fat_bg,
     color: color.macro_span_fat_color,
+  },
+  deleteExpand: {
+    position: "absolute",
+    backgroundColor: color.dark_green,
+    alignItems: "center",
+    justifyContent: "center",
+    width: 70,
+    height: 98,
+    zIndex: 10,
+    right: -10.5,
+    top: -10.5,
   },
   viewDetailContainer: {
     width: 80,

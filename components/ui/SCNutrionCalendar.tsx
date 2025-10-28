@@ -1,19 +1,20 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { isOldDay } from "@utils/filterDay";
+import { navigateCustom } from "@utils/navigation";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
 export default function SCNutritionCalendar() {
-  // Ví dụ dữ liệu: key là ngày, value là trạng thái ăn
-  const nutritionData: Record<string, "thiếu" | "đủ" | "thừa"> = {
-    "2025-09-20": "thiếu",
-    "2025-09-19": "đủ",
-    "2025-09-18": "thừa",
-    "2025-09-17": "đủ",
-    "2025-09-16": "đủ",
-  };
+  // // Ví dụ dữ liệu: key là ngày, value là trạng thái ăn
+  // const nutritionData: Record<string, "thiếu" | "đủ" | "thừa"> = {
+  //   "2025-09-20": "thiếu",
+  //   "2025-09-19": "đủ",
+  //   "2025-09-18": "thừa",
+  //   "2025-09-17": "đủ",
+  //   "2025-09-16": "đủ",
+  // };
 
   const getDotColor = (status: "thiếu" | "đủ" | "thừa") => {
     switch (status) {
@@ -27,35 +28,38 @@ export default function SCNutritionCalendar() {
   };
 
   // Lấy ngày hiện tại
-  const today = new Date();
-  const todayString = [
-  today.getFullYear(),
-  String(today.getMonth() + 1).padStart(2, "0"),
-  String(today.getDate()).padStart(2, "0"),
+  const now = new Date();
+const vietnamTime = new Date(now.getTime() + 7 * 60 * 60 * 1000); // Cộng thêm 7 tiếng
+
+const todayString = [
+  vietnamTime.getUTCFullYear(),
+  String(vietnamTime.getUTCMonth() + 1).padStart(2, "0"),
+  String(vietnamTime.getUTCDate()).padStart(2, "0"),
 ].join("-");
 
+
   // Convert nutritionData sang format của react-native-calendars
-  const markedDates = Object.keys(nutritionData).reduce((acc, date) => {
-    const status = nutritionData[date];
-    acc[date] = {
-      marked: true,
-      dots: [{ color: getDotColor(status) }],
-    };
-    return acc;
-  }, {} as any);
+  // const markedDates = Object.keys(nutritionData).reduce((acc, date) => {
+  //   const status = nutritionData[date];
+  //   acc[date] = {
+  //     marked: true,
+  //     dots: [{ color: getDotColor(status) }],
+  //   };
+  //   return acc;
+  // }, {} as any);
 
   // Highlight ngày hiện tại
-  markedDates[todayString] = {
-    ...(markedDates[todayString] || {}),
-    selected: true,
-    selectedColor: color.light_green,
-  };
+  // markedDates[todayString] = {
+  //   ...(markedDates[todayString] || {}),
+  //   selected: true,
+  //   selectedColor: color.light_green,
+  // };
 
   return (
     <View style={styles.container}>
       <Calendar
         monthFormat={"MMMM yyyy"}
-        markedDates={markedDates}
+        // markedDates={markedDates}
         markingType={"multi-dot"}
         theme={{
           todayTextColor: "#2a9d8f",
@@ -71,16 +75,20 @@ export default function SCNutritionCalendar() {
 
           // Nếu ngày có dữ liệu -> dùng dot từ dữ liệu
           // Nếu không có dữ liệu nhưng state != disabled -> mặc định là "thiếu"
-          const isMarked = markedDates[date.dateString];
-          let dotColor =
-            isMarked && isMarked.dots ? isMarked.dots[0].color : null;
-
-          if (!isMarked && state !== "disabled" && isOldDay(date.dateString)) {
-            dotColor = getDotColor("thiếu");
-          }
-
+          // const isMarked = markedDates[date.dateString];
+          const getToday = new Date().toLocaleDateString("en-CA");
+          console.log("GETTODAY", getToday);
           return (
-            <View
+            <Pressable
+            onPress={() => {
+              if(isToday || isOldDay(date.dateString)){
+                navigateCustom("/viewAllData", {
+                  params: {
+                    date: date.dateString
+                  }
+                })
+              }
+            }}
               style={[
                 styles.dayContainer,
                 {
@@ -110,13 +118,7 @@ export default function SCNutritionCalendar() {
               >
                 {date.day}
               </Text>
-
-              {dotColor && (
-                <View
-                  style={[styles.dotBelow, { backgroundColor: dotColor }]}
-                />
-              )}
-            </View>
+            </Pressable>
           );
         }}
       />
@@ -124,16 +126,16 @@ export default function SCNutritionCalendar() {
       {/* Legend */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.dot, { backgroundColor: color.undereating }]} />
-          <Text>Ăn thiếu calo</Text>
+          <View style={[styles.dot]} />
+          {/* <Text>Ăn thiếu calo</Text> */}
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.dot, { backgroundColor: color.eat_default }]} />
-          <Text>Ăn đủ calo</Text>
+          <View style={[styles.dot]} />
+          {/* <Text>Ăn đủ calo</Text> */}
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.dot, { backgroundColor: color.overeating }]} />
-          <Text>Ăn thừa calo</Text>
+          <View style={[styles.dot]} />
+          {/* <Text>Ăn thừa calo</Text> */}
         </View>
       </View>
     </View>
@@ -165,7 +167,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dot: {
-    width: 6,
+    width: 70,
     height: 6,
     borderRadius: 3,
     marginTop: 2,

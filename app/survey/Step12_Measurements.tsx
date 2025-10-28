@@ -1,12 +1,10 @@
+import { SCSlider } from "@components/ui/SCSlider";
 import color from "@constants/color";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
   Dimensions,
-  Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { globalStyles } from "../../constants/fonts";
@@ -24,19 +22,6 @@ export default function Step12_Measurements({
   surveyData,
   updateSurveyData,
 }: Props) {
-  const [errors, setErrors] = useState({
-    height: false,
-    weight: false,
-    targetWeight: false,
-  });
-
-  const [heightInput, setHeightInput] = useState(
-    surveyData.height ? surveyData.height.toString() : ""
-  );
-  const [weightInput, setWeightInput] = useState(
-    surveyData.weight ? surveyData.weight.toString() : ""
-  );
-
   useEffect(() => {
     // Gán mặc định targetWeight = weight khi người dùng nhập cân nặng
     if (surveyData.weight && !surveyData.targetWeight) {
@@ -47,64 +32,49 @@ export default function Step12_Measurements({
     }
   }, [surveyData.weight]);
 
-  const validateNumber = (value: string) => {
-    const parsed = parseFloat(value);
-    return !(value === "" || isNaN(parsed) || parsed <= 0);
+  const handleHeightChange = (value: number) => {
+    updateSurveyData((prev) => ({
+      ...prev,
+      height: Math.round(value),
+    }));
   };
 
-  // 🧩 Validate LoseWeight / GainWeight
+  const handleWeightChange = (value: number) => {
+    const rounded = Math.round(value * 2) / 2; // Làm tròn đến 0.5
+    updateSurveyData((prev) => ({
+      ...prev,
+      weight: rounded,
+      targetWeight: rounded, // reset targetWeight
+    }));
+  };
+
+  const handleTargetWeightChange = (value: number) => {
+    const rounded = Math.round(value * 2) / 2; // Làm tròn đến 0.5
+    updateSurveyData((prev) => ({
+      ...prev,
+      targetWeight: rounded,
+    }));
+  };
+
+  // Validate LoseWeight / GainWeight
   const validateTargetWeight = () => {
     const { goal, weight, targetWeight } = surveyData;
-    if (!weight || !targetWeight) return false;
+    if (!weight || !targetWeight) return true; // Không hiện lỗi nếu chưa nhập
 
     if (goal === HealthGoal.LoseWeight) return targetWeight < weight;
     if (goal === HealthGoal.GainWeight) return targetWeight > weight;
     return true;
   };
 
-  const handleChange = (field: "height" | "weight", value: string) => {
-    if (field === "height") setHeightInput(value);
-    if (field === "weight") setWeightInput(value);
-
-    const parsed = parseFloat(value);
-    const isValid = validateNumber(value);
-
-    updateSurveyData((prev) => ({
-      ...prev,
-      [field]: value === "" ? undefined : parsed,
-      // reset lại targetWeight nếu đổi cân nặng
-      targetWeight: field === "weight" ? parsed : prev.targetWeight,
-    }));
-
-    setErrors((prev) => ({
-      ...prev,
-      [field]: !isValid,
-    }));
-  };
-
-  const adjustTargetWeight = (delta: number) => {
-    updateSurveyData((prev) => {
-      const base = prev.weight || 0;
-      let newTarget = (prev.targetWeight || base) + delta;
-      const min = base - 10;
-      const max = base + 10;
-
-      if (newTarget < min) newTarget = min;
-      if (newTarget > max) newTarget = max;
-
-      return { ...prev, targetWeight: newTarget };
-    });
-  };
-
   const isTargetValid = validateTargetWeight();
 
-  const baseWeight = surveyData.weight || 0;
+  const currentHeight = surveyData.height || 150;
+  const currentWeight = surveyData.weight || 50;
+  const baseWeight = surveyData.weight || 50;
   const currentTarget = surveyData.targetWeight ?? baseWeight;
-  const minLimit = baseWeight - 10;
-  const maxLimit = baseWeight + 10;
-
-  const disableMinus = currentTarget <= minLimit;
-  const disablePlus = currentTarget >= maxLimit;
+  
+  const minWeight = Math.max(30, baseWeight - 20);
+  const maxWeight = Math.min(200, baseWeight + 20);
 
   return (
     <View style={styles.container}>
@@ -113,99 +83,99 @@ export default function Step12_Measurements({
       </Text>
 
       <View style={styles.formContainer}>
+        {/* Chiều cao */}
         <View style={styles.inputGroup}>
           <Text style={[styles.label, globalStyles.regular]}>
             Chiều cao của bạn?
           </Text>
-          <View style={styles.inputRow}>
-            <TextInput
-              style={[styles.input, globalStyles.semiBold]}
-              value={heightInput}
-              onChangeText={(v) => handleChange("height", v)}
-              keyboardType="numeric"
-              placeholder="Nhập chiều cao"
-              placeholderTextColor={color.black_50}
-            />
-            <Pressable style={styles.unitButton}>
-              <Text style={[styles.unitButtonText, globalStyles.bold]}>cm</Text>
-            </Pressable>
+          
+          <View style={styles.valueDisplayContainer}>
+            <Text style={[styles.valueText, globalStyles.extraBold]}>
+              {currentHeight}
+            </Text>
+            <Text style={[styles.unitText, globalStyles.semiBold]}>cm</Text>
           </View>
-          {errors.height && (
-            <Text style={styles.errorText}>Vui lòng nhập chiều cao hợp lệ</Text>
-          )}
+
+          <SCSlider
+            style={styles.slider}
+            minimumValue={100}
+            maximumValue={220}
+            step={1}
+            value={currentHeight}
+            onValueChange={handleHeightChange}
+          />
+
+          <View style={styles.sliderLabels}>
+            <Text style={[styles.sliderLabel, globalStyles.regular]}>100 cm</Text>
+            <Text style={[styles.sliderLabel, globalStyles.regular]}>220 cm</Text>
+          </View>
         </View>
 
+        {/* Cân nặng hiện tại */}
         <View style={styles.inputGroup}>
           <Text style={[styles.label, globalStyles.regular]}>
             Cân nặng hiện tại của bạn?
           </Text>
-          <View style={styles.inputRow}>
-            <TextInput
-              style={[styles.input, globalStyles.semiBold]}
-              value={weightInput}
-              onChangeText={(v) => handleChange("weight", v)}
-              keyboardType="numeric"
-              placeholder="Nhập cân nặng hiện tại"
-              placeholderTextColor={color.black_50}
-            />
-            <Pressable style={styles.unitButton}>
-              <Text style={[styles.unitButtonText, globalStyles.bold]}>kg</Text>
-            </Pressable>
+          
+          <View style={styles.valueDisplayContainer}>
+            <Text style={[styles.valueText, globalStyles.extraBold]}>
+              {currentWeight}
+            </Text>
+            <Text style={[styles.unitText, globalStyles.semiBold]}>kg</Text>
           </View>
-          {errors.weight && (
-            <Text style={styles.errorText}>Vui lòng nhập cân nặng hợp lệ</Text>
-          )}
+
+          <SCSlider
+            style={styles.slider}
+            minimumValue={20}
+            maximumValue={200}
+            step={0.5}
+            value={currentWeight}
+            onValueChange={handleWeightChange}
+          />
+
+          <View style={styles.sliderLabels}>
+            <Text style={[styles.sliderLabel, globalStyles.regular]}>20 kg</Text>
+            <Text style={[styles.sliderLabel, globalStyles.regular]}>200 kg</Text>
+          </View>
         </View>
 
+        {/* Cân nặng mục tiêu */}
         {surveyData.weight && (
           <View style={styles.inputGroup}>
             <Text style={[styles.label, globalStyles.regular]}>
               Cân nặng mục tiêu của bạn?
             </Text>
 
-            <View
-              style={[styles.inputRow, { justifyContent: "space-between" }]}
-            >
-              <Pressable
-                style={[
-                  styles.stepButton,
-                  disableMinus && styles.stepButtonDisabled,
-                ]}
-                disabled={disableMinus}
-                onPress={() => adjustTargetWeight(-1)}
-              >
-                <Ionicons
-                  name="remove"
-                  size={28}
-                  color={disableMinus ? "#888" : "#fff"}
-                />
-              </Pressable>
-
-              <Text style={[styles.weightText, globalStyles.semiBold]}>
-                {currentTarget} kg
+            <View style={styles.valueDisplayContainer}>
+              <Text style={[styles.valueText, globalStyles.extraBold]}>
+                {currentTarget}
               </Text>
+              <Text style={[styles.unitText, globalStyles.semiBold]}>kg</Text>
+            </View>
 
-              <Pressable
-                style={[
-                  styles.stepButton,
-                  disablePlus && styles.stepButtonDisabled,
-                ]}
-                disabled={disablePlus}
-                onPress={() => adjustTargetWeight(1)}
-              >
-                <Ionicons
-                  name="add"
-                  size={28}
-                  color={disablePlus ? "#888" : "#fff"}
-                />
-              </Pressable>
+            <SCSlider
+              style={styles.slider}
+              minimumValue={minWeight}
+              maximumValue={maxWeight}
+              step={0.5}
+              value={currentTarget}
+              onValueChange={handleTargetWeightChange}
+            />
+
+            <View style={styles.sliderLabels}>
+              <Text style={[styles.sliderLabel, globalStyles.regular]}>
+                {minWeight} kg
+              </Text>
+              <Text style={[styles.sliderLabel, globalStyles.regular]}>
+                {maxWeight} kg
+              </Text>
             </View>
 
             {!isTargetValid && (
               <Text style={styles.errorText}>
                 {surveyData.goal === HealthGoal.LoseWeight
-                  ? "Cân nặng mục tiêu phải thấp hơn cân nặng hiện tại."
-                  : "Cân nặng mục tiêu phải cao hơn cân nặng hiện tại."}
+                  ? "⚠️ Cân nặng mục tiêu phải thấp hơn cân nặng hiện tại."
+                  : "⚠️ Cân nặng mục tiêu phải cao hơn cân nặng hiện tại."}
               </Text>
             )}
           </View>
@@ -219,46 +189,47 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   title: {
     fontSize: width * 0.07,
-    color: "#000000",
+    color: color.black,
     marginBottom: 32,
   },
-  formContainer: { gap: 24 },
-  inputGroup: { gap: 8 },
+  formContainer: { gap: 28 },
+  inputGroup: { gap: 12 },
   label: { fontSize: width * 0.04, color: "#4F4F4F" },
-  inputRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  input: {
-    flex: 1,
-    backgroundColor: "#F2F2F2",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: width * 0.04,
-  },
-  unitButton: {
-    backgroundColor: "#6C9C39",
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  unitButtonText: { color: "#FFFFFF", fontSize: width * 0.04 },
-  stepButton: {
-    backgroundColor: "#6C9C39",
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: "center",
+  valueDisplayContainer: {
+    flexDirection: "row",
+    alignItems: "baseline",
     justifyContent: "center",
+    backgroundColor: color.gray_light,
+    borderRadius: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    gap: 8,
   },
-  stepButtonDisabled: {
-    backgroundColor: "#BDBDBD",
+  valueText: {
+    fontSize: width * 0.11,
+    color: color.dark_green,
   },
-  stepButtonText: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "700",
+  unitText: {
+    fontSize: width * 0.045,
+    color: color.grey,
   },
-  weightText: { fontSize: width * 0.05, color: "#333" },
-  errorText: { color: "red", fontSize: 14, paddingLeft: 4 },
+  slider: {
+    width: "100%",
+    marginVertical: 8,
+  },
+  sliderLabels: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 4,
+  },
+  sliderLabel: {
+    fontSize: width * 0.035,
+    color: color.grey,
+  },
+  errorText: { 
+    color: color.red, 
+    fontSize: 14, 
+    paddingLeft: 4,
+    marginTop: 4,
+  },
 });

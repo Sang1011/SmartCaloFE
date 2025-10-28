@@ -1,249 +1,447 @@
+import LoadingModal from "@components/ui/loadingModal";
 import color from "@constants/color";
 import { globalStyles } from "@constants/fonts";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useRef, useState } from "react";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import {
-    FlatList, // Import Platform để xác định hệ điều hành
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  clearMessages,
+  createMessage,
+  fetchAllChatSessions,
+  fetchAllMessages,
+  setCurrentSessionId,
+} from "@features/chat/chatSlice";
+import { fetchCurrentUserThunk } from "@features/users";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
+import { navigateCustom } from "@utils/navigation";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { CreateChatStreamBodyRequest, SessionDTO } from "../types/chat";
 
-// Mock data tin nhắn
-const MOCK_MESSAGES = [
-    { id: '1', text: 'Chào bạn, tôi muốn tìm một công thức ăn kiêng low-carb.', sender: 'user' },
-    { id: '2', text: 'Chào bạn! Tôi có thể giúp. Bạn muốn tìm công thức cho bữa sáng, trưa, hay tối?', sender: 'ai' },
-    { id: '3', text: 'Tôi muốn bữa tối, món nào nhanh và ít calo.', sender: 'user' },
-    { id: '4', text: 'Tuyệt vời. Món "Cá hồi nướng bơ tỏi và măng tây" rất phù hợp. Bạn cần công thức chi tiết không?', sender: 'ai' },
-];
-
-// Component cho 1 tin nhắn
-const MessageBubble = ({ message}: {message: any}) => {
-    const isUser = message.sender === 'user';
-    return (
-        <View style={[
-            styles.messageContainer,
-            isUser ? styles.userMessageContainer : styles.aiMessageContainer
-        ]}>
-            <View style={[
-                styles.bubble,
-                isUser ? styles.userBubble : styles.aiBubble
-            ]}>
-                <Text style={[
-                    globalStyles.regular,
-                    isUser ? styles.userText : styles.aiText
-                ]}>
-                    {message.text}
-                </Text>
-            </View>
-        </View>
-    );
-};
+const MessageBubble = ({
+  message,
+  isUser,
+}: {
+  message: string;
+  isUser: boolean;
+}) => (
+  <View
+    style={[
+      styles.messageContainer,
+      isUser ? styles.userMessageContainer : styles.aiMessageContainer,
+    ]}
+  >
+    <View style={[styles.bubble, isUser ? styles.userBubble : styles.aiBubble]}>
+      <Text
+        style={[globalStyles.regular, isUser ? styles.userText : styles.aiText]}
+      >
+        {message}
+      </Text>
+    </View>
+  </View>
+);
 
 export default function ChatBoxScreen() {
-    // Sửa lỗi TypeScript bằng cách khai báo rõ ràng kiểu của Ref
-    const flatListRef = useRef<FlatList>(null);
-    const [messages, setMessages] = useState(MOCK_MESSAGES);
-    const [inputText, setInputText] = useState('');
+  const flatListRef = useRef<FlatList>(null);
+  const dispatch = useAppDispatch();
 
-    const handleSend = () => {
-        if (inputText.trim()) {
-            const newMessage = {
-                id: Date.now().toString(),
-                text: inputText.trim(),
-                sender: 'user',
-            };
-            
-            // Thêm tin nhắn mới vào đầu mảng vì FlatList đang dùng `inverted`
-            setMessages(prev => [newMessage, ...prev]); 
-            setInputText('');
+  const { messages, currentSessionId, loading, sessions } = useAppSelector(
+    (state: RootState) => state.chat
+  );
+  const { user } = useAppSelector((state: RootState) => state.user);
 
-            // Cuộn về tin nhắn mới nhất
-            if (flatListRef.current) {
-                // Do dùng inverted, cuộn offset 0 là cuộn đến tin nhắn mới nhất
-                flatListRef.current.scrollToOffset({ offset: 0, animated: true });
-            }
+  const [inputText, setInputText] = useState("");
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
-            console.log("Tin nhắn gửi đi:", newMessage.text);
-        }
-    };
+  // ✅ Lấy user khi mới vào
+  useEffect(() => {
+    dispatch(fetchCurrentUserThunk());
+  }, []);
 
-    return (
-        // Dùng SafeAreaView để tránh notch và status bar
-        <SafeAreaView style={styles.safeArea}> 
-            
-            {/* HEADER SECTION: Đặt ngoài KeyboardAvoidingView */}
-            <View style={styles.headerContainer}>
-                {/* Nút Go Back */}
-                <TouchableOpacity style={styles.buttonGoBack} onPress={() => console.log('Go Back Pressed')}>
-                    <Ionicons name="arrow-back-outline" size={24} color={color.white} />
-                </TouchableOpacity>
-
-                {/* Tiêu đề */}
-                <Text style={[globalStyles.bold, styles.headerTitle]}>
-                    Chat Box
-                </Text>
-
-                {/* Placeholder để căn giữa tiêu đề (đảm bảo không gian) */}
-                <View style={styles.buttonGoBack} /> 
-            </View>
-            
-            {/* KEYBOARD AVOIDING VIEW: Chỉ bọc phần nội dung có thể cuộn và phần input */}
-            <KeyboardAvoidingView 
-                style={styles.keyboardAvoidingView}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-                keyboardVerticalOffset={0} 
-            >
-                {/* Khu vực hiển thị tin nhắn */}
-                <FlatList
-                    ref={flatListRef}
-                    data={messages}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => <MessageBubble message={item} />}
-                    contentContainerStyle={styles.flatListContent}
-                    inverted 
-                />
-
-                {/* Khu vực nhập liệu */}
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={[styles.textInput, globalStyles.regular]}
-                        placeholder="Nhập tin nhắn của bạn..."
-                        placeholderTextColor={color.black_30}
-                        value={inputText}
-                        onChangeText={setInputText}
-                        multiline
-                        textAlignVertical="center" 
-                    />
-                    <TouchableOpacity
-                        style={[
-                            styles.sendButton,
-                            { 
-                                backgroundColor: inputText.trim() ? color.dark_green : color.black_30
-                            }
-                        ]}
-                        onPress={handleSend}
-                        disabled={!inputText.trim()}
-                    >
-                        <Ionicons 
-                            name="arrow-up" 
-                            size={24} 
-                            color={inputText.trim() ? color.white : color.grey} 
-                        />
-                    </TouchableOpacity>
-                </View>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+  // ✅ Khi có session → fetch message
+  useEffect(() => {
+    if (!currentSessionId) return;
+    dispatch(
+      fetchAllMessages({
+        sessionId: currentSessionId,
+        pageIndex: 1,
+        pageSize: 30,
+        orderBy: "CreatedAt",
+        isAscending: false,
+      })
     );
+  }, [dispatch, currentSessionId]);
+
+  // ✅ Gửi tin nhắn
+  const handleSend = async () => {
+    const trimmed = inputText.trim();
+    if (!trimmed || !user?.id) return;
+
+    setInputText("");
+
+    try {
+      const res = await dispatch(
+        createMessage({
+          sessionId: currentSessionId || undefined,
+          body: {
+            userId: user.id,
+            question: trimmed,
+          } as CreateChatStreamBodyRequest,
+        })
+      );
+
+      if (createMessage.fulfilled.match(res)) {
+        console.log("✅ AI response received successfully.");
+
+        const sessionRes = await dispatch(
+          fetchAllChatSessions({
+            userId: user.id,
+            pageIndex: 1,
+            pageSize: 10,
+            orderBy: "CreatedAt",
+            isAscending: false,
+          })
+        );
+
+        if (fetchAllChatSessions.fulfilled.match(sessionRes)) {
+          const firstSession = sessionRes.payload.data[0];
+          if (firstSession) {
+            dispatch(setCurrentSessionId(firstSession.id));
+            dispatch(
+              fetchAllMessages({
+                sessionId: firstSession.id,
+                pageIndex: 1,
+                pageSize: 30,
+                orderBy: "CreatedAt",
+                isAscending: false,
+              })
+            );
+          }
+        }
+      } else {
+        console.warn("❌ Lỗi gửi tin nhắn:", res.payload);
+      }
+    } catch (err) {
+      console.error("❌ Exception during API call:", err);
+    }
+
+    setTimeout(() => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }, 150);
+  };
+
+  // ✅ Khi bấm vào 1 session
+  const handleSelectSession = async (session: SessionDTO) => {
+    setShowHistoryModal(false);
+    dispatch(setCurrentSessionId(session.id));
+    await dispatch(
+      fetchAllMessages({
+        sessionId: session.id,
+        pageIndex: 1,
+        pageSize: 30,
+        orderBy: "CreatedAt",
+        isAscending: false,
+      })
+    );
+  };
+
+  const handleShowHistory = async () => {
+    if (!user) return null;
+    await dispatch(
+      fetchAllChatSessions({
+        userId: user.id,
+        pageIndex: 1,
+        pageSize: 10,
+        orderBy: "CreatedAt",
+        isAscending: false,
+      })
+    );
+    setShowHistoryModal(true);
+  };
+
+  const handleNewChat = () => {
+    dispatch(clearMessages());
+    dispatch(setCurrentSessionId(null));
+    setShowHistoryModal(false);
+  };
+
+  const renderItem = ({ item }: any) => (
+    <>
+      {item.answer && <MessageBubble message={item.answer} isUser={false} />}
+      {item.question && <MessageBubble message={item.question} isUser />}
+    </>
+  );
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      {/* Header */}
+      <View style={styles.headerContainer}>
+        <TouchableOpacity
+          style={styles.buttonGoBack}
+          onPress={() => navigateCustom("/tabs")}
+        >
+          <Ionicons name="arrow-back-outline" size={24} color={color.white} />
+        </TouchableOpacity>
+
+        <Text style={[globalStyles.bold, styles.headerTitle]}>Chat Box</Text>
+
+        <TouchableOpacity
+          style={styles.buttonHistorySession}
+          onPress={() => handleShowHistory()}
+        >
+          <AntDesign name="clock-circle" size={22} color={color.white} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Modal lịch sử session */}
+      <Modal
+        visible={showHistoryModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowHistoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={[globalStyles.bold, styles.modalTitle]}>
+              🕓 Lịch sử hội thoại
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.sessionItem, styles.newChatButton]}
+              onPress={handleNewChat} // Cần định nghĩa hàm handleNewChat
+            >
+              <Text style={[globalStyles.bold, styles.newChatText]}>
+                + Bắt đầu cuộc hội thoại mới
+              </Text>
+            </TouchableOpacity>
+
+            <ScrollView style={styles.sessionList}>
+              {sessions && sessions.length > 0 ? (
+                sessions.map((session) => (
+                  <TouchableOpacity
+                    key={session.id}
+                    style={[
+                      styles.sessionItem,
+                      session.id === currentSessionId &&
+                        styles.sessionItemActive,
+                    ]}
+                    onPress={() => handleSelectSession(session)}
+                  >
+                    <Text
+                      style={[
+                        globalStyles.regular,
+                        session.id === currentSessionId
+                          ? styles.sessionTitleActive
+                          : styles.sessionTitle,
+                      ]}
+                    >
+                      {session.title || "Không tiêu đề"}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={[globalStyles.regular, styles.noSessionText]}>
+                  Chưa có lịch sử hội thoại
+                </Text>
+              )}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowHistoryModal(false)}
+            >
+              <Text style={[globalStyles.bold, styles.closeText]}>Đóng</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Nội dung chat */}
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.flatListContent}
+          inverted
+        />
+
+        {loading && (
+          <LoadingModal visible={loading} text="Đang tải dữ liệu..." />
+        )}
+
+        {/* Input */}
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.textInput, globalStyles.regular]}
+            placeholder="Nhập tin nhắn của bạn..."
+            placeholderTextColor={color.black_30}
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+          />
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              {
+                backgroundColor: inputText.trim()
+                  ? color.dark_green
+                  : color.black_30,
+              },
+            ]}
+            onPress={handleSend}
+            disabled={!inputText.trim()}
+          >
+            <Ionicons
+              name="arrow-up"
+              size={22}
+              color={inputText.trim() ? color.white : color.grey}
+            />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
 }
 
+//
+// 💅 Styles
+//
 const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-        backgroundColor: color.background, // Màu nền #EDEDED
-    },
-    keyboardAvoidingView: {
-        flex: 1, 
-    },
-    // --- STYLES CHO HEADER ---
-    headerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        backgroundColor: color.dark_green, // Màu chủ đạo
-        borderBottomWidth: 1,
-        borderBottomColor: color.border,
-    },
-    headerTitle: {
-        fontSize: 18,
-        color: color.white,
-        flex: 1, 
-        textAlign: 'center',
-    },
-    buttonGoBack: {
-        width: 40, 
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-    },
-    // --- STYLES CỦA CHATBOX ---
-    flatListContent: {
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        flexGrow: 1, 
-        justifyContent: 'flex-end',
-    },
-    messageContainer: {
-        flexDirection: 'row',
-        marginVertical: 5,
-    },
-    userMessageContainer: {
-        justifyContent: 'flex-end', 
-    },
-    aiMessageContainer: {
-        justifyContent: 'flex-start',
-    },
-    bubble: {
-        maxWidth: '80%',
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-        borderRadius: 20,
-        shadowColor: color.black,
-        shadowOpacity: 0.1,
-        shadowRadius: 1,
-        elevation: 1,
-    },
-    userBubble: {
-        backgroundColor: color.dark_green, 
-        borderBottomRightRadius: 5, 
-    },
-    aiBubble: {
-        backgroundColor: color.white,
-        borderBottomLeftRadius: 5, 
-    },
-    userText: {
-        color: color.white,
-        fontSize: 15,
-    },
-    aiText: {
-        color: color.black,
-        fontSize: 15,
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderTopWidth: 1,
-        borderTopColor: color.border,
-        backgroundColor: color.white,
-    },
-    textInput: {
-        flex: 1,
-        minHeight: 40,
-        maxHeight: 120, 
-        backgroundColor: color.black_30,
-        borderRadius: 20,
-        paddingHorizontal: 15,
-        paddingTop: 10, 
-        paddingBottom: 10,
-        marginRight: 10,
-        fontSize: 15,
-        color: color.black,
-        textAlignVertical: 'center', 
-    },
-    sendButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+  safeArea: { flex: 1, backgroundColor: color.background },
+  keyboardAvoidingView: { flex: 1 },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: color.dark_green,
+    borderBottomColor: color.white,
+    borderBottomWidth: 1,
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: color.white,
+    flex: 1,
+    textAlign: "center",
+  },
+  buttonGoBack: { width: 40, height: 40, justifyContent: "center" },
+  buttonHistorySession: { width: 40, height: 40, justifyContent: "center" },
+  flatListContent: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexGrow: 1,
+    justifyContent: "flex-end",
+  },
+  messageContainer: { flexDirection: "row", marginVertical: 5 },
+  userMessageContainer: { justifyContent: "flex-end", alignSelf: "flex-end" },
+  aiMessageContainer: { justifyContent: "flex-start", alignSelf: "flex-start" },
+  bubble: {
+    maxWidth: "80%",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+  },
+  userBubble: { backgroundColor: color.dark_green, borderBottomRightRadius: 6 },
+  aiBubble: { backgroundColor: color.white, borderBottomLeftRadius: 6 },
+  userText: { color: color.white, fontSize: 15 },
+  aiText: { color: color.black, fontSize: 15 },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: color.border,
+    backgroundColor: color.white,
+  },
+  textInput: {
+    flex: 1,
+    minHeight: 40,
+    maxHeight: 120,
+    backgroundColor: color.black_10,
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    marginRight: 10,
+    fontSize: 15,
+    color: color.black,
+  },
+  sendButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "85%",
+    maxHeight: "70%",
+    backgroundColor: color.white,
+    borderRadius: 20,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    color: color.black,
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  newChatButton: {
+    backgroundColor: color.light_green, // Nền xanh nhạt, nổi bật
+    borderWidth: 1,
+    borderColor: color.dark_green, // Viền xanh đậm
+    marginBottom: 15, // Khoảng cách với danh sách lịch sử
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  newChatText: {
+    color: color.white, // Chữ xanh đậm
+    fontSize: 16,
+    textAlign: "center",
+  },
+  sessionList: { marginBottom: 10 },
+  sessionItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: color.black_10,
+    marginBottom: 8,
+  },
+  sessionItemActive: { backgroundColor: color.dark_green },
+  sessionTitle: { color: color.black },
+  sessionTitleActive: { color: color.white },
+  noSessionText: { textAlign: "center", color: color.black_50 },
+  modalCloseButton: {
+    backgroundColor: color.dark_green,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  closeText: { color: color.white, textAlign: "center", fontSize: 16 },
 });
