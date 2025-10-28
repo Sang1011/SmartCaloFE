@@ -26,8 +26,8 @@
       "jsEngine": "hermes",
       "package": "com.penta.smartcalo",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
-        "backgroundColor": "#E6F4FE"
+        "foregroundImage": "./assets/images/foreground.png",
+        "backgroundColor": "./assets/images/background.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false

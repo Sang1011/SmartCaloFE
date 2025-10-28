@@ -128,7 +128,7 @@ export default function Step12_Measurements({
             style={styles.slider}
             minimumValue={20}
             maximumValue={200}
-            step={0.5}
+            step={1}
             value={currentWeight}
             onValueChange={handleWeightChange}
           />

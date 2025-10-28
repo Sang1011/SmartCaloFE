@@ -49,7 +49,7 @@ export default function Step12a_TargetMonths({
         <View style={styles.sliderContainer}>
           <SCSlider
             style={styles.slider}
-            minimumValue={1}
+            minimumValue={2}
             maximumValue={12}
             step={1}
             value={targetMonths}
@@ -57,7 +57,7 @@ export default function Step12a_TargetMonths({
           />
           <View style={styles.labelsContainer}>
             <Text style={[styles.labelText, globalStyles.regular]}>
-              1 tháng
+              2 tháng
             </Text>
             <Text style={[styles.labelText, globalStyles.regular]}>
               12 tháng
