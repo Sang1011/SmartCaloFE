@@ -4,6 +4,7 @@ import SCProgressBar from "@components/ui/SCProgressBar";
 import Color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { getDailyLogThunk } from "@features/tracking";
 import { fetchCurrentUserThunk } from "@features/users";
 import { RootState } from "@redux";
 import { useAppDispatch, useAppSelector } from "@redux/hooks";
@@ -18,18 +19,25 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 export default function DefaultScreen() {
-  const { user, loading } = useAppSelector((state: RootState) => state.user);
+  const { user } = useAppSelector((state: RootState) => state.user);
+  const { dailyLog, loading } = useAppSelector(
+    (state: RootState) => state.tracking
+  );
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(fetchCurrentUserThunk());
-  }, []);
+    const today = new Date().toLocaleDateString("en-CA");
+    console.log("TODAY:", today);
+  
+    dispatch(getDailyLogThunk({ date: today }));
+  }, [dispatch]);
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={[]}>
       {loading ? (
-        // ✅ Hiển thị loading khi đang tải
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Color.dark_green} />
           <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
@@ -37,6 +45,7 @@ export default function DefaultScreen() {
       ) : (
         <ScrollView style={styles.scrollView}>
           <View style={styles.layoutView}>
+            {/* Header */}
             <View style={styles.header}>
               <View style={styles.headerLeft}>
                 <Text style={styles.headerTextName}>Hello, {user?.name}</Text>
@@ -53,52 +62,89 @@ export default function DefaultScreen() {
                 />
               </Pressable>
             </View>
+
+            {/* Body */}
             <View style={styles.bodyView}>
               <View style={styles.caloContainer}>
+                {/* Tổng calo */}
                 <View style={styles.caloView}>
                   <View style={styles.caloContent}>
-                    <Text style={styles.caloTextView}>1700 calo</Text>
+                    <Text style={styles.caloTextView}>
+                      {Math.round(dailyLog?.totalCaloriesTarget ?? 0) -
+                        (dailyLog?.totalCaloriesConsumed ?? 0) || 1700}{" "}
+                      calo
+                    </Text>
                     <Text style={styles.caloDescription}>còn lại hôm nay</Text>
                   </View>
-                  <View style={styles.caloChart}>
-                    <SCDonutChart
-                      segments={[300]}
-                      size={110}
-                      strokeWidth={14}
-                      maxValue={2000}
-                      centerText="15%"
-                    />
-                  </View>
-                </View>
-                <View style={styles.nutrions}>
-                  <View style={styles.nutrionfield}>
-                    <Text style={styles.nutritionValue}>300g</Text>
-                    <Text style={styles.nutritionText}>Carb</Text>
-                    <View style={styles.progressBarContainer}>
-                      <SCProgressBar
-                        progress={45}
-                        color={Color.progress_carb}
+
+                  {dailyLog?.totalCaloriesConsumed !== undefined && (
+                    <View style={styles.caloChart}>
+                      <SCDonutChart
+                        segments={[dailyLog?.totalCaloriesConsumed ?? 0]}
+                        size={110}
+                        strokeWidth={14}
+                        maxValue={dailyLog?.totalCaloriesTarget ?? 2000}
+                        centerText={`${Math.min(
+                          Math.round(
+                            ((dailyLog?.totalCaloriesConsumed ?? 0) /
+                              (dailyLog?.totalCaloriesTarget || 1)) *
+                              100
+                          ),
+                          100
+                        )}%`}
                       />
                     </View>
-                  </View>
-                  <View style={styles.nutrionfield}>
-                    <Text style={styles.nutritionValue}>50g</Text>
-                    <Text style={styles.nutritionText}>Protein</Text>
-                    <View style={styles.progressBarContainer}>
-                      <SCProgressBar
-                        progress={20}
-                        color={Color.progress_protein}
-                      />
-                    </View>
-                  </View>
-                  <View style={styles.nutrionfield}>
-                    <Text style={styles.nutritionValue}>400g</Text>
-                    <Text style={styles.nutritionText}>Fat</Text>
-                    <View style={styles.progressBarContainer}>
-                      <SCProgressBar progress={60} />
-                    </View>
-                  </View>
+                  )}
                 </View>
+
+                {/* Nutrition */}
+                {dailyLog && (
+                  <View style={styles.nutrions}>
+                    <View style={styles.nutrionfield}>
+                      <Text style={styles.nutritionValue}>
+                        {dailyLog?.totalCarbsConsumed ?? 0}g
+                      </Text>
+                      <Text style={styles.nutritionText}>Carb</Text>
+                      <View style={styles.progressBarContainer}>
+                        <SCProgressBar
+                          progress={dailyLog?.totalCarbsConsumed ?? 0}
+                          maxProgress={dailyLog?.totalCarbsTarget ?? 0}
+                          color={Color.progress_carb}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.nutrionfield}>
+                      <Text style={styles.nutritionValue}>
+                        {dailyLog?.totalProteinConsumed ?? 0}g
+                      </Text>
+                      <Text style={styles.nutritionText}>Protein</Text>
+                      <View style={styles.progressBarContainer}>
+                        <SCProgressBar
+                          progress={dailyLog?.totalProteinConsumed ?? 0}
+                          maxProgress={dailyLog?.totalProteinTarget ?? 0}
+                          color={Color.progress_protein}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.nutrionfield}>
+                      <Text style={styles.nutritionValue}>
+                        {dailyLog?.totalFatConsumed ?? 0}g
+                      </Text>
+                      <Text style={styles.nutritionText}>Fat</Text>
+                      <View style={styles.progressBarContainer}>
+                        <SCProgressBar
+                          progress={dailyLog?.totalFatConsumed ?? 0}
+                          maxProgress={dailyLog?.totalFatTarget ?? 0}
+                          color={Color.progress_fat}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {/* This Week Section */}
                 <View>
                   <SCNutritionThisWeek />
                 </View>
@@ -159,17 +205,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
-  },
-  badge: {
-    position: "absolute",
-    right: 13,
-    top: 11,
-    backgroundColor: "red",
-    borderRadius: 4,
-    width: 8,
-    height: 8,
-    justifyContent: "center",
-    alignItems: "center",
   },
   bodyView: {
     marginVertical: 16,
@@ -232,29 +267,5 @@ const styles = StyleSheet.create({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-  },
-  dailySection: {
-    width: "100%",
-    backgroundColor: Color.white,
-    borderRadius: 16,
-    padding: 12,
-  },
-  checklist: {},
-  checklistTitle: {
-    fontSize: 16,
-    fontFamily: FONTS.semiBold,
-  },
-  checklistItems: {
-    paddingVertical: 8,
-  },
-  warningText: {
-    textAlign: "center",
-    fontSize: 12,
-    color: "red",
-  },
-  successText: {
-    textAlign: "center",
-    fontSize: 12,
-    color: "green",
   },
 });

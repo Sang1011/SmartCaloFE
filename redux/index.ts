@@ -4,7 +4,9 @@ import { excerciseReducer } from "@features/excercises";
 import { menuReducer } from "@features/menus";
 import { paymentReducer } from "@features/payment";
 import { programReducer } from "@features/programs";
+import { reviewReducer } from "@features/review";
 import { subcriptionReducer } from "@features/subscriptions";
+import { trackingReducer } from "@features/tracking";
 import { userReducer } from "@features/users";
 import { workoutExcerciseReducer } from "@features/workouExcercise";
 import { workoutReducer } from "@features/workouts";
@@ -23,7 +25,9 @@ export const store = configureStore({
     workout: workoutReducer,
     payment: paymentReducer,
     workoutExcercise: workoutExcerciseReducer,
-    chat: chatReducer
+    chat: chatReducer,
+    review: reviewReducer,
+    tracking: trackingReducer
   },
 });
 

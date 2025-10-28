@@ -251,11 +251,6 @@ export default function BodyInfo() {
             style={styles.historyButton}
             onPress={() => navigateCustom("/bodyHistory")}
           >
-            <Ionicons
-              name="bar-chart-outline"
-              size={18}
-              color={color.dark_green}
-            />
             <Text style={styles.historyText}>
               Xem tổng quan lịch sử thay đổi
             </Text>

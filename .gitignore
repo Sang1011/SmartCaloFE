@@ -46,3 +46,8 @@ smartcalo-release.keystore
 
 .env
 .env*
+
+eas.json
+credentials.json
+google-services.json
+.keystore

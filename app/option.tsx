@@ -11,9 +11,8 @@ import { scale } from "react-native-size-matters"; // Dùng để scaling nếu 
 const mealOptions = [
   { key: "Breakfast", label: "Bữa sáng" },
   { key: "Lunch", label: "Bữa trưa" },
-  { key: "Snacks", label: "Bữa chiều" },
   { key: "Dinner", label: "Bữa tối" },
-  
+  { key: "Snacks", label: "Bữa phụ" },
 ];
 
 /**
@@ -129,12 +128,14 @@ export default function OptionScreen() {
             color={Color.dark_green}
           />
         </View>
-        <View style={styles.textWrapper}>
+        <Pressable style={styles.textWrapper} onPress={() => {
+          navigateCustom("/library");
+        }}>
           <Text style={styles.actionTitle}>Tìm kiếm</Text>
           <Text style={styles.actionDescription}>
             Tìm kiếm bằng database của chúng tôi.
           </Text>
-        </View>
+        </Pressable>
       </Pressable>
     </View>
   );

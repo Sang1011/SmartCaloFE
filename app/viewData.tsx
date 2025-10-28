@@ -4,164 +4,281 @@ import Color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
+import {
+    deleteLogEntriesBatchThunk,
+    getDailyLogThunk,
+} from "@features/tracking";
+import { fetchCurrentUserThunk } from "@features/users";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
-import { useMemo, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { scale } from "react-native-size-matters";
+import { MealType } from "../types/tracking";
 
-export type MealItem = {
-  id: number;
-  name: string;
-  quantity: string;
-  calories: number;
-  protein: number;
-  fat: number;
-  sugar: number;
-  fiber: number;
-};
-
-// Dữ liệu giả định ban đầu
-const initialItems: MealItem[] = [
-  {
-    id: 1,
-    name: "Chicken Breast, cooked",
-    quantity: "1 whole (58 g)",
-    calories: 114,
-    protein: 15.0,
-    fat: 5.0,
-    sugar: 0.5,
-    fiber: 0.0,
-  },
-  {
-    id: 2,
-    name: "Olive Oil",
-    quantity: "1 tbsp. (13½ g)",
-    calories: 119,
-    protein: 0.0,
-    fat: 13.5,
-    sugar: 0.0,
-    fiber: 0.0,
-  },
-];
-
-const mealDataTemplate = {
-  name: "Lunch",
-  nutritionDetails: {
-    targetCal: 552,
-    targetProtein: 27,
-    targetCarbs: 67,
-    targetFat: 18,
-    fiber: 0.0,
-  },
-};
+// Tạm thời set isPro để test
 
 export default function ViewData() {
-  const [items, setItems] = useState(initialItems);
+  const [isPro, setIsPro] = useState<boolean>(false);
+  const { date, mealType } = useLocalSearchParams<{
+    date: string;
+    mealType: string;
+  }>();
+  const [mealTypeNumber, setMealTypeNumber] = useState<number>(0);
+
+  const { dailyLog, loading } = useAppSelector(
+    (state: RootState) => state.tracking
+  );
+  const dispatch = useAppDispatch();
+
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [localDeletedItemIds, setLocalDeletedItemIds] = useState<string[]>([]);
+  const { user } = useAppSelector((state: RootState) => state.user);
 
-  // Tính toán lại tổng calo và macro
-  const calculatedData = useMemo(() => {
-    const totalCal = items.reduce((sum, item) => sum + item.calories, 0);
-    const totalProtein = items.reduce((sum, item) => sum + item.protein, 0);
-    const totalFat = items.reduce((sum, item) => sum + item.fat, 0);
-    const totalSugar = items.reduce((sum, item) => sum + (item.sugar || 0), 0);
-    const totalFiber = items.reduce((sum, item) => sum + (item.fiber || 0), 0);
+  // =================================================================
+  // Lấy tên bữa ăn
+  // =================================================================
+  const mealNames = useMemo(
+    () => [
+      { name: "Bữa sáng", type: MealType.Breakfast },
+      { name: "Bữa trưa", type: MealType.Lunch },
+      { name: "Bữa tối", type: MealType.Dinner },
+      { name: "Bữa phụ", type: MealType.Snack },
+    ],
+    []
+  );
 
-    // Giả định carbs là tổng của Sugar + Fiber (tạm thời)
-    // Tạm thời bỏ qua công thức tính carbs chính xác từ macro
-    const totalCarbs = totalSugar + totalFiber;
+  const mealName = useMemo(() => {
+    return (
+      mealNames.find((m) => m.type === mealTypeNumber)?.name ||
+      "Chi tiết Bữa ăn"
+    );
+  }, [mealTypeNumber, mealNames]);
 
+  useEffect(() => {
+    if (user?.currentPlanId !== 1) {
+      setIsPro(true);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    dispatch(fetchCurrentUserThunk());
+
+    if (date && mealType) {
+      const typeNum = Number(mealType);
+      setMealTypeNumber(typeNum);
+      dispatch(getDailyLogThunk({ date: date, mealType: typeNum }));
+    }
+  }, [date, mealType, dispatch]);
+
+  useEffect(() => {
+    setLocalDeletedItemIds([]);
+  }, [dailyLog, mealTypeNumber]);
+
+  // =================================================================
+  // Tính toán dữ liệu từ dailyLog
+  // =================================================================
+  const items = useMemo(() => {
+    if (!dailyLog || !dailyLog.logEntries) return [];
+
+    return dailyLog.logEntries.map((entry) => ({
+      id: entry.id,
+      name: entry.foodName,
+      quantity: `${entry.quantity} phần`,
+      calories: Math.round(entry.caloriesConsumed),
+      protein: Math.round(entry.proteinConsumed),
+      carbs: Math.round(entry.carbsConsumed),
+      fat: Math.round(entry.fatConsumed),
+      fiber: Math.round(entry.fiberConsumed),
+      sugar: Math.round(entry.sugarConsumed),
+    }));
+  }, [dailyLog]);
+
+  // Danh sách items đã lọc sau khi xóa cục bộ
+  const displayedItems = useMemo(() => {
+    return items.filter((item) => !localDeletedItemIds.includes(item.id));
+  }, [items, localDeletedItemIds]);
+
+  // Tính tổng dinh dưỡng
+  const totals = useMemo(() => {
+    return displayedItems.reduce(
+      (acc, item) => ({
+        calories: acc.calories + item.calories,
+        protein: acc.protein + item.protein,
+        carbs: acc.carbs + item.carbs,
+        fat: acc.fat + item.fat,
+        fiber: acc.fiber + item.fiber,
+        sugar: acc.sugar + item.sugar,
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0 }
+    );
+  }, [displayedItems]);
+
+  // Targets từ dailyLog
+  const targets = useMemo(() => {
+    if (!dailyLog) return null;
     return {
-      totalCal,
-      protein: totalProtein,
-      carbs: totalCarbs,
-      fat: totalFat,
-      sugar: totalSugar,
-      fiber: totalFiber,
-      ...mealDataTemplate,
+      calories: Math.round(dailyLog.totalCaloriesTarget) || 0,
+      protein: Math.round(dailyLog.totalProteinTarget) || 0,
+      carbs: Math.round(dailyLog.totalCarbsTarget) || 0,
+      fat: Math.round(dailyLog.totalFatTarget) || 0,
+      fiber: Math.round(dailyLog.totalFiberTarget) || 0,
+      sugar: Math.round(dailyLog.totalSugarTarget) || 0,
     };
-  }, [items]);
+  }, [dailyLog]);
 
-  const { totalCal, carbs, protein, fat, sugar, fiber, nutritionDetails } =
-    calculatedData;
-
-  // Xử lý xóa món ăn (nhận mảng ID từ Modal)
-  const handleDeleteItem = (idsToRemove: number[]) => {
+  // =================================================================
+  // Xử lý xóa món ăn
+  // =================================================================
+  const handleDeleteItem = async (idsToRemove: string[]) => {
     if (idsToRemove && idsToRemove.length > 0) {
-      setItems((prevItems) =>
-        prevItems.filter((item) => !idsToRemove.includes(item.id))
-      );
+      setLocalDeletedItemIds((prevIds) => [...prevIds, ...idsToRemove]);
+      setIsEditModalVisible(false);
+
+      try {
+        await dispatch(
+          deleteLogEntriesBatchThunk({
+            logEntryIds: idsToRemove,
+            date: date as string,
+            mealType: mealTypeNumber,
+          })
+        ).unwrap();
+        console.log("Xóa hàng loạt thành công và đã cập nhật nhật ký ngày.");
+      } catch (error) {
+        console.error("Lỗi xóa món ăn:", error);
+        // Hoàn tác nếu xóa thất bại
+        setLocalDeletedItemIds((prevIds) =>
+          prevIds.filter((id) => !idsToRemove.includes(id))
+        );
+      }
     }
   };
 
-  // Hàm render cho thanh tiến trình (Giữ logic PRO lock)
-  const renderCalorieProgressBar = (
+  // =================================================================
+  // Render Progress Bar
+  // =================================================================
+  const renderNutrientRow = (
+    label: string,
     value: number,
     target: number,
-    label: string
-  ) => (
-    <View style={styles.macroRow}>
-      <Text style={styles.macroLabel}>{label}</Text>
-      <View style={styles.progressBarBackground}>
-        <View style={styles.proLockFull}>
-          <AntDesign name="lock" size={scale(14)} color={Color.white} />
-          <Text style={styles.proText}> PRO</Text>
-        </View>
+    unit: string = "g"
+  ) => {
+    const percentage = target > 0 ? (value / target) * 100 : 0;
+    const isExceeded = percentage > 100;
+    const displayPercentage = Math.min(percentage, 100);
+
+    const mainNutrients = ["carbs", "protein", "fat", "calories"];
+    const isMainNutrient = mainNutrients.includes(label.toLowerCase());
+    const canShowProgress = isPro || isMainNutrient;
+
+    return (
+      <View style={styles.macroRow}>
+        <Text style={styles.macroLabel}>{label}</Text>
+        {canShowProgress ? (
+          <>
+            <View style={styles.progressBarBackground}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  {
+                    width: `${displayPercentage}%`,
+                    backgroundColor: isExceeded ? Color.red : Color.dark_green,
+                  },
+                ]}
+              />
+            </View>
+            <Text
+              style={[
+                styles.macroTarget,
+                isExceeded && { color: Color.red, fontFamily: FONTS.bold },
+              ]}
+            >
+              {value} / {target}
+              {unit}
+            </Text>
+          </>
+        ) : (
+          <View style={styles.progressBarBackground}>
+            <View style={styles.proLockFull}>
+              <AntDesign name="lock" size={scale(14)} color={Color.white} />
+              <Text style={styles.proText}> PREMIUM</Text>
+            </View>
+          </View>
+        )}
       </View>
-      <Text style={styles.macroTarget}>
-        {value} / {target}{label === "Calories" ? "Cal" : "g"}
-      </Text>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
-      {/* 1. Header (giữ bên ngoài ScrollView để cố định) */}
+      {/* Header */}
       <View style={styles.header}>
-        <Pressable
-          onPress={() => {
-            navigateCustom("/tabs");
-          }}
-        >
+        <Pressable onPress={() => navigateCustom("/tabs")}>
           <AntDesign name="arrow-left" size={scale(24)} color={Color.black} />
         </Pressable>
-        <Text style={styles.headerTitle}>{calculatedData.name}</Text>
+        <Text style={styles.headerTitle}>{mealName}</Text>
         <View style={styles.headerActions}>
-          <Pressable
-            style={styles.actionButton}
-            onPress={() => setIsEditModalVisible(true)}
-          >
-            <Feather name="edit" size={scale(24)} color={Color.dark_green} />
-          </Pressable>
+          {displayedItems.length > 0 && (
+            <Pressable
+              style={styles.actionButton}
+              onPress={() => setIsEditModalVisible(true)}
+            >
+              <Feather name="edit" size={scale(24)} color={Color.dark_green} />
+            </Pressable>
+          )}
         </View>
       </View>
 
-      {/* Bọc toàn bộ nội dung còn lại trong ScrollView */}
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        {/* 2. Tổng quan Bữa Ăn (Tách thành MealSummary) */}
-        {/* Giả định MealSummary đã dùng các màu từ Color, nên không cần thay đổi */}
+        {/* Tổng quan Bữa Ăn */}
         <MealSummary
-          totalCal={totalCal}
-          protein={protein}
-          fat={fat}
-          sugar={sugar}
-          fiber={fiber}
+          totalCal={totals.calories}
+          protein={totals.protein}
+          fat={totals.fat}
+          sugar={totals.sugar}
+          fiber={totals.fiber}
         />
 
-        {/* 3. Danh sách các món ăn */}
+        {/* Danh sách các món ăn */}
         <View style={styles.itemsList}>
           <Text style={styles.listTitle}>Các món đã dùng</Text>
-          {/* Thêm tiêu đề danh sách */}
-          {items.map((item) => (
-            <View key={item.id} style={styles.itemRow}>
-              <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemQuantity}>{item.quantity}</Text>
+          {displayedItems.length > 0 ? (
+            displayedItems.map((item) => (
+              <View key={item.id} style={styles.itemRow}>
+                <View style={styles.itemDetails}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  <Text style={styles.itemQuantity}>{item.quantity}</Text>
+
+                  {isPro ? (
+                    <>
+                      <Text style={styles.itemNutrients}>
+                        Protein: {item.protein}g | Carbs: {item.carbs}g | Fat:{" "}
+                        {item.fat}g
+                      </Text>
+                      <Text style={styles.itemNutrients}>
+                        Fiber: {item.fiber}g | Sugar: {item.sugar}g
+                      </Text>
+                    </>
+                  ) : (
+                    <View style={styles.proLockRow}>
+                      <AntDesign
+                        name="lock"
+                        size={scale(12)}
+                        color={Color.white}
+                      />
+                      <Text style={styles.proLockText}>
+                        Chi tiết dinh dưỡng (PREMIUM)
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                <Text style={styles.itemCalories}>{item.calories} Cal</Text>
               </View>
-              <Text style={styles.itemCalories}>{item.calories} Cal</Text>
-            </View>
-          ))}
-          {items.length === 0 && (
+            ))
+          ) : (
             <Text style={styles.emptyListText}>
               Chưa có món ăn nào được thêm.
             </Text>
@@ -177,65 +294,32 @@ export default function ViewData() {
           <Text style={styles.addButtonText}> Thêm món ăn</Text>
         </Pressable>
 
-        {/* 4. Thông tin Dinh dưỡng (Nutrition Facts) */}
-        {nutritionDetails && (
+        {/* Nutrition Facts */}
+        {targets && displayedItems.length > 0 && (
           <View style={styles.nutritionFactsContainer}>
             <Text style={styles.nutritionFactsTitle}>
-              Nutrition Facts (PRO Feature)
+              Thành phần dinh dưỡng {!isPro && "(PREMIUM)"}
             </Text>
-            {renderCalorieProgressBar(
-              0,
-              nutritionDetails.targetCal,
-              "Calories"
+            {renderNutrientRow(
+              "Calories",
+              totals.calories,
+              targets.calories,
+              "Cal"
             )}
-            {renderCalorieProgressBar(0, nutritionDetails.targetCarbs, "Carbs")}
-            {renderCalorieProgressBar(
-              0,
-              nutritionDetails.targetProtein,
-              "Protein"
-            )}
-            {renderCalorieProgressBar(0, nutritionDetails.targetFat, "Fat")}
+            {renderNutrientRow("Carbs", totals.carbs, targets.carbs)}
+            {renderNutrientRow("Protein", totals.protein, targets.protein)}
+            {renderNutrientRow("Fat", totals.fat, targets.fat)}
+            {renderNutrientRow("Fiber", totals.fiber, targets.fiber)}
+            {renderNutrientRow("Sugar", totals.sugar, targets.sugar)}
           </View>
         )}
-
-        {/* 5. Footer tóm tắt chi tiết */}
-        <View style={styles.footerContainer}>
-          <Text style={styles.footerSummaryTitle}>Tổng quan dinh dưỡng</Text>
-
-          <View style={styles.footerRow}>
-            <Text style={styles.footerLabel}>Calories</Text>
-            <Text style={[styles.footerValue, { color: Color.dark_green }]}>
-              {totalCal} Cal
-            </Text>
-          </View>
-
-          <View style={styles.footerRow}>
-            <Text style={styles.footerLabel}>Protein</Text>
-            <Text style={styles.footerValue}>{protein} g</Text>
-          </View>
-
-          <View style={styles.footerRow}>
-            <Text style={styles.footerLabel}>Chất béo</Text>
-            <Text style={styles.footerValue}>{fat} g</Text>
-          </View>
-
-          <View style={styles.footerRow}>
-            <Text style={styles.footerLabel}>Đường</Text>
-            <Text style={styles.footerValue}>{sugar} g</Text>
-          </View>
-
-          <View style={styles.footerRow}>
-            <Text style={styles.footerLabel}>Chất xơ</Text>
-            <Text style={styles.footerValue}>{fiber} g</Text>
-          </View>
-        </View>
       </ScrollView>
 
-      {/* Modal (Giữ bên ngoài ScrollView) */}
+      {/* Modal */}
       <EditMealModal
         isVisible={isEditModalVisible}
         onClose={() => setIsEditModalVisible(false)}
-        items={items}
+        items={displayedItems}
         onDelete={handleDeleteItem}
       />
     </View>
@@ -243,19 +327,17 @@ export default function ViewData() {
 }
 
 // =================================================================
-// Styles cho ViewData (Đã cập nhật màu)
+// Styles
 // =================================================================
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Color.background, // Nền ngoài cùng
+    backgroundColor: Color.background,
   },
   scrollViewContent: {
     flexGrow: 1,
     paddingBottom: scale(20),
   },
-
-  // 1. Header (Cố định)
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -267,24 +349,22 @@ const styles = StyleSheet.create({
     borderBottomColor: Color.light_gray,
   },
   headerTitle: {
+    flex: 1,
     textAlign: "center",
-    marginLeft: "20%",
     fontSize: scale(18),
     fontFamily: FONTS.semiBold,
     color: Color.black,
   },
   headerActions: {
-    flexDirection: "row",
-    width: scale(80),
-    justifyContent: "flex-end",
+    width: scale(30),
+    alignItems: "flex-end",
   },
-
-  // 3. Items List
+  actionButton: {},
   itemsList: {
     paddingHorizontal: scale(20),
     paddingVertical: scale(10),
     backgroundColor: Color.white,
-    marginTop: scale(10), // Khoảng cách giữa MealSummary và danh sách
+    marginTop: scale(10),
     borderTopWidth: 1,
     borderTopColor: Color.light_gray,
   },
@@ -313,13 +393,19 @@ const styles = StyleSheet.create({
   itemQuantity: {
     fontSize: scale(12),
     fontFamily: FONTS.regular,
-    color: Color.grey, // Dùng gray/grey cho chữ phụ
+    color: Color.gray,
+    marginTop: scale(2),
+  },
+  itemNutrients: {
+    fontSize: scale(11),
+    fontFamily: FONTS.regular,
+    color: Color.dark_green,
     marginTop: scale(2),
   },
   itemCalories: {
     fontSize: scale(15),
     fontFamily: FONTS.semiBold,
-    color: Color.dark_green, // Calo dùng màu nhấn
+    color: Color.dark_green,
   },
   emptyListText: {
     fontSize: scale(14),
@@ -328,8 +414,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingVertical: scale(10),
   },
-
-  // Nút thêm món ăn
   addButton: {
     flexDirection: "row",
     justifyContent: "center",
@@ -345,11 +429,9 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     color: Color.white,
   },
-
-  // 4. Nutrition Facts (Logic tiến trình bị khóa)
   nutritionFactsContainer: {
     padding: scale(20),
-    backgroundColor: Color.white, // Chuyển nền trắng để dễ phân biệt
+    backgroundColor: Color.white,
     marginTop: scale(10),
     borderTopWidth: 1,
     borderTopColor: Color.light_gray,
@@ -357,13 +439,12 @@ const styles = StyleSheet.create({
   nutritionFactsTitle: {
     fontSize: scale(16),
     fontFamily: FONTS.bold,
-    color: Color.black, // Đổi màu tiêu đề thành đen
+    color: Color.black,
     marginBottom: scale(15),
     borderBottomWidth: 1,
     borderBottomColor: Color.light_gray,
     paddingBottom: scale(8),
   },
-  actionButton:{},
   macroRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -378,19 +459,39 @@ const styles = StyleSheet.create({
   progressBarBackground: {
     flex: 1,
     height: scale(20),
-    backgroundColor: Color.gray_light, // Nền xám nhạt cho thanh tiến trình
+    backgroundColor: Color.gray_light,
     borderRadius: 10,
     marginHorizontal: scale(10),
     justifyContent: "center",
     overflow: "hidden",
-    borderWidth: 0, // Bỏ border
+  },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: Color.dark_green,
+    borderRadius: 10,
   },
   proLockFull: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Color.black_70, // Lớp phủ đen mờ
+    backgroundColor: Color.black_70,
+  },
+  proLockRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Color.black_70,
+    borderRadius: scale(8),
+    paddingHorizontal: scale(6),
+    paddingVertical: scale(2),
+    marginTop: scale(4),
+  },
+  proLockText: {
+    color: Color.white,
+    fontFamily: FONTS.medium,
+    fontSize: scale(12),
+    textAlign: "center"
   },
   proText: {
     fontSize: scale(12),
@@ -398,45 +499,10 @@ const styles = StyleSheet.create({
     color: Color.white,
   },
   macroTarget: {
-    width: scale(70),
+    width: scale(90),
     textAlign: "right",
     fontSize: scale(12),
     fontFamily: FONTS.medium,
     color: Color.gray,
   },
-
-  // 5. Footer
-  footerContainer: {
-    padding: scale(20),
-    backgroundColor: Color.white,
-    marginTop: scale(10),
-    borderTopWidth: 1,
-    borderTopColor: Color.light_gray,
-  },
-  footerSummaryTitle: {
-    fontSize: scale(16),
-    fontFamily: FONTS.bold,
-    color: Color.black,
-    marginBottom: scale(15),
-    borderBottomWidth: 1,
-    borderBottomColor: Color.light_gray,
-    paddingBottom: scale(8),
-  },
-  footerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: scale(10),
-  },
-  footerLabel: {
-    fontSize: scale(15),
-    fontFamily: FONTS.regular,
-    color: Color.black_60, // Chữ phụ màu hơi xám
-  },
-  footerValue: {
-    fontSize: scale(15),
-    fontFamily: FONTS.semiBold,
-    color: Color.black,
-  },
-  // Đã xóa các styles không dùng (proBadge, proTextSmall, etc.)
 });

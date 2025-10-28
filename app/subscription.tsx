@@ -11,7 +11,8 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator, Alert,
+  ActivityIndicator,
+  Alert,
   AppState,
   AppStateStatus,
   Image,
@@ -33,20 +34,42 @@ export default function SubscriptionScreen() {
   );
 
   // Lấy thêm transactionId và paymentStatus từ Redux
-  const { qrImageUrl, qrLoading, transactionId, paymentStatus } = useAppSelector(
-    (state: RootState) => state.payment
-  );
+  const { qrImageUrl, qrLoading, transactionId, paymentStatus } =
+    useAppSelector((state: RootState) => state.payment);
   const { user } = useAppSelector((state: RootState) => state.user);
 
   // Cập nhật: Chỉ tạo QR và mở Modal. Logic Polling sẽ chạy trong useEffect.
   const handlePaymentURlCreate = async () => {
-    const res = await dispatch(fetchPaymentQRUrl({ planId: selectedPlanId })).unwrap();
+    const res = await dispatch(
+      fetchPaymentQRUrl({ planId: selectedPlanId })
+    ).unwrap();
     if (res?.transactionId) {
       setIsModalVisible(true);
     } else {
       Alert.alert("Lỗi", "Không thể tạo QR. Vui lòng thử lại!");
     }
   };
+
+  const features = [
+    {
+      name: "Nhận diện thức ăn qua hình ảnh",
+      free: "3 lần",
+      pro: "Không giới hạn",
+    },
+    { name: "Kiểm tra điểm danh hàng ngày", free: "✔️", pro: "✔️" },
+    { name: "Tính toán BMI/BMR/TDEE", free: "✔️", pro: "✔️" },
+    { name: "Xem thực đơn ăn uống & tập luyện cơ bản", free: "✔️", pro: "✔️" },
+    {
+      name: "Ghi lại lịch sử thay đổi cân nặng và chiều cao",
+      free: "✔️",
+      pro: "✔️",
+    },
+    { name: "Tạo thực đơn tùy chỉnh theo cá nhân", free: "❌", pro: "✔️" },
+    { name: "Tra cứu thư viện món ăn", free: "✔️", pro: "✔️" },
+    { name: "AI Chatbox tư vấn", free: "❌", pro: "✔️" },
+    { name: "Theo dõi & ghi nhật ký ăn uống", free: "✔️", pro: "✔️" },
+    { name: "Xem thông tin dinh dưỡng chi tiết của các bữa ăn đã ghi", free: "❌", pro: "✔️" },
+  ];
 
   useEffect(() => {
     dispatch(fetchCurrentUserThunk());
@@ -62,44 +85,54 @@ export default function SubscriptionScreen() {
         setSelectedPlanId(defaultPlan.id);
       }
     }
-  }, [loading, subscriptionPlans, selectedPlanId]); 
-  
+  }, [loading, subscriptionPlans, selectedPlanId]);
+
   useEffect(() => {
     // Hàm xử lý khi trạng thái App thay đổi
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       // Nếu trạng thái chuyển từ background/inactive sang active (người dùng quay lại app)
-      if (nextAppState === 'active' && isModalVisible && transactionId && paymentStatus?.toString().toLowerCase() !== 'completed') {
-        console.log("App returned to foreground. Force checking payment status.");
-        
+      if (
+        nextAppState === "active" &&
+        isModalVisible &&
+        transactionId &&
+        paymentStatus?.toString().toLowerCase() !== "completed"
+      ) {
+        console.log(
+          "App returned to foreground. Force checking payment status."
+        );
+
         // Buộc dispatch ngay lập tức để cập nhật trạng thái sau khi quay lại
         dispatch(fetchPaymentStatus(transactionId));
       }
     };
 
     // Đăng ký sự kiện lắng nghe AppState
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
 
     // Dọn dẹp listener khi component bị unmount
     return () => {
       subscription.remove();
     };
-  }, [isModalVisible, transactionId, paymentStatus, dispatch]); 
-// ------------------------------------------------------------------
-// END LOGIC KIỂM TRA KHI QUAY LẠI APP
-// ------------------------------------------------------------------
+  }, [isModalVisible, transactionId, paymentStatus, dispatch]);
+  // ------------------------------------------------------------------
+  // END LOGIC KIỂM TRA KHI QUAY LẠI APP
+  // ------------------------------------------------------------------
 
-// ------------------------------------------------------------------
-// LOGIC POLLING CHÍNH (Chạy liên tục khi ở foreground)
-// ------------------------------------------------------------------
+  // ------------------------------------------------------------------
+  // LOGIC POLLING CHÍNH (Chạy liên tục khi ở foreground)
+  // ------------------------------------------------------------------
   useEffect(() => {
     let intervalId: number | null = null;
     const POLLING_INTERVAL = 1000; // 1 giây
-    
+
     // 1. Dừng Polling nếu đã thành công
-    if (paymentStatus?.toString().toLowerCase() === 'completed') {
-        if (intervalId) clearInterval(intervalId);
-        Alert.alert("Thành công! 🎉", "Tài khoản của bạn đã được nâng cấp!");
-        return; 
+    if (paymentStatus?.toString().toLowerCase() === "completed") {
+      if (intervalId) clearInterval(intervalId);
+      Alert.alert("Thành công! 🎉", "Tài khoản của bạn đã được nâng cấp!");
+      return;
     }
 
     // 2. Bắt đầu Polling: Chỉ Polling khi Modal mở, có ID giao dịch và chưa thành công
@@ -120,10 +153,9 @@ export default function SubscriptionScreen() {
       }
     };
   }, [isModalVisible, transactionId, paymentStatus, dispatch]);
-// ------------------------------------------------------------------
-// END LOGIC POLLING CHÍNH
-// ------------------------------------------------------------------
-
+  // ------------------------------------------------------------------
+  // END LOGIC POLLING CHÍNH
+  // ------------------------------------------------------------------
 
   const handleSaveQRImage = async () => {
     if (!qrImageUrl) return;
@@ -157,7 +189,7 @@ export default function SubscriptionScreen() {
       </View>
     );
   }
-  
+
   const currentPlan = subscriptionPlans.find((p) => p.id === selectedPlanId);
   return (
     <View style={styles.fullContainer}>
@@ -204,33 +236,14 @@ export default function SubscriptionScreen() {
             </View>
           </View>
 
-          {[
-            ["Nhận diện thức ăn qua hình ảnh", "10 lần / 1 tháng", true],
-            ["Tính toán BMI/BMR/TDEE", "✔️", true],
-            ["Theo dõi quá trình ăn uống & tập luyện cơ bản", "✔️", true],
-            ["Tra cứu thư viện các món ăn Việt Nam", "✔️", true],
-            ["AI gợi ý các bữa ăn và bài tập", "❌", true],
-            ["Ghi nhật ký ăn uống không giới hạn", "❌", true],
-          ].map(([title, freeValue], index) => (
+          {features.map((item, index) => (
             <View key={index} style={styles.row}>
-              <Text style={[styles.cellText, { flex: 2 }]}>{title}</Text>
-              <Text
-                style={[
-                  styles.cellText,
-                  {
-                    flex: 1,
-                    color:
-                      freeValue === "10 lần / 1 tháng"
-                        ? color.red_dark
-                        : color.black,
-                    textAlign: "center",
-                  },
-                ]}
-              >
-                {freeValue}
+              <Text style={[styles.cellText, { flex: 2 }]}>{item.name}</Text>
+              <Text style={[styles.cellText, { flex: 1, textAlign: "center" }]}>
+                {item.free}
               </Text>
               <Text style={[styles.cellText, { flex: 1, textAlign: "center" }]}>
-                ✔️
+                {item.pro}
               </Text>
             </View>
           ))}
@@ -320,7 +333,7 @@ export default function SubscriptionScreen() {
             {/* Hiển thị số tiền thanh toán */}
             <Text
               style={[
-                styles.planPrice, 
+                styles.planPrice,
                 {
                   color: color.dark_green,
                   alignSelf: "center",
@@ -333,28 +346,46 @@ export default function SubscriptionScreen() {
             >
               Số tiền: {currentPlan?.price.toLocaleString() || 0} VND
             </Text>
-            
+
             {/* ✨ HIỂN THỊ TRẠNG THÁI THANH TOÁN (tùy chọn) */}
             <View style={styles.statusBox}>
-                {paymentStatus === 'Pending' && (
-                    <View style={styles.statusRow}>
-                        <ActivityIndicator size="small" color={color.dark_green} />
-                        <Text style={styles.statusTextPending}>Đang chờ xác nhận từ ngân hàng...</Text>
-                    </View>
-                )}
-                {paymentStatus === 'Completed' && (
-                    <View style={styles.statusRow}>
-                        <Ionicons name="checkmark-circle" size={20} color={color.green} />
-                        <Text style={styles.statusTextSuccess}>Thanh toán thành công!</Text>
-                    </View>
-                )}
-                {paymentStatus === 'Failed' && (
-                    <View style={styles.statusRow}>
-                        <Ionicons name="close-circle" size={20} color={color.red_dark} />
-                        <Text style={styles.statusTextFailed}>Thanh toán thất bại. Vui lòng thử lại.</Text>
-                    </View>
-                )}
-                {!transactionId && !qrLoading && <Text style={styles.statusTextFailed}>Không tìm thấy ID giao dịch.</Text>}
+              {paymentStatus === "Pending" && (
+                <View style={styles.statusRow}>
+                  <ActivityIndicator size="small" color={color.dark_green} />
+                  <Text style={styles.statusTextPending}>
+                    Đang chờ xác nhận từ ngân hàng...
+                  </Text>
+                </View>
+              )}
+              {paymentStatus === "Completed" && (
+                <View style={styles.statusRow}>
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={color.green}
+                  />
+                  <Text style={styles.statusTextSuccess}>
+                    Thanh toán thành công!
+                  </Text>
+                </View>
+              )}
+              {paymentStatus === "Failed" && (
+                <View style={styles.statusRow}>
+                  <Ionicons
+                    name="close-circle"
+                    size={20}
+                    color={color.red_dark}
+                  />
+                  <Text style={styles.statusTextFailed}>
+                    Thanh toán thất bại. Vui lòng thử lại.
+                  </Text>
+                </View>
+              )}
+              {!transactionId && !qrLoading && (
+                <Text style={styles.statusTextFailed}>
+                  Không tìm thấy ID giao dịch.
+                </Text>
+              )}
             </View>
             {/* END: HIỂN THỊ TRẠNG THÁI */}
 
@@ -544,34 +575,34 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: 14,
     fontFamily: FONTS.medium,
-  }, 	
+  },
   // ✨ STYLES MỚI CHO TRẠNG THÁI THANH TOÁN
   statusBox: {
     marginVertical: 15,
     paddingHorizontal: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   statusRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 5,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 5,
   },
   statusTextPending: {
-      marginLeft: 8,
-      fontSize: 16,
-      color: color.dark_green,
-      fontFamily: FONTS.medium,
+    marginLeft: 8,
+    fontSize: 16,
+    color: color.dark_green,
+    fontFamily: FONTS.medium,
   },
   statusTextSuccess: {
-      marginLeft: 8,
-      fontSize: 16,
-      color: color.green,
-      fontFamily: FONTS.semiBold,
+    marginLeft: 8,
+    fontSize: 16,
+    color: color.green,
+    fontFamily: FONTS.semiBold,
   },
   statusTextFailed: {
-      marginLeft: 8,
-      fontSize: 16,
-      color: color.red_dark,
-      fontFamily: FONTS.medium,
+    marginLeft: 8,
+    fontSize: 16,
+    color: color.red_dark,
+    fontFamily: FONTS.medium,
   },
 });

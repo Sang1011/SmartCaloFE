@@ -64,7 +64,7 @@ export default function Step10_ActivityLevel({
           <SingleSelectOption
             key={item.value}
             label={item.label}
-            isSelected={surveyData.activityLevel === item.value}
+            isSelected={Number(surveyData.activityLevel) === item.value}
             onPress={() => handleSelect(item.value)}
           />
         ))}

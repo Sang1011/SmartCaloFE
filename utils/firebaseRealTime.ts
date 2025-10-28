@@ -1,229 +1,310 @@
-import { child, get, ref, set, update } from "firebase/database";
+import { get, ref, set, update } from "firebase/database";
 import { rtdb } from "../config/firebase";
-import { UserFromFirebase } from "../types/firebase";
+
+// ==================== INTERFACE ====================
+
+export const ACTIVE_SCAN = 3;
+
+export interface UserStreakData {
+  userId: string;
+  firstLoginDate: number | null; // ✅ Unix timestamp (ms) - ngày đăng nhập lần đầu
+  currentFreeScan: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastActiveDate: number | null; // Unix timestamp (ms)
+  streakStatus: 'uninitiated' | 'active' | 'broken';
+  totalActiveDays: number;
+  timezone: string;
+}
+
+// ==================== HELPER FUNCTIONS ====================
 
 /**
- * 🧩 Tạo user mặc định khi chưa có trên DB
+ * Chuyển string date (dd-mm-yyyy) sang Unix timestamp (start of day UTC)
  */
-export const createDefaultUser = (userId: string): UserFromFirebase => {
-  const now = new Date().toISOString();
+function parseDate(dateStr: string): number {
+  try {
+    const [day, month, year] = dateStr.split('-').map(Number);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) {
+      throw new Error(`Invalid date format: ${dateStr}`);
+    }
 
+    // ✅ Tạo Date ở múi giờ Việt Nam (UTC+7)
+    const date = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const vietnamOffset = 7 * 60 * 60 * 1000;
+    const timestamp = date.getTime() - vietnamOffset;
+
+    return timestamp;
+  } catch (error) {
+    console.error('❌ Error parsing date:', dateStr, error);
+    throw error;
+  }
+}
+
+
+/**
+ * Tính số ngày chênh lệch giữa 2 timestamps
+ */
+function getDaysDifference(timestamp1: number, timestamp2: number): number {
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  return Math.floor((timestamp2 - timestamp1) / MS_PER_DAY);
+}
+
+/**
+ * Tạo default user data
+ */
+function createDefaultUserData(userId: string, firstLoginDate: number): UserStreakData {
   return {
     userId,
-    currentStreak: 1,
-    longestStreak: 1,
-    lastActiveDate: now,
-    menuProgress: {
-      totalDays: 30,
-      createdAt: now,
-      lastCompletedDate: now,
-      currentDayNumber: 1,
-    },
-    programProgress: {
-      totalDays: 30,
-      createdAt: now,
-      lastCompletedDate: now,
-      completedDays: [],
-      currentDayNumber: 1,
-    },
+    firstLoginDate, // ✅ Lưu ngày đăng nhập lần đầu
+    currentFreeScan: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    lastActiveDate: null,
+    streakStatus: 'uninitiated',
+    totalActiveDays: 0,
+    timezone: 'Asia/Ho_Chi_Minh'
   };
-};
+}
+
+// ==================== MAIN FUNCTIONS ====================
 
 /**
- * 🟢 Lưu user vào Realtime Database
+ * Tự động tạo user mặc định nếu chưa tồn tại
+ * @param userId - ID của user
+ * @param today - Ngày hiện tại (format: dd-mm-yyyy)
+ * @returns UserStreakData - Thông tin user (mới hoặc đã có)
  */
-export const saveUserToDB = async (user: UserFromFirebase) => {
+export async function autoCreateDefaultUser(
+  userId: string,
+  today: string
+): Promise<UserStreakData> {
   try {
-    await set(ref(rtdb, `users/${user.userId}`), user);
-    console.log("✅ User saved successfully");
-  } catch (error) {
-    console.error("❌ Error saving user:", error);
-  }
-};
+    const userRef = ref(rtdb, `users/${userId}`);
+    const snapshot = await get(userRef);
 
-/**
- * 🔍 Lấy user từ DB
- */
-export const getUserFromDB = async (userId: string): Promise<UserFromFirebase | null> => {
-  try {
-    const snapshot = await get(child(ref(rtdb), `users/${userId}`));
+    // Nếu user đã tồn tại -> trả về data hiện tại
     if (snapshot.exists()) {
-      return snapshot.val() as UserFromFirebase;
-    } else {
+      console.log(`✅ User ${userId} đã tồn tại`);
+      return snapshot.val() as UserStreakData;
+    }
+
+    // Nếu chưa có -> tạo mới với firstLoginDate = hôm nay
+    const firstLoginTimestamp = parseDate(today);
+    const defaultUser = createDefaultUserData(userId, firstLoginTimestamp);
+    await set(userRef, defaultUser);
+    
+    console.log(`🆕 Đã tạo user mới: ${userId}, firstLoginDate: ${today}`);
+    return defaultUser;
+    
+  } catch (error) {
+    console.error('❌ Lỗi autoCreateDefaultUser:', error);
+    throw new Error(`Không thể tạo user: ${error}`);
+  }
+}
+
+/**
+ * Tự động update streak khi user đăng nhập
+ * @param userId - ID của user
+ * @param today - Ngày hiện tại (format: dd-mm-yyyy, vd: "15-10-2025")
+ * @returns UserStreakData - Thông tin user sau khi update
+ */
+export async function autoUpdateStreaks(
+  userId: string,
+  today: string
+): Promise<UserStreakData> {
+  try {
+    const userRef = ref(rtdb, `users/${userId}`);
+    const snapshot = await get(userRef);
+
+    if (!snapshot.exists()) {
+      console.log(`⚠️ User ${userId} chưa tồn tại, đang tạo mới...`);
+      await autoCreateDefaultUser(userId, today); // ✅ Pass today để set firstLoginDate
+      return await autoUpdateStreaks(userId, today);
+    }
+
+    const userData = snapshot.val() as UserStreakData;
+    
+    // ✅ Validate và parse date trước khi sử dụng
+    let todayTimestamp: number;
+    try {
+      todayTimestamp = parseDate(today);
+      console.log(`📅 Parsed today: ${today} -> ${todayTimestamp}`);
+    } catch (error) {
+      console.error(`❌ Invalid date format: ${today}`, error);
+      throw new Error(`Invalid date format: ${today}. Expected format: dd-mm-yyyy`);
+    }
+
+    // ✅ Migration: Nếu user cũ không có firstLoginDate, set = lastActiveDate hoặc hôm nay
+    if (!userData.firstLoginDate) {
+      const firstLogin = userData.lastActiveDate || todayTimestamp;
+      await update(userRef, { firstLoginDate: firstLogin });
+      console.log(`🔄 Migration: Set firstLoginDate = ${firstLogin} for user ${userId}`);
+      userData.firstLoginDate = firstLogin;
+    }
+
+    if (userData.lastActiveDate === todayTimestamp) {
+      console.log(`User ${userId} đã đăng nhập hôm nay rồi`);
+      return userData;
+    }
+
+    let updatedData: Partial<UserStreakData>;
+
+    if (userData.streakStatus === 'uninitiated' || userData.lastActiveDate === null) {
+      updatedData = {
+        currentStreak: 1,
+        longestStreak: 1,
+        lastActiveDate: todayTimestamp,
+        streakStatus: 'active',
+        totalActiveDays: 1
+      };
+      console.log(`User ${userId} lần đầu đăng nhập`);
+    } 
+    else {
+      const daysDiff = getDaysDifference(userData.lastActiveDate, todayTimestamp);
+      
+      if (daysDiff === 1) {
+        const newStreak = userData.currentStreak + 1;
+        updatedData = {
+          currentStreak: newStreak,
+          longestStreak: Math.max(newStreak, userData.longestStreak),
+          lastActiveDate: todayTimestamp,
+          streakStatus: 'active',
+          totalActiveDays: userData.totalActiveDays + 1
+        };
+        console.log(`🔥 User ${userId} streak: ${userData.currentStreak} -> ${newStreak}`);
+      } 
+      else if (daysDiff > 1) {
+        updatedData = {
+          currentStreak: 1,
+          longestStreak: userData.longestStreak,
+          lastActiveDate: todayTimestamp,
+          streakStatus: 'broken',
+          totalActiveDays: userData.totalActiveDays + 1
+        };
+        console.log(`💔 User ${userId} streak bị break (${daysDiff} ngày bỏ lỡ)`);
+      }
+      else {
+        console.warn(`⚠️ User ${userId}: Ngày hôm nay (${today}) < lastActiveDate`);
+        return userData; 
+      }
+    }
+
+    // ✅ Validate updatedData trước khi update Firebase
+    Object.entries(updatedData).forEach(([key, value]) => {
+      if (typeof value === 'number' && isNaN(value)) {
+        throw new Error(`NaN detected in ${key}`);
+      }
+    });
+
+    await update(userRef, updatedData);
+    const finalData: UserStreakData = {
+      ...userData,
+      ...updatedData
+    };
+
+    console.log(`✅ Updated user ${userId}:`, finalData);
+    return finalData;
+
+  } catch (error) {
+    console.error('❌ Lỗi autoUpdateStreaks:', error);
+    throw error;
+  }
+}
+
+/**
+ * Lấy thông tin user (không update gì)
+ */
+export async function getUserStreakData(userId: string): Promise<UserStreakData | null> {
+  try {
+    const userRef = ref(rtdb, `users/${userId}`);
+    const snapshot = await get(userRef);
+
+    if (!snapshot.exists()) {
+      console.log(`⚠️ User ${userId} không tồn tại`);
       return null;
     }
+
+    return snapshot.val() as UserStreakData;
   } catch (error) {
-    console.error("❌ Error getting user:", error);
-    return null;
+    console.error('❌ Lỗi getUserStreakData:', error);
+    throw error;
   }
-};
+}
 
 /**
- * 🧠 Kiểm tra user đã tồn tại trong DB hay chưa
+ * Cập nhật currentFreeScan của user (+1 nếu chưa đạt giới hạn)
+ * @param userId - ID của user
  */
-export const checkUserExists = async (userId: string): Promise<boolean> => {
+export async function updateFreeScan(userId: string): Promise<UserStreakData> {
   try {
-    const snapshot = await get(child(ref(rtdb), `users/${userId}`));
-    return snapshot.exists();
-  } catch (error) {
-    console.log("🔥 LỖI GET FIRESTORE ĐÃ BỊ BẮT!");
-    console.error("❌ Error checking user existence:", error);
-    return false;
-  }
-};
+    const userRef = ref(rtdb, `users/${userId}`);
+    const snapshot = await get(userRef);
 
-export const ensureUserExists = async (userId: string): Promise<UserFromFirebase> => { 
-  const exists = await checkUserExists(userId);
-  if (!exists) {
-    const newUser = createDefaultUser(userId);
-    await saveUserToDB(newUser);
-    console.log("🆕 Created new default user");
-    return newUser;
-  } else {
-    console.log("✅ User already exists");
-    const existingUser = await getUserFromDB(userId);
-    return existingUser!;
-  }
-};
-
-
-export const partialUpdateUserStreak = async (userId: string) => {
-  try {
-    // 1️⃣ Đảm bảo user tồn tại
-    const user = await ensureUserExists(userId);
-
-    // 2️⃣ Lấy ngày hôm nay và ngày lastActive
-    const today = new Date().toISOString().split("T")[0];
-    const lastActive = new Date(user.lastActiveDate).toISOString().split("T")[0];
-
-    let newStreak = user.currentStreak;
-    let newLongest = user.longestStreak;
-
-    // 3️⃣ Tính streak
-    const diffDays = Math.floor(
-      (new Date(today).getTime() - new Date(lastActive).getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    if (diffDays === 1) {
-      // liên tục -> +1 streak
-      newStreak += 1;
-      if (newStreak > newLongest) newLongest = newStreak;
-    } else if (diffDays > 1) {
-      // gián đoạn -> reset streak
-      newStreak = 1;
+    if (!snapshot.exists()) {
+      console.warn(`⚠️ User ${userId} chưa tồn tại, đang tạo mới...`);
+      const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+      await autoCreateDefaultUser(userId, today);
+      return await updateFreeScan(userId);
     }
 
-    if (diffDays === 0) {
-      console.log("✅ User already checked in today");
-      return { currentStreak: newStreak, longestStreak: newLongest };
+    const userData = snapshot.val() as UserStreakData;
+
+    // Nếu đã đạt giới hạn thì không update nữa
+    if (userData.currentFreeScan >= ACTIVE_SCAN) {
+      console.log(`✅ User ${userId} đã đạt giới hạn free scan (${ACTIVE_SCAN})`);
+      return userData;
     }
 
-    // 4️⃣ Cập nhật partial
-    await update(ref(rtdb, `users/${userId}`), {
-      currentStreak: newStreak,
-      longestStreak: newLongest,
-      lastActiveDate: new Date().toISOString(),
-    });
+    const updatedValue = userData.currentFreeScan + 1;
+    await update(userRef, { currentFreeScan: updatedValue });
 
-    console.log("✅ Partial streak update success");
+    const updatedUser: UserStreakData = {
+      ...userData,
+      currentFreeScan: updatedValue,
+    };
 
-    return { currentStreak: newStreak, longestStreak: newLongest };
+    console.log(`🔍 Đã +1 free scan cho user ${userId} (${userData.currentFreeScan} → ${updatedValue})`);
+    return updatedUser;
+
   } catch (error) {
-    console.error("❌ Error updating streak:", error);
-    return null;
+    console.error('❌ Lỗi updateFreeScan:', error);
+    throw new Error(`Không thể update free scan: ${error}`);
   }
-};
+}
 
+// ==================== HELPER: Check Plan Status ====================
 
 /**
- * 🔁 Cập nhật một vài trường trong menuProgress
+ * Kiểm tra số ngày kể từ lần đầu đăng nhập
+ * @param userId - ID của user
+ * @returns Số ngày đã trải qua kể từ firstLoginDate
  */
-export const autoUpdateUserMenu = async (userId: string) => {
+export async function getDaysSinceFirstLogin(userId: string): Promise<number | null> {
   try {
-    const user = await ensureUserExists(userId);
-    const menu = user.menuProgress;
-
-    const today = new Date().toISOString().split("T")[0];
-    const lastCompleted = new Date(menu.lastCompletedDate).toISOString().split("T")[0];
-
-    // Nếu cùng ngày -> không update
-    if (today === lastCompleted) {
-      console.log("✅ Menu already updated today");
-      return menu;
+    const userData = await getUserStreakData(userId);
+    if (!userData || !userData.firstLoginDate) {
+      return null;
     }
 
-    // Tính next day
-    const nextDay = Math.min(menu.currentDayNumber + 1, menu.totalDays);
-
-    await update(ref(rtdb, `users/${userId}`), {
-      "menuProgress.currentDayNumber": nextDay,
-      "menuProgress.lastCompletedDate": new Date().toISOString(),
-    });
-
-    console.log("✅ Menu auto-updated");
-    return { ...menu, currentDayNumber: nextDay, lastCompletedDate: new Date().toISOString() };
+    const now = Date.now();
+    const daysPassed = getDaysDifference(userData.firstLoginDate, now);
+    return daysPassed;
   } catch (error) {
-    console.error("❌ Error auto-updating menu:", error);
+    console.error('❌ Lỗi getDaysSinceFirstLogin:', error);
     return null;
   }
-};
+}
 
-export const autoUpdateUserProgram = async (userId: string) => {
-  try {
-    const user = await ensureUserExists(userId);
-    const program = user.programProgress;
-
-    const today = new Date().toISOString().split("T")[0];
-    const lastCompleted = new Date(program.lastCompletedDate).toISOString().split("T")[0];
-
-    if (today === lastCompleted) {
-      console.log("✅ Program already updated today");
-      return program;
-    }
-
-    const nextDay = Math.min(program.currentDayNumber + 1, program.totalDays);
-    const completedDays = [...(program.completedDays || []), program.currentDayNumber];
-
-    await update(ref(rtdb, `users/${userId}`), {
-      "programProgress.currentDayNumber": nextDay,
-      "programProgress.lastCompletedDate": new Date().toISOString(),
-      "programProgress.completedDays": completedDays,
-    });
-
-    console.log("✅ Program auto-updated");
-    return { ...program, currentDayNumber: nextDay, lastCompletedDate: new Date().toISOString(), completedDays };
-  } catch (error) {
-    console.error("❌ Error auto-updating program:", error);
-    return null;
-  }
-};
-
-/**
- * 🔄 Reset toàn bộ dữ liệu user về mặc định
- */
-const resetUserData = async (userId: string) => {
-  try {
-    // 1️⃣ Tạo user mặc định
-    const defaultUser = createDefaultUser(userId);
-
-    // 2️⃣ Ghi đè dữ liệu hiện tại trong DB
-    await set(ref(rtdb, `users/${userId}`), defaultUser);
-
-    console.log("✅ User data has been reset to default");
-    return defaultUser;
-  } catch (error) {
-    console.error("❌ Error resetting user data:", error);
-    return null;
-  }
-};
-
-export const resetUserDataSafe = async (userId: string) => {
-  try {
-    await ensureUserExists(userId); // chắc chắn user có tồn tại
-    const defaultUser = await resetUserData(userId);
-    return defaultUser;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
+// /**
+//  * Kiểm tra xem user còn trong trial period không (7 ngày đầu)
+//  * @param userId - ID của user
+//  * @returns true nếu còn trong trial, false nếu hết
+//  */
+// export async function isInTrialPeriod(userId: string): Promise<boolean> {
+//   const daysSinceFirstLogin = await getDaysSinceFirstLogin(userId);
+//   if (daysSinceFirstLogin === null) return false;
+  
+//   const TRIAL_DAYS = 7;
+//   return daysSinceFirstLogin < TRIAL_DAYS;
+// }

@@ -2,8 +2,11 @@ import Color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { getWeeklyLogsThunk } from "@features/tracking";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -12,52 +15,79 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { MealType } from "../../types/tracking";
 import SCNutritionCalendar from "./SCNutrionCalendar";
 
-const days = [
-  { day: "T2", date: 11, calo: 1700, max: 2000 },
-  { day: "T3", date: 12, calo: 1200, max: 2000 },
-  { day: "T4", date: 13, calo: 300, max: 2000 },
-  { day: "T5", date: 14, calo: 1200, max: 2000 },
-  { day: "T6", date: 15, calo: 500, max: 2000 },
-  { day: "T7", date: 16, calo: 800, max: 2000 },
-  { day: "CN", date: 17, calo: 0, max: 2000 },
-];
+// Helper function để lấy 7 ngày trong tuần
+function getCurrentWeekDays() {
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ...
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
 
-const mealsData = [
-  {
-    name: "Bữa sáng",
-    icon: "coffee", // FontAwesome
-    consumed: 448,
-    target: 414,
-  },
-  {
-    name: "Bữa trưa",
-    icon: "bowl-food", // FontAwesome6
-    consumed: 234,
-    target: 552,
-  },
-  {
-    name: "Bữa chiều",
-    icon: "food-apple", // MaterialCommunityIcons
-    consumed: 0,
-    target: 69,
-  },
-  {
-    name: "Bữa tối",
-    icon: "food-turkey", // MaterialCommunityIcons (Đã đổi từ bữa Chiều sang Dinner/Bữa tối như hình)
-    consumed: 0,
-    target: 345,
-  },
-];
-
-const today = new Date();
-let currentDayIndex = today.getDay();
-currentDayIndex = (currentDayIndex + 6) % 7;
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + i);
+    days.push({
+      dateObj: date,
+      day: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"][date.getDay()],
+      date: date.getDate(),
+      dateKey: date.toLocaleDateString("en-CA"),
+    });
+  }
+  return days;
+}
 
 export default function SCNutritionThisWeek() {
+  const mealNames = [
+    { name: "Bữa sáng", type: MealType.Breakfast },
+    { name: "Bữa trưa", type: MealType.Lunch },
+    { name: "Bữa tối", type: MealType.Dinner },
+    { name: "Bữa phụ", type: MealType.Snack }
+  ];
+
   const [isCalendarVisible, setCalendarVisible] = useState(false);
-  const [selectedDayIndex, setSelectedDayIndex] = useState(currentDayIndex);
+  const today = new Date();
+  const days = useMemo(() => getCurrentWeekDays(), []);
+
+  const todayIndex = days.findIndex(
+    (d) =>
+      d.dateObj.getDate() === today.getDate() &&
+      d.dateObj.getMonth() === today.getMonth() &&
+      d.dateObj.getFullYear() === today.getFullYear()
+  );
+
+  const [selectedDayIndex, setSelectedDayIndex] = useState(
+    todayIndex >= 0 ? todayIndex : 0
+  );
+  const selectedDay = days[selectedDayIndex];
+  const month = selectedDay.dateObj.getMonth() + 1;
+
+  const { weeklyLogs, weeklyLoading } = useAppSelector(
+    (state: RootState) => state.tracking
+  );
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    const dateStrings = days.map((d) => d.dateKey);
+    dispatch(getWeeklyLogsThunk(dateStrings));
+  }, []);
+
+  // Tính toán dữ liệu hiển thị từ weeklyLogs
+  const daysWithData = useMemo(() => {
+    return days.map((day) => {
+      const log = weeklyLogs[day.dateKey];
+      return {
+        ...day,
+        calo: log?.totalCaloriesConsumed || 0,
+        max: log?.totalCaloriesTarget || 2000,
+      };
+    });
+  }, [days, weeklyLogs]);
+
+  const selectedDayData = daysWithData[selectedDayIndex];
+  const selectedDayLog = weeklyLogs[selectedDayData.dateKey];
 
   return (
     <View style={styles.container}>
@@ -71,23 +101,41 @@ export default function SCNutritionThisWeek() {
 
       {/* Biểu đồ cột */}
       <View style={styles.chart}>
-        {days.map((item, idx) => {
-          const progress = item.max > 0 ? item.calo / item.max : 0;
+        {daysWithData.map((item, idx) => {
+          const progress = item.max > 0 ? Math.min(item.calo / item.max, 1) : 0;
           return (
             <View key={idx} style={styles.barWrapper}>
-              <View style={styles.bar}>
-                <View
-                  style={{
-                    flex: progress,
-                    backgroundColor:
-                      idx === selectedDayIndex
-                        ? Color.light_green
-                        : Color.light_gray,
-                    borderTopLeftRadius: 8,
-                    borderTopRightRadius: 8,
-                  }}
-                />
+              <View
+                style={[
+                  styles.bar
+                ]}
+              >
+                {item.calo === 0 ? (
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontFamily: FONTS.semiBoldItalic,
+                      color: idx === selectedDayIndex ? Color.dark_green : Color.gray_dark,
+                      margin: "auto",
+                    }}
+                  >
+                    N/A
+                  </Text>
+                ) : (
+                  <View
+                    style={{
+                      flex: progress,
+                      backgroundColor:
+                        idx === selectedDayIndex
+                          ? Color.light_green
+                          : Color.light_gray,
+                      borderTopLeftRadius: 8,
+                      borderTopRightRadius: 8,
+                    }}
+                  />
+                )}
               </View>
+
               <Pressable
                 style={[
                   styles.barLabel,
@@ -117,19 +165,25 @@ export default function SCNutritionThisWeek() {
         })}
       </View>
 
-      {/* Chi tiết hôm nay */}
+      {/* Chi tiết ngày được chọn */}
       <View style={styles.detail}>
         <Text style={styles.detailTitle}>
-          Tổng calo {days[selectedDayIndex].day}, {days[selectedDayIndex].date}{" "}
-          tháng 3
+          Tổng calo {selectedDayData.day}, {selectedDayData.date} tháng {month}
         </Text>
         <View style={styles.detailCaloRow}>
           <Text style={styles.detailCalo}>
-            {days[selectedDayIndex].calo}/{days[selectedDayIndex].max} calo
+            {selectedDayData.calo}/{Math.round(selectedDayData.max)} calo
           </Text>
+
           <Pressable
             style={styles.detailLinkContainer}
-            onPress={() => navigateCustom("/viewAllData")}
+            onPress={() =>
+              navigateCustom("/viewAllData", {
+                params: {
+                  date: selectedDayData.dateKey,
+                },
+              })
+            }
           >
             <Text style={styles.detailLink}>Xem tổng quan</Text>
             <MaterialIcons
@@ -140,22 +194,22 @@ export default function SCNutritionThisWeek() {
           </Pressable>
         </View>
 
-        {/* Danh sách các bữa ăn trong ngày */}
-        {mealsData.map((meal, index) => (
+        {/* Danh sách các bữa ăn */}
+        {mealNames.map((meal, index) => (
           <Pressable
             key={index}
             style={styles.mealRow}
-            onPress={() => navigateCustom("/viewData")}
+            onPress={() =>
+              navigateCustom("/viewData", {
+                params: {
+                  date: selectedDayData.dateKey,
+                  mealType: meal.type.toString(),
+                },
+              })
+            }
           >
-            <Text style={styles.mealText}>
-              {meal.name} - {meal.consumed || 0} calo
-            </Text>
-            <MaterialIcons
-              name="navigate-next"
-              size={20}
-              color={Color.black}
-              onPress={() => navigateCustom("/viewData")}
-            />
+            <Text style={styles.mealText}>{meal.name}</Text>
+            <MaterialIcons name="navigate-next" size={20} color={Color.black} />
           </Pressable>
         ))}
       </View>
@@ -167,7 +221,6 @@ export default function SCNutritionThisWeek() {
         animationType="fade"
         onRequestClose={() => setCalendarVisible(false)}
       >
-        {/* Overlay tối */}
         <TouchableWithoutFeedback onPress={() => setCalendarVisible(false)}>
           <View style={styles.overlay}>
             <TouchableWithoutFeedback>
@@ -187,7 +240,7 @@ export default function SCNutritionThisWeek() {
 const styles = StyleSheet.create({
   container: {
     marginTop: 16,
-    backgroundColor: Color.white, // Nền ngoài cùng là trắng
+    backgroundColor: Color.white,
     borderRadius: 16,
     padding: 12,
   },
@@ -248,7 +301,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 4,
   },
-
   detail: {
     borderTopWidth: 1,
     borderTopColor: Color.black_50,
@@ -269,34 +321,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 4,
   },
-
   detailLinkContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
-
   detailLink: {
     fontSize: 14,
     fontFamily: FONTS.medium,
     color: Color.dark_green,
     marginRight: 4,
-  },
-
-  meal: {
-    fontSize: 14,
-    fontFamily: FONTS.regular,
-    marginTop: 2,
-    marginLeft: 15,
-  },
-  sectionTitle: {
-    fontFamily: FONTS.bold,
-    color: Color.dark_green,
-    fontSize: 18,
-  },
-  detailRightContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
   },
   mealRow: {
     flexDirection: "row",
@@ -312,17 +345,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     color: Color.black,
   },
-  addButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Color.dark_green, // Nút + màu xanh lá đậm
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  // END: Sửa đổi style cho phần chi tiết bữa ăn (detail)
-
-  // Style cũ (giữ lại và loại bỏ các style không dùng)
   overlay: {
     flex: 1,
     backgroundColor: Color.black_50,

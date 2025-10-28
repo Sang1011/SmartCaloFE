@@ -8,13 +8,14 @@ import {
   Ionicons,
   MaterialIcons,
 } from "@expo/vector-icons";
-import { fetchCurrentUserThunk } from "@features/users";
+import { deleteAccountThunk, fetchCurrentUserThunk } from "@features/users";
 import { RootState } from "@redux";
 import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
 import { Link } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -59,7 +60,7 @@ export default function ProfileScreen() {
             {avatarUri ? (
               <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
             ) : (
-              <Text style={styles.avatarText}>H</Text>
+              <Text style={styles.avatarText}>{user?.name.charAt(0).toLocaleUpperCase()}</Text>
             )}
           </View>
           <Text style={styles.userName}>{user?.name || "hello"}</Text>
@@ -94,7 +95,9 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>PHÁP LÝ</Text>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => {
+            navigateCustom("/privacy")
+          }}>
             <View style={styles.menuIcon}>
               <Ionicons
                 name="document-text-outline"
@@ -110,7 +113,9 @@ export default function ProfileScreen() {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => {
+            navigateCustom("/terms")
+          }}>
             <View style={styles.menuIcon}>
               <Ionicons
                 name="shield-checkmark-outline"
@@ -147,7 +152,40 @@ export default function ProfileScreen() {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              if (!user?.id) return;
+
+              Alert.alert(
+                "Xác nhận xóa tài khoản",
+                "Hành động này sẽ xóa toàn bộ dữ liệu của bạn và không thể hoàn tác. Bạn có chắc chắn muốn tiếp tục?",
+                [
+                  { text: "Hủy", style: "cancel" },
+                  {
+                    text: "Xóa tài khoản",
+                    style: "destructive",
+                    onPress: async () => {
+                      try {
+                        await dispatch(deleteAccountThunk(user.id)).unwrap();
+                        await logout();
+                        Alert.alert(
+                          "Thành công",
+                          "Tài khoản của bạn đã được xóa vĩnh viễn."
+                        );
+                      } catch (err) {
+                        console.error("Lỗi khi xóa tài khoản:", err);
+                        Alert.alert(
+                          "Lỗi",
+                          "Không thể xóa tài khoản, vui lòng thử lại sau."
+                        );
+                      }
+                    },
+                  },
+                ]
+              );
+            }}
+          >
             <View style={styles.menuIcon}>
               <Feather name="trash-2" size={20} color={color.icon} />
             </View>

@@ -34,7 +34,7 @@ export function useRedirect(ready?: boolean) {
       } else {
           // Xử lý các trạng thái khác như Suspended, v.v.
           console.log(`User status is not active/pending: ${user.status}`);
-          router.replace("/tabs"); // Mặc định về tabs nếu không rõ ràng
+          router.replace("/login"); // Mặc định về tabs nếu không rõ ràng
       }
       setIsRedirecting(false);
       return;
@@ -53,16 +53,12 @@ export function useRedirect(ready?: boolean) {
       } else if (!hasloggedIn) {
         router.replace("/login");
       } else {
-        // Nếu đã đăng nhập theo cờ HAS_LOGGED_IN nhưng user vẫn là null 
-        // (chưa fetch xong hoặc lỗi), tạm thời chuyển về Tabs, hoặc Login. 
-        // Tuy nhiên, dựa trên logic cũ, ta chuyển về Tabs.
-        // Tốt nhất là thêm logic tải lại user ở đây hoặc trong /tabs
-        router.replace("/tabs");
+        router.replace("/login");
       }
     } catch (error) {
       console.error('Error checking flags in useRedirect:', error);
       // Fallback an toàn
-      router.replace("/tabs");
+      router.replace("/login");
     } finally {
       setIsRedirecting(false);
     }

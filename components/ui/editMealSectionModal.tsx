@@ -1,4 +1,4 @@
-// EditMealsModal.js
+// EditMealsModal.tsx
 
 import Color from "@constants/color";
 import { FONTS } from "@constants/fonts";
@@ -6,7 +6,8 @@ import Entypo from "@expo/vector-icons/Entypo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useMemo, useState } from "react";
 import {
-  LayoutAnimation, // Dùng cho hiệu ứng mở/đóng item
+  ActivityIndicator,
+  LayoutAnimation,
   Modal,
   Platform,
   Pressable,
@@ -43,27 +44,34 @@ interface EditMealsModalProps {
   isVisible: boolean;
   onClose: () => void;
   mealSections: MealSection[];
-  // onSave nhận về các sections còn lại sau khi đã xóa/chỉnh sửa
-  onSave: (sectionsToKeep: MealSection[]) => void;
+  // onDelete nhận danh sách IDs cần xóa
+  onDelete: (idsToDelete: string[]) => Promise<void>;
 }
 
 const EditMealsModal: React.FC<EditMealsModalProps> = ({
   isVisible,
   onClose,
   mealSections,
-  onSave,
+  onDelete,
 }) => {
-  // State lưu trữ trạng thái chọn xóa của TỪNG món ăn/bữa ăn
-  // Key là ID của item hoặc section, value là boolean (được chọn để xóa)
   const [selectedToDelete, setSelectedToDelete] = useState<
     Record<string, boolean>
   >({});
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Tính toán số lượng đã chọn để xóa
+  // Tính toán số lượng đã chọn để xóa (chỉ đếm items, không đếm sections)
   const selectedCount = useMemo(() => {
-    return Object.values(selectedToDelete).filter(Boolean).length;
-  }, [selectedToDelete]);
+    let count = 0;
+    mealSections.forEach((section) => {
+      section.items.forEach((item) => {
+        if (selectedToDelete[item.id]) {
+          count++;
+        }
+      });
+    });
+    return count;
+  }, [selectedToDelete, mealSections]);
 
   // Hàm đồng bộ trạng thái khi chọn một Item hoặc Section
   const toggleSelect = (
@@ -71,7 +79,6 @@ const EditMealsModal: React.FC<EditMealsModalProps> = ({
     isSection: boolean,
     itemIds: string[] = []
   ) => {
-    // Bắt đầu animation
     LayoutAnimation.easeInEaseOut();
 
     setSelectedToDelete((prev) => {
@@ -79,18 +86,18 @@ const EditMealsModal: React.FC<EditMealsModalProps> = ({
       const isCurrentlySelected = !!prev[id];
 
       if (isSection) {
-        // 1. Nếu là Section, đảo ngược trạng thái của Section đó
+        // Nếu là Section, đảo ngược trạng thái của Section đó
         newState[id] = !isCurrentlySelected;
 
-        // 2. Đồng bộ trạng thái của tất cả Items trong Section đó
+        // Đồng bộ trạng thái của tất cả Items trong Section đó
         itemIds.forEach((itemId) => {
           newState[itemId] = !isCurrentlySelected;
         });
       } else {
-        // 1. Nếu là Item, chỉ đảo ngược trạng thái của Item đó
+        // Nếu là Item, chỉ đảo ngược trạng thái của Item đó
         newState[id] = !isCurrentlySelected;
 
-        // 2. Cần kiểm tra lại trạng thái của Section cha (Nếu tất cả items đều được chọn/bỏ chọn)
+        // Kiểm tra lại trạng thái của Section cha
         const sectionId = mealSections.find((s) =>
           s.items.some((i) => i.id === id)
         )?.id;
@@ -108,10 +115,8 @@ const EditMealsModal: React.FC<EditMealsModalProps> = ({
           );
 
           if (allItemsSelected || allItemsDeselected) {
-            // Nếu tất cả item cùng trạng thái, đồng bộ Section
             newState[sectionId] = allItemsSelected;
           } else {
-            // Nếu item không đồng nhất, đảm bảo Section không được chọn
             newState[sectionId] = false;
           }
         }
@@ -120,30 +125,31 @@ const EditMealsModal: React.FC<EditMealsModalProps> = ({
     });
   };
 
-  // Hàm thực hiện xóa và trả về dữ liệu mới
-  const handleConfirm = () => {
-    const sectionsToKeep: MealSection[] = mealSections
-      .map((section) => {
-        // Nếu toàn bộ section được chọn để xóa, bỏ qua section này
-        if (selectedToDelete[section.id]) {
-          return { ...section, items: [] }; // Giữ lại section với items rỗng
+  // Hàm xác nhận xóa
+  const handleConfirm = async () => {
+    // Lấy danh sách IDs của các items được chọn (không bao gồm section IDs)
+    const itemIdsToDelete: string[] = [];
+    
+    mealSections.forEach((section) => {
+      section.items.forEach((item) => {
+        if (selectedToDelete[item.id]) {
+          itemIdsToDelete.push(item.id);
         }
+      });
+    });
 
-        // Lọc ra các món ăn không được chọn để xóa
-        const itemsToKeep = section.items.filter(
-          (item) => !selectedToDelete[item.id]
-        );
+    if (itemIdsToDelete.length === 0) return;
 
-        return {
-          ...section,
-          items: itemsToKeep,
-        };
-      })
-      .filter((section) => section.items.length > 0); // Lọc bỏ các section đã rỗng
-
-    onSave(sectionsToKeep);
-    setSelectedToDelete({}); // Reset state
-    onClose();
+    setIsDeleting(true);
+    try {
+      await onDelete(itemIdsToDelete);
+      setSelectedToDelete({}); // Reset state
+      onClose();
+    } catch (error) {
+      console.error("Error deleting items:", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Toggle mở/đóng phần tử Accordion
@@ -158,6 +164,7 @@ const EditMealsModal: React.FC<EditMealsModalProps> = ({
       <Pressable
         style={modalStyles.checkboxButton}
         onPress={() => toggleSelect(id, false)}
+        disabled={isDeleting}
       >
         <MaterialCommunityIcons
           name={
@@ -190,9 +197,6 @@ const EditMealsModal: React.FC<EditMealsModalProps> = ({
                   mealSections.map((section) => {
                     const isSectionSelected = !!selectedToDelete[section.id];
                     const isExpanded = expandedSection === section.id;
-                    const sectionIcon = isExpanded
-                      ? "chevron-up"
-                      : "chevron-down";
 
                     return (
                       <View key={section.id} style={modalStyles.sectionCard}>
@@ -207,6 +211,7 @@ const EditMealsModal: React.FC<EditMealsModalProps> = ({
                                 section.items.map((i) => i.id)
                               )
                             }
+                            disabled={isDeleting}
                           >
                             <MaterialCommunityIcons
                               name={
@@ -233,9 +238,10 @@ const EditMealsModal: React.FC<EditMealsModalProps> = ({
                           <Pressable
                             style={modalStyles.expandButton}
                             onPress={() => toggleExpand(section.id)}
+                            disabled={isDeleting}
                           >
                             <Entypo
-                              name="chevron-down"
+                              name={isExpanded ? "chevron-up" : "chevron-down"}
                               size={24}
                               color={Color.gray}
                             />
@@ -280,14 +286,19 @@ const EditMealsModal: React.FC<EditMealsModalProps> = ({
               <Pressable
                 style={[
                   modalStyles.confirmButton,
-                  selectedCount === 0 && modalStyles.confirmButtonDisabled,
+                  (selectedCount === 0 || isDeleting) &&
+                    modalStyles.confirmButtonDisabled,
                 ]}
                 onPress={handleConfirm}
-                disabled={selectedCount === 0}
+                disabled={selectedCount === 0 || isDeleting}
               >
-                <Text style={modalStyles.confirmButtonText}>
-                  Xác nhận xóa ({selectedCount})
-                </Text>
+                {isDeleting ? (
+                  <ActivityIndicator color={Color.white} />
+                ) : (
+                  <Text style={modalStyles.confirmButtonText}>
+                    Xác nhận xóa ({selectedCount})
+                  </Text>
+                )}
               </Pressable>
             </View>
           </TouchableWithoutFeedback>
@@ -297,9 +308,7 @@ const EditMealsModal: React.FC<EditMealsModalProps> = ({
   );
 };
 
-// =================================================================
 // Styles cho Modal
-// =================================================================
 const modalStyles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -328,14 +337,14 @@ const modalStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Color.light_gray,
     borderRadius: 8,
-    overflow: "hidden", // Quan trọng cho LayoutAnimation
+    overflow: "hidden",
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: scale(12),
     paddingHorizontal: scale(5),
-    backgroundColor: Color.gray_light, // Nền nhẹ cho header section
+    backgroundColor: Color.gray_light,
   },
   sectionCheckbox: {
     paddingHorizontal: scale(10),
@@ -360,8 +369,6 @@ const modalStyles = StyleSheet.create({
   expandButton: {
     paddingHorizontal: scale(10),
   },
-
-  // Items (Nội dung Accordion)
   itemsContainer: {
     backgroundColor: Color.white,
     paddingHorizontal: scale(10),
@@ -383,8 +390,8 @@ const modalStyles = StyleSheet.create({
     alignItems: "center",
   },
   itemName: {
-    width: "80%",
-    fontSize: scale(12),
+    width: "70%",
+    fontSize: scale(13),
     fontFamily: FONTS.regular,
     color: Color.black,
   },
@@ -397,8 +404,6 @@ const modalStyles = StyleSheet.create({
     padding: scale(5),
     marginLeft: scale(10),
   },
-
-  // Footer/Button
   confirmButton: {
     backgroundColor: Color.dark_green,
     padding: scale(12),

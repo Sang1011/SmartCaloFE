@@ -23,6 +23,7 @@ import {
 import Step10_ActivityLevel from "../survey/Step10_ActivityLevel";
 import Step11_Demographics from "../survey/Step11_Demographics";
 import Step12_Measurements from "../survey/Step12_Measurements";
+import Step12a_TargetMonths from "../survey/Step12a_TargetMonths";
 import Step13_Completion from "../survey/Step13_Completion";
 import Step1_Name from "../survey/Step1_Name";
 import Step2_Goals from "../survey/Step2_Goals";
@@ -48,6 +49,7 @@ const SURVEY_SCREENS = [
   Step10_ActivityLevel,
   Step11_Demographics,
   Step12_Measurements,
+  Step12a_TargetMonths, // Bước mới thêm
   Step13_Completion,
 ];
 
@@ -60,6 +62,7 @@ export interface SurveyData {
   planningFrequency?: string;
   willingness?: string;
   activityLevel: ActivityLevel;
+  targetMonths: number;
   gender: Gender;
   age: number;
   height: number;
@@ -82,11 +85,13 @@ const isNextButtonDisabled = (stepIndex: number, data: SurveyData): boolean => {
     case 8:
       return !data.willingness?.trim();
     case 9:
-      return !data.activityLevel;
+      return false;
     case 10:
       return !data.age || !data.gender;
     case 11:
       return !data.height || !data.weight || !data.targetWeight;
+    case 12:
+      return !data.targetMonths || data.targetMonths < 1 || data.targetMonths > 12;
     default:
       return false;
   }
@@ -100,8 +105,9 @@ export default function SurveyScreen() {
     height: 0,
     weight: 0,
     gender: Gender.Male,
-    activityLevel: ActivityLevel.LightlyActive,
+    activityLevel: 0,
     targetWeight: 0,
+    targetMonths: 1,
     goal: HealthGoal.MaintainWeight,
   });
   const totalSteps = SURVEY_SCREENS.length;
@@ -138,7 +144,9 @@ export default function SurveyScreen() {
       age: surveyData.age,
       height: surveyData.height,
       weight: surveyData.weight,
+      startWeight: surveyData.weight,
       targetWeight: surveyData.targetWeight,
+      targetMonths: surveyData.targetMonths,
       goal: surveyData.goal,
       gender: surveyData.gender,
       activityLevel: surveyData.activityLevel,

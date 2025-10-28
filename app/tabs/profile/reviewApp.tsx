@@ -1,75 +1,118 @@
+import { default as Color } from "@constants/color";
+import { FONTS } from "@constants/fonts";
 import { Ionicons } from "@expo/vector-icons";
+import { createFeedbackThunk, deleteFeedbackThunk, getCurrentUserFeedbackThunk, resetReviewState } from "@features/review/reviewSlice";
+import { fetchCurrentUserThunk } from "@features/users";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-// --- PLACEHOLDER CONSTANTS (Dựa trên style của bạn) ---
-// Vui lòng thay thế bằng import từ file constants thực tế của bạn
 const color = {
-  background: "#f4f4f9", // Nền nhạt
+  background: "#f4f4f9",
   white: "#ffffff",
-  dark_green: "#007bff", // Màu xanh dương (đã thay đổi để nổi bật)
-  icon: "#4a4a4a", // Icon xám đậm
-  primary_button: "#28a745", // Xanh lá cho nút Gửi
-  star_active: "#ffc107", // Màu vàng sao
-  star_inactive: "#e0e0e0", // Màu sao chưa chọn
+  dark_green: "#007bff",
+  icon: "#4a4a4a",
+  primary_button: "#28a745",
 };
-
-// Giả lập FONTS
-const FONTS = {
-  regular: "System", // Thay thế bằng font thực tế của bạn
-  medium: "System",
-  semiBold: "System",
-};
-// --------------------------------------------------------
 
 export default function ReviewAppScreen() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state: RootState) => state.user);
+  const { feedback, loading } = useAppSelector((state: RootState) => state.review);
+
   const [rating, setRating] = useState<number>(0);
   const [feedbackText, setFeedbackText] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [submissionStatus, setSubmissionStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
+  const [submissionStatus, setSubmissionStatus] = useState<"idle" | "success" | "error">("idle");
+  const [hasFeedback, setHasFeedback] = useState<boolean>(false);
+
+  useEffect(() => {
+    dispatch(fetchCurrentUserThunk());
+  }, []);
+
+  // Khi user đã có, fetch feedback
+  useEffect(() => {
+    if (user) {
+      dispatch(getCurrentUserFeedbackThunk())
+        .unwrap()
+        .then((res) => {
+          setHasFeedback(true);
+          setRating(res.rating || 0);
+          setFeedbackText(res.comment || "");
+        })
+        .catch(() => {
+          setHasFeedback(false);
+        });
+    }
+  }, [user]);
 
   const handleRating = (newRating: number) => {
+    if (hasFeedback) return; // Đã có feedback thì khóa không cho chọn
     setRating(newRating);
   };
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      // Dùng Alert trong môi trường React Native
       Alert.alert("Lỗi", "Vui lòng chọn số sao để đánh giá trước khi gửi.");
       return;
     }
 
     setIsSubmitting(true);
-    setSubmissionStatus("idle");
+    try {
+      await dispatch(
+        createFeedbackThunk({
+          rating,
+          comment: feedbackText,
+        })
+      ).unwrap();
 
-    // --- LOGIC GỌI API GỬI ĐÁNH GIÁ Ở ĐÂY ---
-    console.log("Đánh giá đã gửi:", { rating, feedbackText });
-    
-    // Giả lập cuộc gọi API
-    await new Promise((resolve) => setTimeout(resolve, 1500)); 
-
-    setIsSubmitting(false);
-    
-    // Giả lập thành công
-    setSubmissionStatus("success");
-    
-    // Quay lại màn hình trước sau 2 giây
-    setTimeout(() => {
-        router.back();
-    }, 2000);
+      setSubmissionStatus("success");
+      setHasFeedback(true);
+    } catch (err) {
+      console.log("Submit failed:", err);
+      setSubmissionStatus("error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+
+
+  const handleDeleteFeedback = async () => {
+  Alert.alert("Xóa đánh giá", "Bạn có chắc muốn xóa đánh giá của mình không?", [
+    { text: "Hủy", style: "cancel" },
+    {
+      text: "Xóa",
+      style: "destructive",
+      onPress: async () => {
+        try {
+          await dispatch(deleteFeedbackThunk()).unwrap(); 
+          dispatch(resetReviewState()); 
+          setHasFeedback(false);
+          setRating(0);
+          setFeedbackText("");
+          Alert.alert("Đã xóa", "Đánh giá của bạn đã được xóa thành công!");
+        } catch (err) {
+          console.log("Delete failed:", err);
+          Alert.alert("Lỗi", "Không thể xóa đánh giá. Vui lòng thử lại sau.");
+        }
+      },
+    },
+  ]);
+};
+
 
   const maxRating = 5;
   const starArray = Array.from({ length: maxRating }, (_, index) => index + 1);
@@ -100,108 +143,126 @@ export default function ReviewAppScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Hướng dẫn */}
-        <Text style={styles.instructionText}>
-          Giúp chúng tôi cải thiện trải nghiệm của bạn. Vui lòng cho biết mức độ hài lòng của bạn!
-        </Text>
+        {loading ? (
+                // ✅ Hiển thị loading khi đang tải
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color={Color.dark_green} />
+                  <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
+                </View>
+              ) : (
+          <>
+            <Text style={styles.instructionText}>
+              Giúp chúng tôi cải thiện trải nghiệm của bạn. Vui lòng cho biết mức độ hài lòng của bạn!
+            </Text>
 
-        {/* Khu vực chọn sao */}
-        <View style={styles.ratingSection}>
-          <Text style={styles.ratingTitle}>Bạn đánh giá ứng dụng này mấy sao?</Text>
-          <View style={styles.starContainer}>
-            {starArray.map((star) => (
+            {/* Khu vực chọn sao */}
+            <View style={styles.ratingSection}>
+              <Text style={styles.ratingTitle}>
+                {hasFeedback
+                  ? "Đánh giá của bạn:"
+                  : "Bạn đánh giá ứng dụng này mấy sao?"}
+              </Text>
+              <View style={styles.starContainer}>
+                {starArray.map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() => handleRating(star)}
+                    style={styles.starButton}
+                    disabled={hasFeedback || isSubmitting}
+                  >
+                    <Ionicons
+                      name={star <= rating ? "star" : "star-outline"}
+                      size={40}
+                      color={star <= rating ? "#ffc107" : "#e0e0e0"}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Phản hồi chi tiết */}
+            <View style={styles.feedbackSection}>
+              <Text style={styles.feedbackTitle}>
+                {hasFeedback ? "Nội dung đánh giá của bạn" : "Ý kiến đóng góp (Không bắt buộc)"}
+              </Text>
+              <TextInput
+                style={styles.textInput}
+                multiline
+                placeholder="Hãy chia sẻ những điều bạn thích hoặc cần cải thiện..."
+                placeholderTextColor="#888"
+                value={feedbackText}
+                onChangeText={setFeedbackText}
+                editable={!hasFeedback && !isSubmitting}
+                textAlignVertical="top"
+                maxLength={500}
+              />
+              <Text style={styles.charCount}>{feedbackText.length}/500 ký tự</Text>
+            </View>
+
+            {renderStatusMessage()}
+
+            {/* Nút hành động */}
+            {!hasFeedback ? (
               <TouchableOpacity
-                key={star}
-                onPress={() => handleRating(star)}
-                style={styles.starButton}
+                style={[
+                  styles.submitButton,
+                  (isSubmitting || submissionStatus === "success") &&
+                    styles.submitButtonDisabled,
+                ]}
+                onPress={handleSubmit}
                 disabled={isSubmitting || submissionStatus === "success"}
               >
-                <Ionicons
-                  name={star <= rating ? "star" : "star-outline"}
-                  size={40}
-                  color={star <= rating ? color.star_active : color.star_inactive}
-                />
+                <Text style={styles.submitText}>
+                  {isSubmitting ? "Đang gửi..." : "Gửi đánh giá"}
+                </Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Khu vực nhập phản hồi chi tiết */}
-        <View style={styles.feedbackSection}>
-          <Text style={styles.feedbackTitle}>Ý kiến đóng góp (Không bắt buộc)</Text>
-          <TextInput
-            style={styles.textInput}
-            multiline
-            placeholder="Hãy chia sẻ những điều bạn thích hoặc những điểm cần cải thiện..."
-            placeholderTextColor="#888"
-            value={feedbackText}
-            onChangeText={setFeedbackText}
-            maxLength={500}
-            textAlignVertical="top"
-            editable={!isSubmitting && submissionStatus !== "success"}
-          />
-          <Text style={styles.charCount}>{feedbackText.length}/500 ký tự</Text>
-        </View>
-
-        {renderStatusMessage()}
-
-        {/* Nút gửi đánh giá */}
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            (isSubmitting || submissionStatus === "success") && styles.submitButtonDisabled,
-          ]}
-          onPress={handleSubmit}
-          disabled={isSubmitting || submissionStatus === "success"}
-        >
-          <Text style={styles.submitText}>
-            {isSubmitting ? "Đang gửi..." : submissionStatus === "success" ? "Hoàn tất" : "Gửi đánh giá"}
-          </Text>
-        </TouchableOpacity>
-        
-        {/* Liên kết đến App Store/Google Play */}
-        <TouchableOpacity 
-            style={styles.linkButton} 
-            onPress={() => console.log("Chuyển hướng ra Store")}
-            disabled={isSubmitting || submissionStatus === "success"}
-        >
-             <Text style={styles.linkText}>
-                Hoặc đánh giá chúng tôi trên App Store/Google Play
-             </Text>
-        </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.submitButton, { backgroundColor: "#ff3b30" }]}
+                onPress={handleDeleteFeedback}
+              >
+                <Text style={styles.submitText}>Xóa đánh giá</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: color.background,
-  },
+  container: { flex: 1, backgroundColor: color.background },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: 50, // Điều chỉnh cho iPhone notch
+    paddingTop: 50,
     paddingBottom: 15,
     backgroundColor: color.white,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
-  backButton: {
-    padding: 4,
-  },
+  backButton: { padding: 4 },
   headerTitle: {
     fontSize: 18,
     fontFamily: FONTS.semiBold,
     color: "#000",
   },
-  scrollContent: {
-    padding: 20,
-    alignItems: "center",
-  },
+  loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      // backgroundColor: Color.white,
+    },
+    loadingText: {
+      marginTop: 12,
+      color: Color.dark_green,
+      fontFamily: FONTS.medium,
+      fontSize: 15,
+    },
+  scrollContent: { padding: 20, alignItems: "center" },
   instructionText: {
     fontSize: 16,
     color: color.icon,
@@ -210,7 +271,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.regular,
     paddingHorizontal: 10,
   },
-  // Khu vực Rating
   ratingSection: {
     width: "100%",
     backgroundColor: color.white,
@@ -230,14 +290,8 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 15,
   },
-  starContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  starButton: {
-    paddingHorizontal: 8,
-  },
-  // Khu vực Feedback
+  starContainer: { flexDirection: "row", justifyContent: "center" },
+  starButton: { paddingHorizontal: 8 },
   feedbackSection: {
     width: "100%",
     backgroundColor: color.white,
@@ -273,7 +327,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontFamily: FONTS.regular,
   },
-  // Nút Submit
   submitButton: {
     width: "100%",
     backgroundColor: color.primary_button,
@@ -286,26 +339,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  submitButtonDisabled: {
-    backgroundColor: "#a0d7b0", // Màu nhạt hơn khi disabled
-  },
-  submitText: {
-    fontSize: 18,
-    fontFamily: FONTS.semiBold,
-    color: color.white,
-  },
-  // Trạng thái
+  submitButtonDisabled: { backgroundColor: "#a0d7b0" },
+  submitText: { fontSize: 18, fontFamily: FONTS.semiBold, color: color.white },
   statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 20,
     padding: 10,
-    backgroundColor: '#e6ffe6',
+    backgroundColor: "#e6ffe6",
     borderRadius: 8,
-    width: '100%',
-    justifyContent: 'center',
+    width: "100%",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: '#b2dfdb',
+    borderColor: "#b2dfdb",
   },
   statusTextSuccess: {
     marginLeft: 10,
@@ -313,14 +359,4 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     fontSize: 14,
   },
-  linkButton: {
-      marginTop: 20,
-      padding: 5,
-  },
-  linkText: {
-    color: color.dark_green,
-    fontFamily: FONTS.regular,
-    fontSize: 14,
-    textDecorationLine: 'underline',
-  }
 });

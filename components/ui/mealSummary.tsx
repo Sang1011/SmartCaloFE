@@ -8,22 +8,36 @@ import { StyleSheet, Text, View } from "react-native";
 import { scale } from "react-native-size-matters";
 
 interface Props {
-    totalCal: number,
-    protein : number,
-    fat: number,
-    sugar: number,
-    fiber: number
+  totalCal: number;
+  protein: number;
+  fat: number;
+  sugar: number;
+  fiber: number;
+  isPro?: boolean;
 }
 
-const MealSummary = ({ totalCal, protein, fat, sugar, fiber }: Props) => {
+const MealSummary = ({
+  totalCal,
+  protein,
+  fat,
+  sugar,
+  fiber,
+  isPro = false,
+}: Props) => {
   // Dữ liệu macro dưới dạng mảng để dễ render
-  const macros = [
-    { label: "Calorie", value: totalCal, unit: "" },
-    { label: "Protein", value: protein, unit: "g" },
-    { label: "Chất Béo", value: fat, unit: "g" },
-    { label: "Đường", value: sugar, unit: "g" },
-    { label: "Chất Xơ", value: fiber, unit: "g" },
-  ];
+  const macros = isPro
+    ? [
+        { label: "Calories", value: totalCal, unit: "" },
+        { label: "Protein", value: protein, unit: "g" },
+        { label: "Chất Béo", value: fat, unit: "g" },
+        { label: "Đường", value: sugar, unit: "g" },
+        { label: "Chất Xơ", value: fiber, unit: "g" },
+      ]
+    : [
+        { label: "Calories", value: totalCal, unit: "" },
+        { label: "Protein", value: protein, unit: "g" },
+        { label: "Chất Béo", value: fat, unit: "g" },
+      ];
 
   return (
     <View style={summaryStyles.summaryContainer}>

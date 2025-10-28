@@ -98,7 +98,7 @@ export default function RootLayout() {
               <Stack.Screen name="login" />
               <Stack.Screen name="survey/index" />
               <Stack.Screen name="tabs" />
-              <Stack.Screen name="/schedule/workout/index" />
+              <Stack.Screen name="/schedule/workout" />
               <Stack.Screen name="+not-found" />
             </Stack>
             </SafeAreaView>

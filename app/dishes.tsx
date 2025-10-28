@@ -1,10 +1,12 @@
 import ButtonGoBack from "@components/ui/buttonGoBack";
 import color from "@constants/color";
-import { FONTS } from "@constants/fonts";
+import { FONTS, globalStyles } from "@constants/fonts";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { clearSelectedDish, fetchDishById } from "@features/dishes";
+import { createLogEntryThunk } from "@features/tracking";
+import { fetchCurrentUserThunk } from "@features/users";
 import { RootState } from "@redux";
 import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { calculateNutritionPercentages } from "@utils/calculateNutrionPercentages";
@@ -13,15 +15,19 @@ import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { PieChart } from "react-native-gifted-charts/dist";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { CreateEntryLogRequestBody, MealType } from "../types/tracking";
 
 // const methods = rawMethods
 //   .replace(/[,]+/g, "") // xoá hết dấu phẩy thừa
@@ -32,9 +38,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function Dishes() {
   const [tab, setTab] = useState<"ingre" | "method">("ingre");
   const { id, menuId, predict } = useLocalSearchParams<{
-    id : string
-    menuId: string
-    predict: string
+    id: string;
+    menuId: string;
+    predict: string;
   }>();
   const dispatch = useAppDispatch();
   const { selectedDish, loading } = useAppSelector(
@@ -44,7 +50,14 @@ export default function Dishes() {
   const [isPredict, setIsPredict] = useState<boolean>(false);
 
   useEffect(() => {
+    dispatch(fetchCurrentUserThunk());
+  }, []);
 
+  const { loading: createLoading } = useAppSelector(
+    (state: RootState) => state.tracking
+  );
+
+  useEffect(() => {
     if (id) {
       setDishId(id);
       dispatch(fetchDishById(id));
@@ -52,18 +65,76 @@ export default function Dishes() {
       console.warn("⚠️ Không tìm thấy dishId hợp lệ:", id);
     }
 
-    if(predict){
+    if (predict) {
       setIsPredict(true);
     }
-
 
     return () => {
       dispatch(clearSelectedDish());
     };
   }, [id, menuId, dispatch]);
 
-  const handleAddPress = () => {
-    navigateCustom("/addMealEntry");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [mealType, setMealType] = useState<MealType>(MealType.Breakfast);
+
+  // Optional: cho phép người dùng chỉnh dinh dưỡng
+  const [customNutrition, setCustomNutrition] = useState({
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    fiber: 0,
+    sugar: 0,
+  });
+
+  const handleAddPress = async () => {
+    if (!selectedDish) return;
+  
+    const body: CreateEntryLogRequestBody = {
+      dishId: selectedDish.id,
+      quantity,
+      mealType,
+      sourceType: 1,
+      date: new Date().toLocaleDateString("en-CA"),
+      foodName: selectedDish.name,
+      calories: customNutrition.calories ?? selectedDish.calories,
+      protein: customNutrition.protein ?? selectedDish.protein,
+      carbs: customNutrition.carbs ?? selectedDish.carbs,
+      fat: customNutrition.fat ?? selectedDish.fat,
+      fiber: customNutrition.fiber ?? selectedDish.fiber,
+      sugar: customNutrition.sugar ?? selectedDish.sugar,
+    };
+  
+    console.warn("BODY", body);
+  
+    try {
+      await dispatch(createLogEntryThunk({ body })).unwrap();
+      alert("✅ Đã thêm vào lịch sử thành công!");
+    } catch (error: any) {
+      console.error("❌ Lỗi khi thêm log món ăn:", error);
+  
+      if (error?.status === 403 || error?.response?.status === 403) {
+        Alert.alert(
+          "Nâng cấp tài khoản",
+          "Vui lòng nâng cấp tài khoản của bạn lên bản trả phí để sử dụng tính năng này!",
+          [
+            {
+              text: "Nâng cấp ngay",
+              style: "default",
+              onPress: () => navigateCustom("/subscription"),
+            },
+            {
+              text: "Rời khỏi",
+              style: "cancel",
+              onPress: () => navigateCustom("/tabs"),
+            },
+          ]
+        );
+      } else {
+        alert("❌ Lỗi khi thêm log món ăn: " + (error?.message || "Không xác định"));
+      }
+    }
   };
 
   // Nếu dữ liệu đang tải hoặc chưa có, bạn có thể hiển thị loading/placeholder
@@ -83,6 +154,13 @@ export default function Dishes() {
       </View>
     );
   }
+
+  const mealTypeOptions = [
+    { label: "Bữa sáng", value: MealType.Breakfast },
+    { label: "Bữa trưa", value: MealType.Lunch },
+    { label: "Bữa tối", value: MealType.Dinner },
+    { label: "Ăn nhẹ", value: MealType.Snack },
+  ];
 
   // Nếu không có món ăn nào được chọn
   if (!selectedDish) {
@@ -126,10 +204,9 @@ export default function Dishes() {
           <View style={styles.gobackButton}>
             <ButtonGoBack
               handleLogic={() => {
-                if(isPredict){
-                  navigateCustom("/tabs")
-                }
-                else{
+                if (isPredict) {
+                  navigateCustom("/tabs");
+                } else {
                   navigateCustom("/library");
                 }
               }}
@@ -212,6 +289,126 @@ export default function Dishes() {
               </Text>
             </View>
           </View>
+
+          <Modal
+            visible={isModalVisible}
+            animationType="slide"
+            transparent
+            onRequestClose={() => setIsModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalTitle}>Thêm vào lịch sử</Text>
+
+                {/* Số lượng */}
+                <View style={styles.modalRow}>
+                  <Text style={styles.modalLabel}>Số lượng:</Text>
+                  <TextInput
+                    style={styles.input}
+                    keyboardType="numeric"
+                    value={quantity.toString()}
+                    onChangeText={(val) => setQuantity(Number(val) || 1)}
+                  />
+                </View>
+
+                {/* Meal type */}
+                <View style={styles.modalRow}>
+                  <Text style={styles.modalLabel}>Bữa ăn:</Text>
+                  <View style={styles.mealTypeContainer}>
+                    {mealTypeOptions.map((item) => (
+                      <Pressable
+                        key={item.value}
+                        style={[
+                          styles.mealTypeButton,
+                          mealType === item.value && {
+                            backgroundColor: color.dark_green,
+                          },
+                        ]}
+                        onPress={() => setMealType(item.value)}
+                      >
+                        <Text
+                          style={{
+                            color:
+                              mealType === item.value
+                                ? color.white
+                                : color.black,
+                          }}
+                        >
+                          {item.label}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Tùy chỉnh dinh dưỡng */}
+                <View style={{ marginTop: 10 }}>
+                  <Text style={[styles.modalLabel, { marginBottom: 6 }]}>
+                    Tùy chỉnh dinh dưỡng (Tùy chọn):
+                  </Text>
+                  {Object.keys(customNutrition).map((key) => (
+                    <View style={styles.modalRow} key={key}>
+                      <Text style={styles.modalLabelSmall}>{key}:</Text>
+                      <TextInput
+                        style={styles.inputSmall}
+                        keyboardType="numeric"
+                        placeholder="Mặc định theo món"
+                        value={customNutrition[
+                          key as keyof typeof customNutrition
+                        ].toString()}
+                        onChangeText={(val) =>
+                          setCustomNutrition((prev) => ({
+                            ...prev,
+                            [key]: val === "" ? 0 : Number(val),
+                          }))
+                        }
+                      />
+                    </View>
+                  ))}
+                </View>
+
+                {/* Nút xác nhận */}
+                <View style={styles.modalButtons}>
+                  <Pressable
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: color.grey },
+                      createLoading && { opacity: 0.6 },
+                    ]}
+                    onPress={() => setIsModalVisible(false)}
+                    disabled={createLoading}
+                  >
+                    <Text
+                      style={[{ color: color.white }, globalStyles.regular]}
+                    >
+                      Hủy
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: color.dark_green },
+                    ]}
+                    onPress={async () => {
+                      await handleAddPress();
+                      setIsModalVisible(false);
+                    }}
+                    disabled={createLoading}
+                  >
+                    <Text
+                      style={[
+                        { color: color.white },
+                        globalStyles.regular,
+                        createLoading && { opacity: 0.6 },
+                      ]}
+                    >
+                      Xác nhận
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
 
           {/* Dinh dưỡng (Giữ nguyên) */}
           <View style={styles.nutrions}>
@@ -316,13 +513,14 @@ export default function Dishes() {
             {/* Nội dung tab (Giữ nguyên) */}
             <View style={styles.contentContainer}>
               {tab === "ingre" ? (
-                <View style={styles.ingreContainer}>
-                  {dishIngredients.map((item, index) => (
-                    <View key={index} style={styles.ingreRow}>
-                      <Text style={styles.bulletPoint}>•</Text>
-                      <Text style={styles.ingreText}>{item}</Text>
-                    </View>
-                  ))}
+                <View style={styles.ingredientsBox}>
+                  <View style={styles.ingredientTags}>
+                    {dishIngredients.map((ing, index) => (
+                      <View key={index} style={styles.ingredientTag}>
+                        <Text style={styles.ingredientText}>{ing.trim()}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
               ) : (
                 <View style={styles.methodContainer}>
@@ -351,7 +549,22 @@ export default function Dishes() {
           </View>
         </View>
       </ScrollView>
-      <Pressable style={styles.addButton} onPress={handleAddPress}>
+      <Pressable
+        style={[styles.addButton, createLoading && { opacity: 0.6 }]}
+        onPress={() => {
+          if (!selectedDish) return;
+          setCustomNutrition({
+            calories: selectedDish.calories || 0,
+            protein: selectedDish.protein || 0,
+            carbs: selectedDish.carbs || 0,
+            fat: selectedDish.fat || 0,
+            fiber: selectedDish.fiber || 0,
+            sugar: selectedDish.sugar || 0,
+          });
+          setIsModalVisible(true);
+        }}
+        disabled={createLoading}
+      >
         <AntDesign name="plus" size={20} color={color.white} />
         <Text style={styles.addButtonText}>Thêm vào lịch sử</Text>
       </Pressable>
@@ -389,6 +602,82 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginTop: -40, // bo góc chồng lên ảnh
     paddingBottom: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    backgroundColor: color.white,
+    width: "85%",
+    borderRadius: 12,
+    padding: 16,
+  },
+  modalTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 12,
+    color: color.dark_green,
+  },
+  modalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 4,
+  },
+  modalLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+  },
+  modalLabelSmall: {
+    width: 90,
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: color.grey,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    width: 60,
+    textAlign: "center",
+  },
+  inputSmall: {
+    borderWidth: 1,
+    borderColor: color.grey,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    width: 80,
+    textAlign: "center",
+  },
+  mealTypeContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  mealTypeButton: {
+    borderWidth: 1,
+    borderColor: color.dark_green,
+    borderRadius: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  modalBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    width: "45%",
+    alignItems: "center",
   },
   flyContainer: {
     padding: 16,
@@ -528,26 +817,35 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
   },
-  ingreContainer: {
-    flexDirection: "column",
+  ingredientsBox: {
+    backgroundColor: color.light_gray + "30",
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    color: color.black,
+    fontFamily: FONTS.bold,
+    marginBottom: 12,
+  },
+  ingredientTags: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
   },
-  ingreRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    paddingHorizontal: 5,
+  ingredientTag: {
+    backgroundColor: color.white,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: color.dark_green + "30",
   },
-  bulletPoint: {
-    marginRight: 8,
-    fontSize: 16,
-    lineHeight: 20,
+  ingredientText: {
+    fontSize: 13,
     color: color.dark_green,
-  },
-  ingreText: {
-    fontFamily: FONTS.regular,
-    fontSize: 15,
-    flexShrink: 1,
-    lineHeight: 20,
+    fontFamily: FONTS.medium,
   },
   methodContainer: {
     flexDirection: "column",

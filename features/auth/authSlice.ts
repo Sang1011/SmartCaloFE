@@ -107,6 +107,7 @@ export const registerThunk = createAsyncThunk(
     async ({ email, password, name }: RegisterRequest, { rejectWithValue }) => {
         try {
             const res = await authApi.register({ email, password, name });
+            console.log("RES REGISTER", res.data);
             return res.data as RegisterANDLoginResponse;
         } catch (err: any) {
             return rejectWithValue(handleAuthError(err));
@@ -176,10 +177,23 @@ export const logoutThunk = createAsyncThunk(
     async (_, { rejectWithValue, dispatch }) => {
         try {
             const refreshToken = await getRefreshToken();
-            if (refreshToken) await authApi.logout({ refreshToken });
+            
+            // ✅ Chỉ call API nếu còn refreshToken
+            if (refreshToken) {
+                try {
+                    await authApi.logout({ refreshToken });
+                    console.log("✅ Logout API success");
+                } catch (err: any) {
+                    // ✅ Nếu API fail (token đã hết hạn) → ignore
+                    console.warn("⚠️ Logout API failed (token expired), clearing local anyway");
+                }
+            }
+            
+            // ✅ Luôn cleanup local state
             dispatch(logout());
             return { success: true };
         } catch (err: any) {
+            // ✅ Ensure cleanup even on error
             dispatch(logout());
             return rejectWithValue(handleAuthError(err));
         }

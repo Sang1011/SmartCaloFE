@@ -22,6 +22,7 @@ export interface UserDTO {
     avatarUrl: string;
     gender: string;
     age: number;
+    targetMonths: number;
     currentSubscriptionExpiresAt: string;
     currentPlanId: number;
     startWeight: number;
@@ -40,6 +41,7 @@ export interface UserDTOLogin {
   avatarUrl: string;
   gender: string;
   age: number;
+  targetMonths: number;
   currentSubscriptionExpiresAt: string;
   currentPlanId: number;
   startWeight: number;
@@ -67,7 +69,9 @@ export interface UpdateProfileDto {
     age: number;
     weight: number;
     height: number;
+    startWeight: number;
     targetWeight: number;
+    targetMonths: number;
     goal: HealthGoal;         // Ví dụ: 0 = Maintain, 1 = Lose Weight, 2 = Gain Muscle
     gender: Gender | "";       // Ví dụ: 0 = Male, 1 = Female, 2 = Other
     activityLevel: ActivityLevel; // Ví dụ: 0 = Sedentary, 1 = Lightly Active, 2 = Very Active
@@ -126,3 +130,23 @@ export const genderLabelMap: Record<Gender, string> = {
     [Gender.Male]: "Male",
     [Gender.Female]: "Female",
   };
+
+  export interface AllStatsResponse {
+    id: string;
+    email: string;
+    name: string;
+    avatarUrl: string;
+    age: number;
+    startWeight: number;
+    height: number;
+    targetWeight: number;
+    gender: string;
+    activityLevel: string;
+    dailyCaloGoal: number;
+    status: string;
+    currentPlanId: number;
+    currentSubscriptionExpiresAt: string;
+    roles: string[];
+    userStats: UserStatsDto[];
+  }
+  
