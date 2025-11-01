@@ -171,19 +171,19 @@ export default function SubscriptionScreen() {
     dispatch,
   ]);
 
-  const forceRefreshUser = async() => {
+  const forceRefreshUser = async () => {
     dispatch(refreshTokenThunk())
-  .unwrap() 
-  .catch((err) => {
-    console.log("Refresh attempt failed gracefully:", err);
-  });
+      .unwrap()
+      .catch((err) => {
+        console.log("Refresh attempt failed gracefully:", err);
+      });
 
-        // 2️⃣ Lấy lại thông tin người dùng
-        await dispatch(fetchCurrentUserThunk());
+    // 2️⃣ Lấy lại thông tin người dùng
+    await dispatch(fetchCurrentUserThunk());
 
-        // 3️⃣ Đóng modal
-        handleCloseModal();
-  }
+    // 3️⃣ Đóng modal
+    handleCloseModal();
+  };
 
   // Logic Polling chính (Chạy liên tục khi ở foreground)
   useEffect(() => {
@@ -349,31 +349,28 @@ export default function SubscriptionScreen() {
           ))}
         </View>
         <View style={styles.planContainer}>
-        {subscriptionPlans
-  .filter((plan) => plan.price !== 0 && plan.durationInDays !== 9999) // lọc như cũ
-  .slice(0, 2) // ✅ chỉ lấy 3 phần tử đầu tiên
-  .map((plan) => (
-    <TouchableOpacity
-      key={plan.id}
-      style={[
-        styles.planBox,
-        selectedPlanId === plan.id && styles.planSelected,
-      ]}
-      onPress={() => setSelectedPlanId(plan.id)}
-      activeOpacity={0.8}
-    >
-      <Text style={[styles.planTitle, { fontFamily: FONTS.bold }]}>
-        {plan.planName.toUpperCase()}
-      </Text>
-      <Text style={[styles.planPrice, { fontFamily: FONTS.medium }]}>
-        {plan.price.toLocaleString()} VND /{" "}
-        {plan.durationInDays >= 365 ? "1 năm" : "1 tháng"}
-      </Text>
-    </TouchableOpacity>
-  ))}
-
+          {subscriptionPlans
+            .filter((plan) => plan.price !== 0 && plan.durationInDays !== 9999)
+            .map((plan) => (
+              <TouchableOpacity
+                key={plan.id}
+                style={[
+                  styles.planBox,
+                  selectedPlanId === plan.id && styles.planSelected,
+                ]}
+                onPress={() => setSelectedPlanId(plan.id)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.planTitle, { fontFamily: FONTS.bold }]}>
+                  {plan.planName.toUpperCase()}
+                </Text>
+                <Text style={[styles.planPrice, { fontFamily: FONTS.medium }]}>
+                  {plan.price.toLocaleString()} VND /{" "}
+                  {plan.durationInDays >= 365 ? "1 năm" : "1 tháng"}
+                </Text>
+              </TouchableOpacity>
+            ))}
         </View>
-        {/* Nút nâng cấp */}
         {isPro ? (
           <View
             style={{
@@ -407,7 +404,8 @@ export default function SubscriptionScreen() {
                     textAlign: "center",
                   }}
                 >
-                  Còn lại {getDaysRemaining(user.currentSubscriptionExpiresAt)} ngày
+                  Còn lại {getDaysRemaining(user.currentSubscriptionExpiresAt)}{" "}
+                  ngày
                 </Text>
                 <Text
                   style={{
@@ -417,7 +415,8 @@ export default function SubscriptionScreen() {
                     textAlign: "center",
                   }}
                 >
-                  Hết hạn vào ngày {formatExpiryDate(user.currentSubscriptionExpiresAt)}
+                  Hết hạn vào ngày{" "}
+                  {formatExpiryDate(user.currentSubscriptionExpiresAt)}
                 </Text>
               </>
             )}
