@@ -14,12 +14,10 @@ interface WorkoutFlowControllerProps {
 }
 
 export default function WorkoutFlowController({excerciseList}: WorkoutFlowControllerProps) {
-  // 🔹 2. Chuẩn hóa dữ liệu từ API sang định dạng mà useWorkoutFlow cần
   const normalizedExercises = useMemo(() => {
     if (!excerciseList || excerciseList.length === 0) return [];
 
     return excerciseList.map((item) => {
-      console.log(item);
       const baseItem = {
         id: item.id,
         name: item.exerciseName || "Bài tập không tên",
@@ -30,11 +28,10 @@ export default function WorkoutFlowController({excerciseList}: WorkoutFlowContro
         return {
           ...baseItem,
           type: WorkoutExcerciseTypeEnum.TimeBased,
-          duration: item.durationMin === 0 ? 30 : item.durationMin  // phút -> giây
+          duration: item.durationMin === 0 ? 30 : item.durationMin
         };
       }
 
-      // Mặc định RepBased
       return {
         ...baseItem,
         type: WorkoutExcerciseTypeEnum.RepBased,
@@ -43,24 +40,25 @@ export default function WorkoutFlowController({excerciseList}: WorkoutFlowContro
     });
   }, [excerciseList]);
 
-  // 🔹 3. Dùng useWorkoutFlow
   const { currentItem, isRest, next, currentIndex, prev, canPrev } =
     useWorkoutFlow(normalizedExercises);
 
-  // 🔹 4. Phase quản lý flow
-  const [phase, setPhase] = useState<"intro" | "workout" | "rest" | "success">(
-    "intro"
-  );
+  const [phase, setPhase] = useState<"intro" | "workout" | "rest" | "success">("intro");
 
+  // ✅ Đồng bộ phase với isRest và currentIndex
   useEffect(() => {
-    if (normalizedExercises.length > 0 && phase === "intro") {
-      // giữ nguyên intro cho người dùng bấm start
-    }
+    if (phase === "intro") return; // Giữ nguyên intro
+    if (phase === "success") return; // Giữ nguyên success
 
-    if (normalizedExercises.length === 0 && phase !== "intro") {
-      // có thể xử lý lỗi hoặc navigate ra
+    // Tự động sync phase với isRest
+    if (currentIndex === -1) {
+      setPhase("intro");
+    } else if (isRest) {
+      setPhase("rest");
+    } else {
+      setPhase("workout");
     }
-  }, [normalizedExercises, phase]);
+  }, [currentIndex, isRest]);
 
   const handleStart = () => {
     if (normalizedExercises.length > 0) {
@@ -69,41 +67,40 @@ export default function WorkoutFlowController({excerciseList}: WorkoutFlowContro
   };
 
   const handleNext = () => {
-    next();
-
     const totalSteps = normalizedExercises.length * 2 - 1;
 
-    if (currentIndex + 1 < totalSteps) {
-      // Nếu đang ở nghỉ -> chuyển sang bài tập
-      if (isRest) setPhase("workout");
-      // Nếu đang ở bài tập -> chuyển sang nghỉ
-      else setPhase("rest");
-    } else {
+    if (currentIndex + 1 >= totalSteps) {
       setPhase("success");
+    } else {
+      next(); // Phase sẽ tự động update qua useEffect
     }
   };
 
   const handlePrev = () => {
     if (!canPrev) return;
-    prev();
-
-    if (currentIndex - 1 >= 0) {
-      if (isRest) setPhase("workout");
-      else setPhase("rest");
-    } else {
+    
+    if (currentIndex === 0) {
       setPhase("intro");
+    } else {
+      prev(); // Phase sẽ tự động update qua useEffect
     }
   };
 
-  const nextItem =
-  currentIndex + 1 < normalizedExercises.length
-    ? normalizedExercises[currentIndex + 1]
-    : null;
+  const nextItem = useMemo(() => {
+    const currentExerciseIndex = Math.floor(currentIndex / 2);
+    const nextExerciseIndex = currentExerciseIndex + 1;
+    
+    if (nextExerciseIndex < normalizedExercises.length) {
+      return normalizedExercises[nextExerciseIndex];
+    }
+    
+    return null;
+  }, [currentIndex, normalizedExercises]);
 
-  // 🔹 5. Render theo phase
+  // Render
   if (phase === "intro") return <WorkoutIntro onStart={handleStart} />;
 
-  if (phase === "workout" && currentItem)
+  if (phase === "workout" && currentItem) {
     return (
       <WorkoutTest
         item={currentItem}
@@ -112,9 +109,17 @@ export default function WorkoutFlowController({excerciseList}: WorkoutFlowContro
         canPrev={canPrev} 
       />
     );
+  }
 
-  if (phase === "rest")
-    return <RestScreen duration={currentItem?.duration ?? 30} onNext={handleNext} nextItem={nextItem} />;
+  if (phase === "rest") {
+    return (
+      <RestScreen 
+        duration={currentItem?.duration ?? 30} 
+        onNext={handleNext}
+        nextItem={nextItem} 
+      />
+    );
+  }
 
   if (phase === "success") return <SuccessScreen />;
 

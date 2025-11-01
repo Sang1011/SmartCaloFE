@@ -27,7 +27,7 @@
       "package": "com.penta.smartcalo",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/foreground.png",
-        "backgroundColor": "./assets/images/background.png"
+        "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false

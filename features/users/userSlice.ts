@@ -56,7 +56,7 @@ export const getAllStatsThunk = createAsyncThunk(
 
       return res.data as AllStatsResponse;
     } catch (err: any) {
-      console.error("❌ getAllStatsThunk error:", err);
+      console.warn("❌ getAllStatsThunk error:", err);
       return rejectWithValue(handleError(err));
     }
   }

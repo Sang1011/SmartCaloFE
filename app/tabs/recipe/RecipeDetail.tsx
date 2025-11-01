@@ -378,6 +378,24 @@ export default function RecipeDetail() {
 
   // ✅ Áp dụng menu (có thể có chỉnh sửa hoặc không)
   const handleAdoptMenu = async () => {
+    if(!isPro){
+      Alert.alert(
+        "Nâng cấp tài khoản",
+        "Vui lòng nâng cấp tài khoản của bạn lên bản trả phí để sử dụng tính năng này!",
+        [
+          {
+            text: "Nâng cấp ngay",
+            style: "default",
+            onPress: () => navigateCustom("/subscription"),
+          },
+          {
+            text: "Rời khỏi",
+            style: "destructive",
+          },
+        ]
+      );
+      return;
+    }
     const menuDaysRequest = convertToMenuDaysRequest();
     console.warn("menuDaysRequest", menuDaysRequest);
     const objectAdopt: AdopMenuBodyRequest = {
@@ -619,7 +637,7 @@ export default function RecipeDetail() {
                         onPress={handleAdoptMenu}
                       >
                         <Text style={styles.primaryButtonText}>
-                          Ăn theo thực đơn này
+                          Ăn theo thực đơn này {isPro ? (<></>) : (<MaterialCommunityIcons name="crown" size={24} color={color.gold} />)}
                         </Text>
                       </Pressable>
                     </>

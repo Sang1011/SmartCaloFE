@@ -5,21 +5,21 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Octicons from "@expo/vector-icons/Octicons";
 import {
-  ensureCameraPermission,
-  ensureLibraryPermission,
+    ensureCameraPermission,
+    ensureLibraryPermission,
 } from "@utils/permissions";
 import { CameraView } from "expo-camera";
 import type { CameraType, FlashMode } from "expo-camera/build/Camera.types";
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Animated,
-  Image,
-  StyleSheet,
-  Text,
-  View
+    ActivityIndicator,
+    Alert,
+    Animated,
+    Image,
+    StyleSheet,
+    Text,
+    View
 } from "react-native";
 
 import ButtonGoBack from "./buttonGoBack";
@@ -191,7 +191,7 @@ export default function SCScan() {
         throw new Error("Không nhận diện được món ăn");
       }
     } catch (error) {
-      console.error("❌ Predict error:", error);
+      console.warn("❌ Predict error:", error);
       Alert.alert("❌ Không thể nhận diện ảnh", "Vui lòng thử lại!");
       setLoading(false);
     }
@@ -263,7 +263,7 @@ export default function SCScan() {
         setAlreadyTaken(true);
       }
     } catch (error) {
-      console.error("Lỗi khi chọn ảnh:", error);
+      console.warn("Lỗi khi chọn ảnh:", error);
       Alert.alert("Lỗi", "Đã xảy ra lỗi khi chọn ảnh. Vui lòng thử lại!");
     }
   };

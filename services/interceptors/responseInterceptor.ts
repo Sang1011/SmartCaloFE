@@ -47,7 +47,7 @@ export const responseInterceptor = {
     const originalRequest = error.config;
     const url = originalRequest?.url || "";
 
-    console.error("❌ API ERROR:", {
+    console.warn("❌ API ERROR:", {
       url,
       status: error.response?.status,
       message: error.message,
@@ -118,7 +118,7 @@ export const responseInterceptor = {
         return axios(originalRequest);
         
       } catch (err: any) {
-        console.error("❌ Refresh token failed:", err.message);
+        console.warn("❌ Refresh token failed:", err.message);
         processQueue(err, null);
         
         // ✅ Chỉ logout khi refresh THỰC SỰ fail (RefreshToken hết hạn 30 ngày)

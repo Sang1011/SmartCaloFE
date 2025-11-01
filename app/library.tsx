@@ -28,7 +28,7 @@ export default function LibraryScreen() {
   const [searchText, setSearchText] = useState("");
   const [filteredFoods, setFilteredFoods] = useState<Dish[]>([]);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
-  
+
   // Bỏ tất cả các state lọc và state phụ trợ của Modal:
   // [showAllIngredients, isExpandingIngredientsIncluded, isExpandingIngredientsExcluded, searchIncludedText, searchExcludedText, includedIngredients, excludedIngredients, selectedTimeFilter, selectedTypeFilter]
 
@@ -39,7 +39,7 @@ export default function LibraryScreen() {
 
   // === SỬ DỤNG CUSTOM HOOK ===
   const filterState = useFilterState(allDishes);
-  
+
   // Destructure các state lọc và setter cần thiết cho logic chính
   const {
     includedIngredients,
@@ -60,7 +60,7 @@ export default function LibraryScreen() {
       setFilteredFoods(allDishes);
     }
   }, [allDishes]);
-  
+
   // Tách riêng logic Apply Filter và làm cho nó là một Callback để có thể gọi từ bên ngoài
   const handleApplyFilter = useCallback(() => {
     let finalFilteredDishes = allDishes;
@@ -116,7 +116,7 @@ export default function LibraryScreen() {
         return category.toLowerCase() === selectedTypeFilter.toLowerCase();
       });
     }
-    
+
     // Cuối cùng mới cập nhật danh sách
     setFilteredFoods(finalFilteredDishes);
     setIsFilterModalVisible(false);
@@ -128,7 +128,7 @@ export default function LibraryScreen() {
     selectedTimeFilter,
     selectedTypeFilter,
   ]);
-  
+
   // Hook để áp dụng filter tự động khi searchText thay đổi (chỉ cho search bar)
   useEffect(() => {
     // Chỉ áp dụng khi có text search, nếu không, phải bấm nút Tìm kiếm trong modal
@@ -136,10 +136,9 @@ export default function LibraryScreen() {
       handleApplyFilter();
     } else if (searchText.trim().length === 0 && !isFilterModalVisible) {
       // Nếu xóa search text, ta nên áp dụng lại toàn bộ filter hiện có
-      handleApplyFilter(); 
+      handleApplyFilter();
     }
-  }, [searchText, handleApplyFilter, isFilterModalVisible]); 
-
+  }, [searchText, handleApplyFilter, isFilterModalVisible]);
 
   /** Xóa tất cả lọc và áp dụng danh sách đầy đủ */
   const handleClearAllAndApply = useCallback(() => {
@@ -236,9 +235,8 @@ export default function LibraryScreen() {
                     />
                   ) : (
                     <Image
-                      source={require("../assets/images/pho-bo.png")}
+                      source={require("@assets/images/com-tam.png")}
                       style={styles.image}
-                      resizeMode="cover"
                     />
                   )}
                 </View>
@@ -260,168 +258,168 @@ export default function LibraryScreen() {
 // === Styles ===
 // ... (GIỮ NGUYÊN Styles cho LibraryScreen)
 const styles = StyleSheet.create({
-    // ... (Giữ nguyên styles cũ cho màn hình chính)
-    container: {
-        flex: 1,
-        backgroundColor: color.background,
-        paddingHorizontal: 16,
-        paddingTop: 60,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: color.white,
-    },
-    loadingText: {
-        marginTop: 12,
-        color: color.dark_green,
-        fontFamily: FONTS.medium,
-        fontSize: 15,
-    },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 16,
-    },
-    title: {
-        fontSize: 20,
-        marginLeft: "22%",
-        color: color.black,
-    },
-    searchContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: color.white,
-        borderRadius: 10,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        marginBottom: 20,
-    },
-    searchInput: {
-        flex: 1,
-        fontSize: 14,
-        marginHorizontal: 8,
-        color: color.black,
-    },
-    card: {
-        backgroundColor: color.white,
-        borderRadius: 12,
-        marginBottom: 20,
-        width: "47%",
-        height: 275,
-    },
-    headerContainer: {
-        height: 95,
-        borderRadius: 10,
-        backgroundColor: color.dark_green,
-    },
-    propContainer: {
-        position: "absolute",
-        width: "100%",
-    },
-    imageContainer: {
-        marginTop: 32,
-        height: 170,
-        justifyContent: "flex-end",
-        alignItems: "center",
-    },
-    image: {
-        marginTop: 15,
-        width: "100%",
-        height: 170,
-        borderTopLeftRadius: 12,
-        borderTopRightRadius: 12,
-    },
-    typeTag: {
-        position: "absolute",
-        top: 8,
-        left: 8,
-        backgroundColor: "rgba(0,0,0,0.3)",
-        borderRadius: 6,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-    },
-    typeText: {
-        fontSize: 11,
-        color: color.white,
-        fontFamily: FONTS.medium,
-    },
-    timeText: {
-        position: "absolute",
-        top: 8,
-        right: 8,
-        fontSize: 11,
-        color: color.white,
-        backgroundColor: color.undereating,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 6,
-        fontFamily: FONTS.italic,
-    },
-    foodName: {
-        fontSize: 14,
-        color: color.dark_green,
-        marginTop: 100,
-        marginHorizontal: 8,
-    },
-    desc: {
-        fontSize: 12,
-        color: color.gray_dark,
-        marginHorizontal: 8,
-        marginBottom: 8,
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(0,0,0,0.7)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    modalContainer: {
-        backgroundColor: color.white,
-        borderRadius: 12,
-        padding: 20,
-        width: "90%",
-        maxHeight: "80%",
-    },
-    modalTitle: {
-        fontSize: 18,
-        color: color.dark_green,
-        marginBottom: 15,
-        textAlign: "center",
-    },
-    showAllButton: {
-        marginTop: 5,
-        alignSelf: "flex-start",
-    },
-    showAllText: {
-        fontSize: 12,
-        color: color.gray_dark,
-        fontFamily: FONTS.medium,
-    },
-    buttonGroup: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 20,
-        paddingTop: 10,
-        borderTopWidth: 1,
-        borderTopColor: color.light_gray,
-    },
-    actionButton: {
-        paddingVertical: 10,
-        borderRadius: 8,
-        alignItems: "center",
-        width: "48%",
-    },
-    backButton: {
-        backgroundColor: color.light_gray,
-    },
-    searchButton: {
-        backgroundColor: color.dark_green,
-    },
-    buttonText: {
-        color: color.white,
-        fontFamily: FONTS.semiBold,
-        fontSize: 15,
-    },
+  // ... (Giữ nguyên styles cũ cho màn hình chính)
+  container: {
+    flex: 1,
+    backgroundColor: color.background,
+    paddingHorizontal: 16,
+    paddingTop: 60,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: color.white,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: color.dark_green,
+    fontFamily: FONTS.medium,
+    fontSize: 15,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 20,
+    marginLeft: "22%",
+    color: color.black,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: color.white,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 20,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    marginHorizontal: 8,
+    color: color.black,
+  },
+  card: {
+    backgroundColor: color.white,
+    borderRadius: 12,
+    marginBottom: 20,
+    width: "47%",
+    height: 275,
+  },
+  headerContainer: {
+    height: 95,
+    borderRadius: 10,
+    backgroundColor: color.dark_green,
+  },
+  propContainer: {
+    position: "absolute",
+    width: "100%",
+  },
+  imageContainer: {
+    marginTop: 32,
+    height: 170,
+    justifyContent: "flex-end",
+    alignItems: "center",
+  },
+  image: {
+    marginTop: 15,
+    width: "100%",
+    height: 170,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  typeTag: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  typeText: {
+    fontSize: 11,
+    color: color.white,
+    fontFamily: FONTS.medium,
+  },
+  timeText: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    fontSize: 11,
+    color: color.white,
+    backgroundColor: color.undereating,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    fontFamily: FONTS.italic,
+  },
+  foodName: {
+    fontSize: 14,
+    color: color.dark_green,
+    marginTop: 100,
+    marginHorizontal: 8,
+  },
+  desc: {
+    fontSize: 12,
+    color: color.gray_dark,
+    marginHorizontal: 8,
+    marginBottom: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    backgroundColor: color.white,
+    borderRadius: 12,
+    padding: 20,
+    width: "90%",
+    maxHeight: "80%",
+  },
+  modalTitle: {
+    fontSize: 18,
+    color: color.dark_green,
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  showAllButton: {
+    marginTop: 5,
+    alignSelf: "flex-start",
+  },
+  showAllText: {
+    fontSize: 12,
+    color: color.gray_dark,
+    fontFamily: FONTS.medium,
+  },
+  buttonGroup: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: color.light_gray,
+  },
+  actionButton: {
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    width: "48%",
+  },
+  backButton: {
+    backgroundColor: color.light_gray,
+  },
+  searchButton: {
+    backgroundColor: color.dark_green,
+  },
+  buttonText: {
+    color: color.white,
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+  },
 });

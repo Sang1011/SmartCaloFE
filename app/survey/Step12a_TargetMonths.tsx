@@ -28,7 +28,7 @@ export default function Step12a_TargetMonths({
     }));
   };
 
-  const targetMonths = surveyData.targetMonths || 1;
+  const targetMonths = surveyData.targetMonths || 2;
 
   return (
     <View style={styles.container}>
@@ -42,7 +42,7 @@ export default function Step12a_TargetMonths({
             {targetMonths}
           </Text>
           <Text style={[styles.unitText, globalStyles.semiBold]}>
-            {targetMonths === 1 ? "tháng" : "tháng"}
+            {targetMonths === 2 ? "tháng" : "tháng"}
           </Text>
         </View>
 

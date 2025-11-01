@@ -4,7 +4,14 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { navigateCustom } from "@utils/navigation";
 import { useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
+import {
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 import { scale } from "react-native-size-matters"; // Dùng để scaling nếu bạn có thư viện này
 
 // Danh sách các tùy chọn bữa ăn
@@ -20,8 +27,9 @@ const mealOptions = [
  */
 const MealSelect = ({ selectedMeal, setSelectedMeal }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  
-  const currentLabel = mealOptions.find(opt => opt.key === selectedMeal)?.label || "Chọn bữa ăn";
+
+  const currentLabel =
+    mealOptions.find((opt) => opt.key === selectedMeal)?.label || "Chọn bữa ăn";
 
   const handleSelect = (key) => {
     setSelectedMeal(key);
@@ -58,7 +66,8 @@ const MealSelect = ({ selectedMeal, setSelectedMeal }) => {
                   <Text
                     style={[
                       selectStyles.itemText,
-                      meal.key === selectedMeal && selectStyles.itemTextSelected,
+                      meal.key === selectedMeal &&
+                        selectStyles.itemTextSelected,
                     ]}
                   >
                     {meal.label}
@@ -73,27 +82,21 @@ const MealSelect = ({ selectedMeal, setSelectedMeal }) => {
   );
 };
 
-
 export default function OptionScreen() {
   const [selectedMeal, setSelectedMeal] = useState("Breakfast");
 
   return (
     <View style={styles.container}>
       {/* 1. Nút Quay Lại (prevButton) */}
-      <Pressable style={styles.backButton} onPress={() => {
-        navigateCustom("/tabs")
-      }}>
+      <Pressable
+        style={styles.backButton}
+        onPress={() => {
+          navigateCustom("/tabs");
+        }}
+      >
         <AntDesign name="arrow-left" size={24} color={Color.black} />
       </Pressable>
 
-      <Text style={styles.headerTitle}>Bạn muốn thêm bữa ăn nào?</Text>
-
-      {/* 2. Select Option Bữa Ăn (Dropdown) */}
-      <MealSelect
-        selectedMeal={selectedMeal}
-        setSelectedMeal={setSelectedMeal}
-      />
-      
       <Text style={styles.instructionText}>Hãy lựa chọn phương thức thêm:</Text>
 
       {/* 3. Button Chụp ảnh (snap) */}
@@ -119,7 +122,7 @@ export default function OptionScreen() {
       {/* 4. Button Search */}
       <Pressable
         style={styles.actionButton}
-        onPress={() => navigateCustom("/browseToAdd")}
+        onPress={() => navigateCustom("/library")}
       >
         <View style={styles.iconWrapper}>
           <MaterialCommunityIcons
@@ -128,14 +131,12 @@ export default function OptionScreen() {
             color={Color.dark_green}
           />
         </View>
-        <Pressable style={styles.textWrapper} onPress={() => {
-          navigateCustom("/library");
-        }}>
+        <View style={styles.textWrapper}>
           <Text style={styles.actionTitle}>Tìm kiếm</Text>
           <Text style={styles.actionDescription}>
             Tìm kiếm bằng database của chúng tôi.
           </Text>
-        </Pressable>
+        </View>
       </Pressable>
     </View>
   );
@@ -160,11 +161,11 @@ const selectStyles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: Color.black_50, // Nền mờ cho Modal
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   dropdownList: {
-    width: '80%',
+    width: "80%",
     backgroundColor: Color.white,
     borderRadius: 12,
     paddingHorizontal: scale(10),
@@ -191,7 +192,6 @@ const selectStyles = StyleSheet.create({
   },
 });
 
-
 // Styles cho OptionScreen (Giữ lại và điều chỉnh nhẹ)
 const styles = StyleSheet.create({
   container: {
@@ -211,9 +211,9 @@ const styles = StyleSheet.create({
     color: Color.black,
     marginBottom: scale(20),
   },
-  
+
   // Tùy chọn Bữa Ăn (Đã loại bỏ container cũ, sử dụng MealSelect)
-  
+
   instructionText: {
     fontSize: scale(16),
     fontFamily: FONTS.semiBold,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     marginBottom: scale(15),
     borderWidth: 1.5,
     borderColor: Color.light_gray,
-    
+
     shadowColor: Color.dark_green,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,

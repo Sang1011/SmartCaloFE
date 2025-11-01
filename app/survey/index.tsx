@@ -75,7 +75,7 @@ const isNextButtonDisabled = (stepIndex: number, data: SurveyData): boolean => {
     case 0:
       return !data.name?.trim();
     case 1:
-      return !data.goal;
+      return false;
     case 3:
       return !data.obstacles || data.obstacles.length === 0;
     case 5:
@@ -87,11 +87,11 @@ const isNextButtonDisabled = (stepIndex: number, data: SurveyData): boolean => {
     case 9:
       return false;
     case 10:
-      return !data.age || !data.gender;
+      return false;
     case 11:
-      return !data.height || !data.weight || !data.targetWeight;
+      return false;
     case 12:
-      return !data.targetMonths || data.targetMonths < 1 || data.targetMonths > 12;
+      return false;
     default:
       return false;
   }
@@ -107,8 +107,8 @@ export default function SurveyScreen() {
     gender: Gender.Male,
     activityLevel: 0,
     targetWeight: 0,
-    targetMonths: 1,
-    goal: HealthGoal.MaintainWeight,
+    targetMonths: 2,
+    goal: 0,
   });
   const totalSteps = SURVEY_SCREENS.length;
 
@@ -167,6 +167,17 @@ export default function SurveyScreen() {
     handleUpdateUser();
   };
 
+  const validateTargetWeight = (data: SurveyData) => {
+    const { goal, weight, targetWeight } = data;
+    if (!weight || !targetWeight) return true;
+  
+    if (goal === HealthGoal.LoseWeight) return targetWeight < weight;
+    if (goal === HealthGoal.GainWeight) return targetWeight > weight;
+    return true;
+  };
+  
+  const isTargetValid = validateTargetWeight(surveyData);
+
   const CurrentStepComponent = SURVEY_SCREENS[currentStep];
 
   return (
@@ -190,6 +201,7 @@ export default function SurveyScreen() {
           <CurrentStepComponent
             surveyData={surveyData}
             updateSurveyData={setSurveyData}
+            isTargetValid={isTargetValid}
           />
         </SurveyLayout>
       )}

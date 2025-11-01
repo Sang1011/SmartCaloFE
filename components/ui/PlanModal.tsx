@@ -6,15 +6,15 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { HealthGoal } from "../../types/me";
 
@@ -123,7 +123,7 @@ export default function PlanModal({
       );
       onClose();
     } catch (error) {
-      console.error("Error submitting plan:", error);
+      console.warn("Error submitting plan:", error);
     } finally {
       setLoading(false);
     }

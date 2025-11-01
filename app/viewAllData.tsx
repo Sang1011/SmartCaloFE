@@ -114,11 +114,13 @@ export default function ViewAllDataScreen() {
     if (user?.currentPlanId !== 1) {
       setIsPro(true);
     }
+    
   }, [user]);
 
   // Fetch data khi component mount
   useEffect(() => {
     dispatch(fetchCurrentUserThunk());
+    
     if (date) {
       dispatch(getDailyLogThunk({ date: date }));
     }
@@ -179,7 +181,7 @@ export default function ViewAllDataScreen() {
 
       // Thunk đã tự động fetch lại data, không cần fetch thêm
     } catch (error) {
-      console.error("Error deleting items:", error);
+      console.warn("Error deleting items:", error);
       // Có thể hiển thị thông báo lỗi cho người dùng
     }
   };

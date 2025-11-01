@@ -53,10 +53,10 @@ export function useRedirect(ready?: boolean) {
       } else if (!hasloggedIn) {
         router.replace("/login");
       } else {
-        router.replace("/login");
+        router.replace("/tabs");
       }
     } catch (error) {
-      console.error('Error checking flags in useRedirect:', error);
+      console.warn('Error checking flags in useRedirect:', error);
       // Fallback an toàn
       router.replace("/login");
     } finally {

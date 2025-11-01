@@ -142,7 +142,7 @@ export default function WorkoutTest({
               />
             }
             onPress={() => {
-              if (canPrev) onPrev;
+              if (canPrev) onPrev();
             }}
           />
 

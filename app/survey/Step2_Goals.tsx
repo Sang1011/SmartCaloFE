@@ -63,7 +63,7 @@ export default function Step2_Goals({ surveyData, updateSurveyData }: Props) {
           <SingleSelectOption
             key={value}
             label={label}
-            isSelected={surveyData.goal === value}
+            isSelected={Number(surveyData.goal) === value}
             onPress={() => handleSelectGoal(value)}
           />
         ))}

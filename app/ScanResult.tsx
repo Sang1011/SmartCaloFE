@@ -154,7 +154,7 @@ export default function ScanResult() {
       alert("✅ Đã thêm vào lịch sử thành công!");
       navigateCustom("/tabs");
     } catch (error: any) {
-      console.error("❌ Lỗi khi thêm log món ăn:", error);
+      console.warn("❌ Lỗi khi thêm log món ăn:", error);
 
       if (error?.status === 403 || error?.response?.status === 403) {
         Alert.alert(
@@ -255,7 +255,7 @@ export default function ScanResult() {
               source={{ uri: selectedDish.imageUrl }}
               style={styles.dishImage}
             />
-            <View style={styles.imageOverlay} />
+            {/* <View style={styles.imageOverlay} /> */}
           </View>
           <View style={styles.successBadge}>
             <View style={styles.checkIcon}>
@@ -642,7 +642,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: SCREEN_WIDTH - 40,
     marginTop: 40,
-    height: 280,
+    height: 300,
     alignSelf: "center",
     borderRadius: 20,
     overflow: "hidden",
@@ -654,14 +654,14 @@ const styles = StyleSheet.create({
     height: "100%",
     resizeMode: "cover",
   },
-  imageOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: "linear-gradient(transparent, rgba(0,0,0,0.7))",
-  },
+  // imageOverlay: {
+  //   position: "absolute",
+  //   bottom: 0,
+  //   left: 0,
+  //   right: 0,
+  //   height: 100,
+  //   backgroundColor: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+  // },
   infoContainer: {
     backgroundColor: color.white,
     borderTopLeftRadius: 30,

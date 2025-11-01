@@ -1,9 +1,7 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { navigateCustom } from "@utils/navigation";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import SCButton from "./SCButton";
 
 type Props = {
   menuId: string;
@@ -26,28 +24,6 @@ export default function CurrentMenuCard({
 }: Props) {
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Thực đơn đang áp dụng</Text>
-        <View style={{ width: "25%" }}>
-          <SCButton
-            title="Thay đổi"
-            variant="outline"
-            gap={2}
-            height={32}
-            fontSize={12}
-            iconPos="left"
-            icon={
-              <MaterialIcons
-                name="change-circle"
-                size={18}
-                color={color.dark_green}
-              />
-            }
-            onPress={() => onChange}
-          />
-        </View>
-      </View>
 
       {/* Card */}
       <Pressable style={styles.card} onPress={() => {

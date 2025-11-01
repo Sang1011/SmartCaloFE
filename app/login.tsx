@@ -1,8 +1,8 @@
 import SCCheckBox from "@components/ui/SCCheckBox";
 import SCInput from "@components/ui/SCInput";
 import { REMEMBER_ME, SAVED_EMAIL, SAVED_PASSWORD } from "@constants/app";
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 import Fontisto from "@expo/vector-icons/Fontisto";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { loginThunk } from "@features/auth";
 import { RootState } from "@redux";
 import { useAppDispatch, useAppSelector } from "@redux/hooks";
@@ -30,7 +30,6 @@ import { FONTS, globalStyles } from "../constants/fonts";
 import { useAuth } from "../contexts/AuthContext";
 import { RegisterANDLoginResponse } from "../types/auth";
 import { UserStatusLabel } from "../types/me";
-
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -90,8 +89,8 @@ export default function LoginScreen() {
           // ... (Giữ nguyên logic lỗi)
           const errorMessage =
             (resultAction.payload as string) ||
-            "Đăng ký thất bại không rõ lý do.";
-          Alert.alert("Lỗi Đăng Ký", errorMessage);
+            "Đăng nhập thất bại không rõ lý do.";
+          Alert.alert("Lỗi Đăng Nhập", "Email hoặc mật khẩu bị sai");
           return;
         }
 
@@ -138,7 +137,7 @@ export default function LoginScreen() {
         navigateCustom("/survey"); // chỉ navigate khi login thành công
       }
     } catch (error: any) {
-      console.error("Google login error from LOGIN:", error);
+      console.warn("Google login error from LOGIN:", error);
       Alert.alert("Lỗi", error.message || "Đăng nhập thất bại");
     }
   };
@@ -173,13 +172,13 @@ export default function LoginScreen() {
                 value={email}
               />
               <SCInput
-                fontFamily={FONTS.regular}
-                placeholder="Nhập mật khẩu"
                 variant="password"
-                onChangeText={(text) => setPassword(text)}
-                secureTextEntry={true}
+                placeholder="Nhập mật khẩu"
                 value={password}
+                onChangeText={setPassword}
                 icon={<MaterialIcons name="password" size={12} color="black" />}
+                eyeIcon={<Feather name="eye" size={20} color={color.gray} />}
+                eyeOffIcon={<Feather name="eye-off" size={20} color={color.gray} />}
               />
             </View>
             <View style={styles.checkboxContainer}>
@@ -187,7 +186,7 @@ export default function LoginScreen() {
                 fontFamily={FONTS.medium}
                 fontSize={12}
                 label="Duy trì đăng nhập"
-                labelPos="right"
+                labelPos="right"                
                 checked={rememberMe}
                 onChange={(value) => setRememberMe(value)}
               />

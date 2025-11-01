@@ -14,16 +14,16 @@ import { navigateCustom } from "@utils/navigation";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { PieChart } from "react-native-gifted-charts/dist";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -112,7 +112,7 @@ export default function Dishes() {
       await dispatch(createLogEntryThunk({ body })).unwrap();
       alert("✅ Đã thêm vào lịch sử thành công!");
     } catch (error: any) {
-      console.error("❌ Lỗi khi thêm log món ăn:", error);
+      console.warn("❌ Lỗi khi thêm log món ăn:", error);
   
       if (error?.status === 403 || error?.response?.status === 403) {
         Alert.alert(

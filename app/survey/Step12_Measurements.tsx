@@ -16,11 +16,13 @@ const { width } = Dimensions.get("window");
 interface Props {
   surveyData: SurveyData;
   updateSurveyData: React.Dispatch<React.SetStateAction<SurveyData>>;
+  isTargetValid: boolean;
 }
 
 export default function Step12_Measurements({
   surveyData,
   updateSurveyData,
+  isTargetValid
 }: Props) {
   useEffect(() => {
     // Gán mặc định targetWeight = weight khi người dùng nhập cân nặng
@@ -55,18 +57,6 @@ export default function Step12_Measurements({
       targetWeight: rounded,
     }));
   };
-
-  // Validate LoseWeight / GainWeight
-  const validateTargetWeight = () => {
-    const { goal, weight, targetWeight } = surveyData;
-    if (!weight || !targetWeight) return true; // Không hiện lỗi nếu chưa nhập
-
-    if (goal === HealthGoal.LoseWeight) return targetWeight < weight;
-    if (goal === HealthGoal.GainWeight) return targetWeight > weight;
-    return true;
-  };
-
-  const isTargetValid = validateTargetWeight();
 
   const currentHeight = surveyData.height || 150;
   const currentWeight = surveyData.weight || 50;

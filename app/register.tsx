@@ -4,7 +4,7 @@ import color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { loginThunk, registerThunk } from "@features/auth";
+import { registerThunk } from "@features/auth";
 import { useAppDispatch } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
 import { Image } from "expo-image";
@@ -49,11 +49,11 @@ export default function RegisterScreen() {
         Alert.alert("Lỗi Đăng Ký", errorMessage);
         return;
       }
-      await dispatch(loginThunk({ email, password }));
+      // await dispatch(loginThunk({ email, password }));
       Alert.alert("Thành công", "Đăng ký thành công!");
-      navigateCustom("/survey");
+      navigateCustom("/login");
     } catch (e) {
-      console.error("Async Register Error:", e);
+      console.warn("Async Register Error:", e);
       Alert.alert("Lỗi hệ thống", "Đã xảy ra lỗi không mong muốn.");
     } finally {
       setIsLoading(false);

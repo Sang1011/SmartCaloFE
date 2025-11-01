@@ -69,7 +69,7 @@ export const useAppStartup = () => {
                     await saveBooleanData(HAS_LOGGED_IN, false);
                 }
             } catch (error) {
-                console.error("Error verifying tokens:", error);
+                console.warn("Error verifying tokens:", error);
                 await saveBooleanData(HAS_LOGGED_IN, false);
             } finally {
                 // Đảm bảo setReady(true) chỉ khi đã hoàn tất xác thực VÀ hydrate user
