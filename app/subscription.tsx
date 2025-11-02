@@ -7,6 +7,7 @@ import { fetchAllSubscriptions } from "@features/subscriptions";
 import { fetchCurrentUserThunk } from "@features/users";
 import { RootState } from "@redux";
 import { useAppDispatch, useAppSelector } from "@redux/hooks";
+import { getAccessToken, getRefreshToken } from "@stores";
 import { navigateCustom } from "@utils/navigation";
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
@@ -97,7 +98,13 @@ export default function SubscriptionScreen() {
     },
   ];
 
+  const checkToken = async () => {
+    console.warn("accessToken", await getAccessToken());
+    console.warn("refreshToken", await getRefreshToken());
+  }
+
   useEffect(() => {
+    checkToken();
     dispatch(fetchCurrentUserThunk());
     dispatch(fetchAllSubscriptions());
   }, []);
@@ -169,22 +176,19 @@ export default function SubscriptionScreen() {
     paymentStatus,
     pollingStartTime,
     dispatch,
-  ]);
+  ]);  
+  
+  const forceRefreshUser = async() => {
+    await dispatch(refreshTokenThunk())
+  .unwrap() 
+  .catch((err) => {
+    console.log("Refresh attempt failed gracefully:", err);
+  });
 
-  const forceRefreshUser = async () => {
-    dispatch(refreshTokenThunk())
-      .unwrap()
-      .catch((err) => {
-        console.log("Refresh attempt failed gracefully:", err);
-      });
 
-    // 2️⃣ Lấy lại thông tin người dùng
-    await dispatch(fetchCurrentUserThunk());
-
-    // 3️⃣ Đóng modal
-    handleCloseModal();
-  };
-
+        // 3️⃣ Đóng modal
+        handleCloseModal();
+  }
   // Logic Polling chính (Chạy liên tục khi ở foreground)
   useEffect(() => {
     let intervalId: number | null = null;

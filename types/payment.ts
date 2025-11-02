@@ -19,4 +19,6 @@ export interface CreatePaymentQRUrlResponse {
 
 export interface CheckPaymentStatusReponse {
     paymentStatus: string
+    accessToken: string
+    refreshToken: string
 }

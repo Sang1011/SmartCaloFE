@@ -3,7 +3,7 @@ import PlanModal from "@components/ui/PlanModal";
 import SCButton from "@components/ui/SCButton";
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
-import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -474,24 +474,6 @@ export default function ExploreScreen() {
 
               <View style={styles.header}>
                 <Text style={styles.title}>Thực đơn đang áp dụng</Text>
-                <View style={{ width: "25%" }}>
-                  <SCButton
-                    title="Thay đổi"
-                    variant="outline"
-                    gap={2}
-                    height={32}
-                    fontSize={12}
-                    iconPos="left"
-                    icon={
-                      <MaterialIcons
-                        name="change-circle"
-                        size={18}
-                        color={color.dark_green}
-                      />
-                    }
-                    onPress={() => console.log("Thay đổi thực đơn")}
-                  />
-                </View>
               </View>
               {/* --- Current Menu Section --- */}
               <View style={styles.menuWrapper}>

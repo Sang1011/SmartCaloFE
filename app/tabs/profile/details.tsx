@@ -3,6 +3,7 @@ import SCButton from "@components/ui/SCButton";
 import color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
 import { useAuth } from "@contexts/AuthContext";
+import { refreshTokenThunk } from "@features/auth";
 import { fetchCurrentUserThunk, updateProfileThunk } from "@features/users";
 import { RootState } from "@redux";
 import { useAppDispatch } from "@redux/hooks";
@@ -46,6 +47,7 @@ export default function ProfileDetailsScreen() {
   const [isEditing, setIsEditing] = useState(false);
 
   const handleLoadUser = async () => {
+    await dispatch(refreshTokenThunk())
     const result = await dispatch(fetchCurrentUserThunk());
     if (fetchCurrentUserThunk.rejected.match(result)) {
       await logout();

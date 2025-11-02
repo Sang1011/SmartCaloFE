@@ -278,6 +278,7 @@ const authSlice = createSlice({
                 (state, action: PayloadAction<RefreshTokenResponse>) => {
                     state.loading = false;
                     saveTokens(action.payload.accessToken, action.payload.refreshToken);
+                    console.log("✅ Token refresh success");
                 }
             )
             .addCase(refreshTokenThunk.rejected, (state, action) => {
