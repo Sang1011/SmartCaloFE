@@ -45,43 +45,42 @@ const handleAuthError = (error: any): string => {
 
 const decodeToken = (token: string) => {
     try {
-        // atob is available in the environment (based on useAppStartup.ts)
-        const payload = JSON.parse(atob(token.split(".")[1]));
+        let payloadBase64 = token.split(".")[1]; 
+
+        if (!payloadBase64) {
+            return null; 
+        }
+        
+        payloadBase64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+        
+        while (payloadBase64.length % 4) {
+            payloadBase64 += '=';
+        }
+
+        const payloadString = atob(payloadBase64);
+        const payload = JSON.parse(payloadString);
+        
         return payload;
+        
     } catch {
-        return null;
+        return null; 
     }
 };
 
-// ======================== Thunks ========================
-
-// ✅ NEW THUNK: Hydrate user from a valid local token
-export const hydrateUserThunk = createAsyncThunk(
-    "auth/hydrateUser",
-    async (_, { rejectWithValue, dispatch }) => {
-        const accessToken = await getAccessToken();
-        if (!accessToken) {
-            return rejectWithValue("No access token found");
-        }
-        
-        const payload = decodeToken(accessToken);
-        if (payload && payload.userDto) {
-            // Cập nhật state user dựa trên dữ liệu giải mã từ token
-            dispatch(setCredentials({ userDto: payload.userDto }));
-            return payload.userDto;
-        }
-
-        return rejectWithValue("Invalid token structure or missing user data in token.");
-    }
-);
-
-// (Các thunks khác giữ nguyên...)
+// ===
 
 export const googleLoginThunk = createAsyncThunk(
     AUTH_URLS.GOOGLE_LOGIN,
     async ({ idToken }: LoginGoogleRequest, { rejectWithValue }) => {
         try {
             const res = await authApi.googleLogin({ idToken });
+            
+            // ✅ AWAIT async storage operations
+            await saveTokens(res.data.accessToken, res.data.refreshToken);
+            await saveBooleanData(HAS_OPENED_APP, true);
+            await saveBooleanData(HAS_LOGGED_IN, true);
+            
+            console.log("✅ Google login + storage saved");
             return res.data as LoginGoogleResponse;
         } catch (err: any) {
             return rejectWithValue(handleAuthError(err));
@@ -94,7 +93,13 @@ export const loginThunk = createAsyncThunk(
     async ({ email, password }: LoginRequest, { rejectWithValue }) => {
         try {
             const res = await authApi.login({ email, password });
-            console.log("res Login", res.data);
+            
+            // ✅ AWAIT async storage operations
+            await saveTokens(res.data.accessToken, res.data.refreshToken);
+            await saveBooleanData(HAS_OPENED_APP, true);
+            await saveBooleanData(HAS_LOGGED_IN, true);
+            
+            console.log("✅ Login + storage saved");
             return res.data as RegisterANDLoginResponse;
         } catch (err: any) {
             return rejectWithValue(handleAuthError(err));
@@ -107,7 +112,13 @@ export const registerThunk = createAsyncThunk(
     async ({ email, password, name }: RegisterRequest, { rejectWithValue }) => {
         try {
             const res = await authApi.register({ email, password, name });
-            console.log("RES REGISTER", res.data);
+            
+            // ✅ AWAIT async storage operations
+            await saveTokens(res.data.accessToken, res.data.refreshToken);
+            await saveBooleanData(HAS_OPENED_APP, true);
+            await saveBooleanData(HAS_LOGGED_IN, true);
+            
+            console.log("✅ Register + storage saved");
             return res.data as RegisterANDLoginResponse;
         } catch (err: any) {
             return rejectWithValue(handleAuthError(err));
@@ -132,7 +143,6 @@ export const verifyOTPThunk = createAsyncThunk(
     async ({ email, otp }: VerifyOTPRequest, { rejectWithValue }) => {
         try {
             const res = await authApi.verifyOTP({ email, otp });
-            console.log("res.data", res.data);
             return res.data;
         } catch (err: any) {
             return rejectWithValue(handleAuthError(err));
@@ -154,18 +164,28 @@ export const resetPasswordThunk = createAsyncThunk(
 
 export const refreshTokenThunk = createAsyncThunk(
     AUTH_URLS.REFRESH_TOKEN,
-    async (_, { rejectWithValue }) => {
+    async (_, { rejectWithValue, dispatch }) => {
         try {
             const accessToken = await getAccessToken();
             const refreshToken = await getRefreshToken();
-            console.warn("accessToken refresh",  accessToken);
-            console.warn("refreshToken refresh", refreshToken);
+            
             if (!accessToken || !refreshToken) {
                 throw new Error("No tokens available");
             }
 
             const res = await authApi.refresh({ accessToken, refreshToken });
-            return res.data as RefreshTokenResponse; 
+            
+            // ✅ Save new tokens
+            await saveTokens(res.data.accessToken, res.data.refreshToken);
+            
+            // ✅ Hydrate user from new token
+            const payload = decodeToken(res.data.accessToken);
+            if (payload?.userDto) {
+                dispatch(setCredentials({ userDto: payload.userDto }));
+            }
+            
+            console.log("✅ Token refreshed + user hydrated");
+            return res.data as RefreshTokenResponse;
         } catch (err: any) {
             return rejectWithValue(handleAuthError(err));
         }
@@ -174,27 +194,26 @@ export const refreshTokenThunk = createAsyncThunk(
 
 export const logoutThunk = createAsyncThunk(
     AUTH_URLS.LOGOUT,
-    async (_, { rejectWithValue, dispatch }) => {
+    async (_, { rejectWithValue }) => {
         try {
             const refreshToken = await getRefreshToken();
             
-            // ✅ Chỉ call API nếu còn refreshToken
             if (refreshToken) {
                 try {
                     await authApi.logout({ refreshToken });
                     console.log("✅ Logout API success");
                 } catch (err: any) {
-                    // ✅ Nếu API fail (token đã hết hạn) → ignore
-                    console.warn("⚠️ Logout API failed (token expired), clearing local anyway");
+                    console.warn("⚠️ Logout API failed, clearing local anyway");
                 }
             }
             
-            // ✅ Luôn cleanup local state
-            dispatch(logout());
+            // ✅ AWAIT cleanup operations
+            await deleteTokens();
+            await saveBooleanData(HAS_LOGGED_IN, false);
+            
+            console.log("✅ Local storage cleared");
             return { success: true };
         } catch (err: any) {
-            // ✅ Ensure cleanup even on error
-            dispatch(logout());
             return rejectWithValue(handleAuthError(err));
         }
     }
@@ -207,13 +226,12 @@ const authSlice = createSlice({
     initialState,
     reducers: {
         logout(state) {
-            saveBooleanData(HAS_LOGGED_IN, false);
+            // ✅ Chỉ clear Redux state, storage được handle ở logoutThunk
             state.isNewUser = undefined;
             state.user = null;
             state.loading = false;
             state.error = null;
             state.resetToken = "";
-            deleteTokens();
         },
         clearError(state) {
             state.error = null;
@@ -241,17 +259,8 @@ const authSlice = createSlice({
         ) => {
             state.loading = false;
             state.isNewUser = action.payload.isNewUser || false;
-            state.user = action.payload.userDto; 
-            saveTokens(action.payload.accessToken, action.payload.refreshToken);
-            (async () => {
-                const at = await getAccessToken();
-                const rt = await getRefreshToken();
-                console.log("✅ Access Token:", at);
-                console.log("✅ Refresh Token:", rt);
-              })();
-            saveBooleanData(HAS_OPENED_APP, true);
-            saveBooleanData(HAS_LOGGED_IN, true);
-            console.log("✅ Login success:", state.user);
+            state.user = action.payload.userDto;
+            // ✅ Storage đã được save trong thunk, không cần làm gì ở đây
         };
 
         // ========== Google / Normal / Register ==========
@@ -273,44 +282,34 @@ const authSlice = createSlice({
         // ========== Refresh token ==========
         builder
             .addCase(refreshTokenThunk.pending, handlePending)
-            .addCase(
-                refreshTokenThunk.fulfilled,
-                (state, action: PayloadAction<RefreshTokenResponse>) => {
-                    state.loading = false;
-                    saveTokens(action.payload.accessToken, action.payload.refreshToken);
-                    console.log("✅ Token refresh success");
-                }
-            )
+            .addCase(refreshTokenThunk.fulfilled, (state) => {
+                state.loading = false;
+                // Token + user đã được save trong thunk
+            })
             .addCase(refreshTokenThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
                 state.user = null;
-                deleteTokens();
+                // deleteTokens sẽ được gọi trong useAppStartup nếu refresh fail
             });
             
-        // ========== Hydrate User (New logic) ==========
-        // Thunk này dùng để setCredentials (cập nhật state.user) nên không cần logic riêng biệt, 
-        // nó sẽ kích hoạt reducer setCredentials ở trên.
-        builder
-            .addCase(hydrateUserThunk.pending, handlePending)
-            .addCase(hydrateUserThunk.fulfilled, (state) => {
-                state.loading = false; // setCredentials đã set loading = false
-            })
-            .addCase(hydrateUserThunk.rejected, handleRejected);
-
-        // ========== Logout / Forgot / Verify / Reset (Giữ nguyên) ==========
+        // ========== Logout ==========
         builder
             .addCase(logoutThunk.pending, handlePending)
             .addCase(logoutThunk.fulfilled, (state) => {
                 state.loading = false;
+                // Cleanup Redux state
+                state.user = null;
+                state.isNewUser = undefined;
+                state.resetToken = "";
             })
             .addCase(logoutThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
                 state.user = null;
-                deleteTokens();
             });
 
+        // ========== Forgot / Verify / Reset ==========
         builder
             .addCase(forgotPasswordThunk.pending, handlePending)
             .addCase(forgotPasswordThunk.fulfilled, (state) => {
@@ -326,9 +325,7 @@ const authSlice = createSlice({
                 const resetToken = action.payload?.resetToken;
                 if (resetToken) {
                     state.resetToken = resetToken;
-                    console.log("resetToken saved:", resetToken);
                 } else {
-                    console.warn("API success but missing resetToken in payload:", action.payload);
                     state.error = "Xác thực thành công, nhưng không nhận được mã thiết lập lại mật khẩu.";
                 }
             })
