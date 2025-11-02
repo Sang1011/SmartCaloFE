@@ -40,7 +40,7 @@ export const fetchMenuByIdAndDay = createAsyncThunk<
     const res = await menuApi.getMenuByIdAndDayNumber(menuId, dayNumber);
     return res.data.menuDayDto as MenuDay;
   } catch (err: any) {
-    console.error("❌ Lỗi fetchMenuByIdAndDay:", err);
+    console.warn("❌ Lỗi fetchMenuByIdAndDay:", err);
     return rejectWithValue(err.response?.data?.message || "Không thể tải menu");
   }
 });
@@ -54,7 +54,7 @@ export const fetchMenuByDailyCalo = createAsyncThunk<
     const res = await menuApi.getMenuByDailyCalo(dailyCalo);
     return res.data as MenuItemResponse[];
   } catch (err: any) {
-    console.error("❌ Lỗi fetchMenuByDailyCalo:", err);
+    console.warn("❌ Lỗi fetchMenuByDailyCalo:", err);
     return rejectWithValue(
       err.response?.data?.message || "Không thể tải menu theo calo"
     );
@@ -70,7 +70,7 @@ export const fetchMenuByUserId = createAsyncThunk<
     const res = await menuApi.getMenuByUserId(userId);
     return res.data.menuSummaryDto as MenuItemResponse;
   } catch (err: any) {
-    console.error("❌ Lỗi fetchMenuByUserId:", err);
+    // console.warn("❌ Lỗi fetchMenuByUserId:", err);
     return rejectWithValue(
       err.response?.data?.message || "Không thể tải menu theo userId"
     );
@@ -86,7 +86,7 @@ export const adoptCustomMenu = createAsyncThunk<
     const res = await menuApi.adoptCustomMenu(body);
     return res.data;
   } catch (err: any) {
-    console.error("❌ Lỗi adoptCustomMenu:", err);
+    console.warn("❌ Lỗi adoptCustomMenu:", err);
     return rejectWithValue(
       err.response?.data?.message || "Không thể áp dụng menu tuỳ chỉnh"
     );

@@ -58,7 +58,7 @@ export const fetchAllPrograms = createAsyncThunk<
 
       return response.data as ProgramResponseApiAll;
     } catch (error) {
-      console.error("❌ Fetch all programs failed:", error);
+      console.warn("❌ Fetch all programs failed:", error);
       return rejectWithValue("Failed to fetch all programs.");
     }
   }

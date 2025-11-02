@@ -6,10 +6,25 @@ import { useEffect, useState } from "react";
 
 const decodeToken = (token: string) => {
     try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
+        let payloadBase64 = token.split(".")[1]; 
+
+        if (!payloadBase64) {
+            return null; 
+        }
+        
+        payloadBase64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+        
+        while (payloadBase64.length % 4) {
+            payloadBase64 += '=';
+        }
+
+        const payloadString = atob(payloadBase64);
+        const payload = JSON.parse(payloadString);
+        
         return payload;
+        
     } catch {
-        return null;
+        return null; 
     }
 };
 
@@ -69,7 +84,7 @@ export const useAppStartup = () => {
                     await saveBooleanData(HAS_LOGGED_IN, false);
                 }
             } catch (error) {
-                console.error("Error verifying tokens:", error);
+                console.warn("Error verifying tokens:", error);
                 await saveBooleanData(HAS_LOGGED_IN, false);
             } finally {
                 // Đảm bảo setReady(true) chỉ khi đã hoàn tất xác thực VÀ hydrate user

@@ -158,14 +158,14 @@ export const refreshTokenThunk = createAsyncThunk(
         try {
             const accessToken = await getAccessToken();
             const refreshToken = await getRefreshToken();
-
+            console.warn("accessToken refresh",  accessToken);
+            console.warn("refreshToken refresh", refreshToken);
             if (!accessToken || !refreshToken) {
                 throw new Error("No tokens available");
             }
 
             const res = await authApi.refresh({ accessToken, refreshToken });
-            // API refresh thường trả về user object mới (userDto) cùng với token mới
-            return res.data as RefreshTokenResponse & { userDto: UserDTOLogin }; 
+            return res.data as RefreshTokenResponse; 
         } catch (err: any) {
             return rejectWithValue(handleAuthError(err));
         }
@@ -243,8 +243,12 @@ const authSlice = createSlice({
             state.isNewUser = action.payload.isNewUser || false;
             state.user = action.payload.userDto; 
             saveTokens(action.payload.accessToken, action.payload.refreshToken);
-            console.log("✅ getAccessTokens:", getAccessToken);
-            console.log("✅ getRefreshToken:", getRefreshToken);
+            (async () => {
+                const at = await getAccessToken();
+                const rt = await getRefreshToken();
+                console.log("✅ Access Token:", at);
+                console.log("✅ Refresh Token:", rt);
+              })();
             saveBooleanData(HAS_OPENED_APP, true);
             saveBooleanData(HAS_LOGGED_IN, true);
             console.log("✅ Login success:", state.user);
@@ -271,13 +275,10 @@ const authSlice = createSlice({
             .addCase(refreshTokenThunk.pending, handlePending)
             .addCase(
                 refreshTokenThunk.fulfilled,
-                (state, action: PayloadAction<RefreshTokenResponse & { userDto: UserDTOLogin }>) => {
+                (state, action: PayloadAction<RefreshTokenResponse>) => {
                     state.loading = false;
-                    if (action.payload.userDto) { 
-                        state.user = action.payload.userDto;
-                        console.log("✅ User hydrated after refresh:", state.user);
-                    }
                     saveTokens(action.payload.accessToken, action.payload.refreshToken);
+                    console.log("✅ Token refresh success");
                 }
             )
             .addCase(refreshTokenThunk.rejected, (state, action) => {
@@ -327,7 +328,7 @@ const authSlice = createSlice({
                     state.resetToken = resetToken;
                     console.log("resetToken saved:", resetToken);
                 } else {
-                    console.error("API success but missing resetToken in payload:", action.payload);
+                    console.warn("API success but missing resetToken in payload:", action.payload);
                     state.error = "Xác thực thành công, nhưng không nhận được mã thiết lập lại mật khẩu.";
                 }
             })

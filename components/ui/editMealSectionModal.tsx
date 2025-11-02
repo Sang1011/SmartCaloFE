@@ -6,17 +6,17 @@ import Entypo from "@expo/vector-icons/Entypo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  LayoutAnimation,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableWithoutFeedback,
-  UIManager,
-  View,
+    ActivityIndicator,
+    LayoutAnimation,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableWithoutFeedback,
+    UIManager,
+    View,
 } from "react-native";
 import { scale } from "react-native-size-matters";
 
@@ -146,7 +146,7 @@ const EditMealsModal: React.FC<EditMealsModalProps> = ({
       setSelectedToDelete({}); // Reset state
       onClose();
     } catch (error) {
-      console.error("Error deleting items:", error);
+      console.warn("Error deleting items:", error);
     } finally {
       setIsDeleting(false);
     }

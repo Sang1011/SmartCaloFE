@@ -1,11 +1,13 @@
 import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { refreshTokenThunk } from "@features/auth";
 import { fetchPaymentQRUrl, fetchPaymentStatus } from "@features/payment";
 import { fetchAllSubscriptions } from "@features/subscriptions";
 import { fetchCurrentUserThunk } from "@features/users";
 import { RootState } from "@redux";
 import { useAppDispatch, useAppSelector } from "@redux/hooks";
+import { getAccessToken, getRefreshToken } from "@stores";
 import { navigateCustom } from "@utils/navigation";
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
@@ -27,51 +29,82 @@ import {
 export default function SubscriptionScreen() {
   const [selectedPlanId, setSelectedPlanId] = useState<number>(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [pollingStartTime, setPollingStartTime] = useState<number | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState(600); // 600 giây = 10 phút
 
   const dispatch = useAppDispatch();
   const { subscriptionPlans, loading } = useAppSelector(
     (state: RootState) => state.subscription
   );
 
-  // Lấy thêm transactionId và paymentStatus từ Redux
   const { qrImageUrl, qrLoading, transactionId, paymentStatus } =
     useAppSelector((state: RootState) => state.payment);
   const { user } = useAppSelector((state: RootState) => state.user);
+  const [isPro, setIsPro] = useState<boolean>(false);
+  useEffect(() => {
+    if (user) {
+      if (user.currentPlanId !== 1) {
+        setIsPro(true);
+      }
+    }
+  }, [user]);
 
-  // Cập nhật: Chỉ tạo QR và mở Modal. Logic Polling sẽ chạy trong useEffect.
   const handlePaymentURlCreate = async () => {
     const res = await dispatch(
       fetchPaymentQRUrl({ planId: selectedPlanId })
     ).unwrap();
     if (res?.transactionId) {
+      setPollingStartTime(Date.now()); // Lưu thời gian bắt đầu
+      setTimeRemaining(600); // Reset thời gian còn lại
       setIsModalVisible(true);
     } else {
       Alert.alert("Lỗi", "Không thể tạo QR. Vui lòng thử lại!");
     }
   };
 
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+    setPollingStartTime(null);
+    setTimeRemaining(600);
+  };
+
   const features = [
     {
       name: "Nhận diện thức ăn qua hình ảnh",
       free: "3 lần",
-      pro: "Không giới hạn",
+      premium: "Không giới hạn",
     },
-    { name: "Kiểm tra điểm danh hàng ngày", free: "✔️", pro: "✔️" },
-    { name: "Tính toán BMI/BMR/TDEE", free: "✔️", pro: "✔️" },
-    { name: "Xem thực đơn ăn uống & tập luyện cơ bản", free: "✔️", pro: "✔️" },
+    { name: "Kiểm tra điểm danh hàng ngày", free: "✔️", premium: "✔️" },
+    { name: "Tính toán BMI/BMR/TDEE", free: "✔️", premium: "✔️" },
+    { name: "Xem thực đơn ăn uống", free: "✔️", premium: "✔️" },
+    { name: "Tập luyện thể thao", free: "✔️", premium: "✔️" },
     {
       name: "Ghi lại lịch sử thay đổi cân nặng và chiều cao",
       free: "✔️",
-      pro: "✔️",
+      premium: "✔️",
     },
-    { name: "Tạo thực đơn tùy chỉnh theo cá nhân", free: "❌", pro: "✔️" },
-    { name: "Tra cứu thư viện món ăn", free: "✔️", pro: "✔️" },
-    { name: "AI Chatbox tư vấn", free: "❌", pro: "✔️" },
-    { name: "Theo dõi & ghi nhật ký ăn uống", free: "✔️", pro: "✔️" },
-    { name: "Xem thông tin dinh dưỡng chi tiết của các bữa ăn đã ghi", free: "❌", pro: "✔️" },
+    {
+      name: "Áp dụng thực đơn và tạo thực đơn tùy chỉnh theo cá nhân",
+      free: "❌",
+      premium: "✔️",
+    },
+    { name: "Tra cứu thư viện món ăn", free: "✔️", premium: "✔️" },
+    { name: "AI Chatbox tư vấn", free: "❌", premium: "✔️" },
+    { name: "Theo dõi & ghi nhật ký ăn uống", free: "✔️", premium: "✔️" },
+    {
+      name: "Xem thông tin dinh dưỡng chi tiết của các bữa ăn đã ghi",
+      free: "❌",
+      premium: "✔️",
+    },
   ];
 
+  const checkToken = async () => {
+    console.warn("accessToken", await getAccessToken());
+    console.warn("refreshToken", await getRefreshToken());
+  }
+
   useEffect(() => {
+    checkToken();
     dispatch(fetchCurrentUserThunk());
     dispatch(fetchAllSubscriptions());
   }, []);
@@ -87,60 +120,111 @@ export default function SubscriptionScreen() {
     }
   }, [loading, subscriptionPlans, selectedPlanId]);
 
+  // Timer đếm ngược hiển thị thời gian còn lại
   useEffect(() => {
-    // Hàm xử lý khi trạng thái App thay đổi
+    if (isModalVisible && pollingStartTime) {
+      const timer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - pollingStartTime) / 1000);
+        const remaining = 600 - elapsed;
+        setTimeRemaining(remaining > 0 ? remaining : 0);
+
+        if (remaining <= 0) {
+          clearInterval(timer);
+        }
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [isModalVisible, pollingStartTime]);
+
+  // Logic kiểm tra khi quay lại App
+  useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      // Nếu trạng thái chuyển từ background/inactive sang active (người dùng quay lại app)
       if (
         nextAppState === "active" &&
         isModalVisible &&
         transactionId &&
+        pollingStartTime &&
         paymentStatus?.toString().toLowerCase() !== "completed"
       ) {
-        console.log(
-          "App returned to foreground. Force checking payment status."
-        );
+        const elapsedTime = Date.now() - pollingStartTime;
 
-        // Buộc dispatch ngay lập tức để cập nhật trạng thái sau khi quay lại
-        dispatch(fetchPaymentStatus(transactionId));
+        // Kiểm tra nếu vẫn còn trong 10 phút
+        if (elapsedTime < 10 * 60 * 1000) {
+          console.log(
+            "App returned to foreground. Force checking payment status."
+          );
+          dispatch(fetchPaymentStatus(transactionId));
+        } else {
+          console.log("🛑 Polling time expired while app was in background");
+          handleCloseModal();
+        }
       }
     };
 
-    // Đăng ký sự kiện lắng nghe AppState
     const subscription = AppState.addEventListener(
       "change",
       handleAppStateChange
     );
 
-    // Dọn dẹp listener khi component bị unmount
     return () => {
       subscription.remove();
     };
-  }, [isModalVisible, transactionId, paymentStatus, dispatch]);
-  // ------------------------------------------------------------------
-  // END LOGIC KIỂM TRA KHI QUAY LẠI APP
-  // ------------------------------------------------------------------
+  }, [
+    isModalVisible,
+    transactionId,
+    paymentStatus,
+    pollingStartTime,
+    dispatch,
+  ]);  
+  
+  const forceRefreshUser = async() => {
+    await dispatch(refreshTokenThunk())
+  .unwrap() 
+  .catch((err) => {
+    console.log("Refresh attempt failed gracefully:", err);
+  });
 
-  // ------------------------------------------------------------------
-  // LOGIC POLLING CHÍNH (Chạy liên tục khi ở foreground)
-  // ------------------------------------------------------------------
+
+        // 3️⃣ Đóng modal
+        handleCloseModal();
+  }
+  // Logic Polling chính (Chạy liên tục khi ở foreground)
   useEffect(() => {
     let intervalId: number | null = null;
     const POLLING_INTERVAL = 1000; // 1 giây
+    const MAX_POLLING_DURATION = 10 * 60 * 1000; // 10 phút
 
     // 1. Dừng Polling nếu đã thành công
     if (paymentStatus?.toString().toLowerCase() === "completed") {
       if (intervalId) clearInterval(intervalId);
       Alert.alert("Thành công! 🎉", "Tài khoản của bạn đã được nâng cấp!");
+      forceRefreshUser();
       return;
     }
 
     // 2. Bắt đầu Polling: Chỉ Polling khi Modal mở, có ID giao dịch và chưa thành công
-    if (isModalVisible && transactionId) {
+    if (isModalVisible && transactionId && pollingStartTime) {
       setTimeout(() => {
         intervalId = setInterval(() => {
+          const elapsedTime = Date.now() - pollingStartTime;
+
+          // Kiểm tra nếu đã quá 10 phút
+          if (elapsedTime >= MAX_POLLING_DURATION) {
+            if (intervalId) clearInterval(intervalId);
+            console.log("🛑 Polling stopped after 10 minutes");
+            Alert.alert(
+              "Hết thời gian",
+              "Đã hết thời gian thanh toán (10 phút). Vui lòng thử lại."
+            );
+            handleCloseModal();
+            return;
+          }
+
           dispatch(fetchPaymentStatus(transactionId));
-          console.log("⏳ Checking payment status for:", transactionId);
+          console.log(
+            `⏳ Checking payment status (${Math.floor(elapsedTime / 1000)}s)`
+          );
         }, POLLING_INTERVAL);
       }, 2000);
     }
@@ -149,13 +233,33 @@ export default function SubscriptionScreen() {
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
-        console.log("🛑Payment status check stopped.");
+        console.log("🛑 Payment status check stopped.");
       }
     };
-  }, [isModalVisible, transactionId, paymentStatus, dispatch]);
-  // ------------------------------------------------------------------
-  // END LOGIC POLLING CHÍNH
-  // ------------------------------------------------------------------
+  }, [
+    isModalVisible,
+    transactionId,
+    paymentStatus,
+    pollingStartTime,
+    dispatch,
+  ]);
+
+  const formatExpiryDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // Tính số ngày còn lại
+  const getDaysRemaining = (dateString: string) => {
+    const expiryDate = new Date(dateString);
+    const today = new Date();
+    const diffTime = expiryDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
 
   const handleSaveQRImage = async () => {
     if (!qrImageUrl) return;
@@ -173,7 +277,7 @@ export default function SubscriptionScreen() {
       await MediaLibrary.saveToLibraryAsync(fileUri);
       Alert.alert("Thành công", "Đã lưu ảnh QR vào thư viện của bạn!");
     } catch (error) {
-      console.error(error);
+      console.warn(error);
       Alert.alert("Lỗi", "Không thể lưu ảnh, vui lòng thử lại.");
     }
   };
@@ -243,17 +347,15 @@ export default function SubscriptionScreen() {
                 {item.free}
               </Text>
               <Text style={[styles.cellText, { flex: 1, textAlign: "center" }]}>
-                {item.pro}
+                {item.premium}
               </Text>
             </View>
           ))}
         </View>
         <View style={styles.planContainer}>
-          {subscriptionPlans.map((plan) => {
-            if (plan.price === 0 || plan.durationInDays === 9999) {
-              return null;
-            }
-            return (
+          {subscriptionPlans
+            .filter((plan) => plan.price !== 0 && plan.durationInDays !== 9999)
+            .map((plan) => (
               <TouchableOpacity
                 key={plan.id}
                 style={[
@@ -271,27 +373,75 @@ export default function SubscriptionScreen() {
                   {plan.durationInDays >= 365 ? "1 năm" : "1 tháng"}
                 </Text>
               </TouchableOpacity>
-            );
-          })}
+            ))}
         </View>
-        {/* Nút nâng cấp */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handlePaymentURlCreate} // Gọi hàm mở Modal
-        >
-          <Text style={[styles.buttonText, { fontFamily: FONTS.semiBold }]}>
-            Nâng cấp tài khoản của bạn ngay bây giờ!
-          </Text>
-        </TouchableOpacity>
+        {isPro ? (
+          <View
+            style={{
+              backgroundColor: "#E7F8ED",
+              borderRadius: 10,
+              paddingVertical: 14,
+              paddingHorizontal: 12,
+              marginVertical: 24,
+              alignItems: "center",
+            }}
+          >
+            <Text
+              style={{
+                color: color.dark_green,
+                fontFamily: FONTS.semiBold,
+                fontSize: 15,
+                textAlign: "center",
+              }}
+            >
+              Bạn đang sử dụng gói
+              <Text style={{ color: color.green }}> PREMIUM</Text>
+            </Text>
+            {user?.currentSubscriptionExpiresAt && (
+              <>
+                <Text
+                  style={{
+                    marginTop: 6,
+                    color: color.black,
+                    fontFamily: FONTS.regular,
+                    fontSize: 13,
+                    textAlign: "center",
+                  }}
+                >
+                  Còn lại {getDaysRemaining(user.currentSubscriptionExpiresAt)}{" "}
+                  ngày
+                </Text>
+                <Text
+                  style={{
+                    color: color.gray_dark,
+                    fontFamily: FONTS.regular,
+                    fontSize: 13,
+                    textAlign: "center",
+                  }}
+                >
+                  Hết hạn vào ngày{" "}
+                  {formatExpiryDate(user.currentSubscriptionExpiresAt)}
+                </Text>
+              </>
+            )}
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handlePaymentURlCreate}
+          >
+            <Text style={[styles.buttonText, { fontFamily: FONTS.semiBold }]}>
+              Nâng cấp tài khoản của bạn ngay bây giờ!
+            </Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       <Modal
         animationType="slide"
         transparent={true}
         visible={isModalVisible}
-        onRequestClose={() => {
-          setIsModalVisible(false);
-        }}
+        onRequestClose={handleCloseModal}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -300,14 +450,36 @@ export default function SubscriptionScreen() {
               <Text style={[styles.modalTitle, { fontFamily: FONTS.semiBold }]}>
                 Thanh toán cho gói {currentPlan?.planName || "Đang chọn..."}
               </Text>
-              <TouchableOpacity onPress={() => setIsModalVisible(false)}>
+              <TouchableOpacity onPress={handleCloseModal}>
                 <MaterialIcons name="close" size={28} color={color.gray_dark} />
               </TouchableOpacity>
             </View>
 
             <Text style={styles.modalSubtitle}>
-              Vui lòng quét mã QR dưới đây để thanh toán.
+              Vui lòng quét mã QR dưới đây để thanh toán.{"\n"}
+              Vui lòng thực hiện việc chuyển tiền trong{" "}
+              <Text style={{ fontWeight: "bold", color: "red" }}>10 phút</Text>.
+              {"\n\n"}
+              Nếu việc thanh toán gặp trục trặc, vui lòng liên hệ với chúng tôi
+              qua{"\n"}
+              Email:{" "}
+              <Text style={{ fontWeight: "bold" }}>
+                pentasmartcalo@gmail.com
+              </Text>
             </Text>
+
+            {/* Hiển thị thời gian còn lại */}
+            <View style={styles.timerContainer}>
+              <Ionicons
+                name="time-outline"
+                size={18}
+                color={color.dark_green}
+              />
+              <Text style={styles.timerText}>
+                Thời gian còn lại: {Math.floor(timeRemaining / 60)}:
+                {(timeRemaining % 60).toString().padStart(2, "0")}
+              </Text>
+            </View>
 
             {/* Hiển thị QR Code hoặc Loading / Lỗi */}
             {qrLoading ? (
@@ -347,7 +519,7 @@ export default function SubscriptionScreen() {
               Số tiền: {currentPlan?.price.toLocaleString() || 0} VND
             </Text>
 
-            {/* ✨ HIỂN THỊ TRẠNG THÁI THANH TOÁN (tùy chọn) */}
+            {/* Hiển thị trạng thái thanh toán */}
             <View style={styles.statusBox}>
               {paymentStatus === "Pending" && (
                 <View style={styles.statusRow}>
@@ -387,7 +559,6 @@ export default function SubscriptionScreen() {
                 </Text>
               )}
             </View>
-            {/* END: HIỂN THỊ TRẠNG THÁI */}
 
             <TouchableOpacity
               style={styles.saveButton}
@@ -517,10 +688,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: "center",
   },
-  // ✨ STYLES CHO MODAL
   modalOverlay: {
     flex: 1,
-    justifyContent: "flex-end", // Đẩy modal lên từ dưới
+    justifyContent: "flex-end",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
@@ -545,7 +715,24 @@ const styles = StyleSheet.create({
   modalSubtitle: {
     fontSize: 14,
     color: color.gray_dark,
-    marginBottom: 20,
+    marginBottom: 12,
+  },
+  timerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF9E6",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+    alignSelf: "center",
+  },
+  timerText: {
+    fontSize: 14,
+    color: color.dark_green,
+    fontFamily: FONTS.semiBold,
+    marginLeft: 6,
   },
   qrImage: {
     width: 300,
@@ -576,7 +763,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: FONTS.medium,
   },
-  // ✨ STYLES MỚI CHO TRẠNG THÁI THANH TOÁN
   statusBox: {
     marginVertical: 15,
     paddingHorizontal: 10,

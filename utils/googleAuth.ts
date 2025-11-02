@@ -14,7 +14,7 @@ export const useGoogleAuth = () => {
       console.log('User Info:', userInfo);
       return userInfo.data?.idToken;
     } catch (error: any) {
-      console.error('Google Sign-In error:', error.code, error.message);
+      console.warn('Google Sign-In error:', error.code, error.message);
       throw error;
     }
   };
@@ -23,7 +23,7 @@ export const useGoogleAuth = () => {
     try {
       await GoogleSignin.signOut();
     } catch (error) {
-      console.error('Google Sign-Out error:', error);
+      console.warn('Google Sign-Out error:', error);
     }
   };
 

@@ -5,7 +5,7 @@ export const saveBooleanData = async (key: string, value: boolean) => {
   try {
     await AsyncStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error('Error saving boolean data', error);
+    console.warn('Error saving boolean data', error);
   }
 };
 
@@ -15,7 +15,7 @@ export const getBooleanData = async (key: string): Promise<boolean> => {
     const value = await AsyncStorage.getItem(key);
     return value !== null ? JSON.parse(value) : false;
   } catch (error) {
-    console.error('Error getting boolean data', error);
+    console.warn('Error getting boolean data', error);
     return false;
   }
 };
@@ -25,7 +25,7 @@ export const saveStringData = async (key: string, value: string) => {
   try {
     await AsyncStorage.setItem(key, value);
   } catch (error) {
-    console.error('Error saving string data', error);
+    console.warn('Error saving string data', error);
   }
 };
 
@@ -35,7 +35,7 @@ export const getStringData = async (key: string): Promise<string> => {
     const value = await AsyncStorage.getItem(key);
     return value !== null ? value : '';
   } catch (error) {
-    console.error('Error getting string data', error);
+    console.warn('Error getting string data', error);
     return '';
   }
 };
@@ -45,7 +45,7 @@ export const deleteLongTermData = async (key: string) => {
   try {
     await AsyncStorage.removeItem(key);
   } catch (error) {
-    console.error('Error deleting data', error);
+    console.warn('Error deleting data', error);
   }
 };
 
@@ -54,7 +54,7 @@ export const saveNumberData = async (key: string, value: number) => {
   try {
     await AsyncStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error('Error saving number data', error);
+    console.warn('Error saving number data', error);
   }
 };
 
@@ -67,7 +67,7 @@ export const getNumberData = async (
     const value = await AsyncStorage.getItem(key);
     return value !== null ? JSON.parse(value) : defaultValue;
   } catch (error) {
-    console.error('Error getting number data', error);
+    console.warn('Error getting number data', error);
     return defaultValue;
   }
 };

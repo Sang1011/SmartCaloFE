@@ -53,10 +53,11 @@ export function useRedirect(ready?: boolean) {
       } else if (!hasloggedIn) {
         router.replace("/login");
       } else {
-        router.replace("/login");
+    console.warn("user is NULL despite HAS_LOGGED_IN being TRUE. Session compromised, forcing LOGIN.");
+    router.replace("/login"); // <-- Thay đổi TABS thành LOGIN
       }
     } catch (error) {
-      console.error('Error checking flags in useRedirect:', error);
+      console.warn('Error checking flags in useRedirect:', error);
       // Fallback an toàn
       router.replace("/login");
     } finally {

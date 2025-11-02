@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       return updatedStreak;
     } catch (error) {
-      console.error("❌ Failed to sync Firebase streak:", error);
+      console.warn("❌ Failed to sync Firebase streak:", error);
       // ✅ Không throw error - streak sync là optional
     }
   }, []);
@@ -181,7 +181,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return false;
     } catch (err: any) {
       const errorMessage = err?.message || "Đăng nhập Google thất bại";
-      console.error("❌ Google login error:", errorMessage);
+      console.warn("❌ Google login error:", errorMessage);
       if (isMounted.current) setAuthError(errorMessage);
       return false;
     } finally {
@@ -208,7 +208,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       navigateCustom("/login");
       
     } catch (err: any) {
-      console.error("❌ Logout error:", err);
+      console.warn("❌ Logout error:", err);
       
       // ✅ Dù có lỗi vẫn clear error và navigate
       clearError();

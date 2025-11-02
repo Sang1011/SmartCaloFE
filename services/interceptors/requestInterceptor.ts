@@ -22,7 +22,7 @@ export const requestInterceptor = {
 
       return config;
     } catch (error) {
-      console.error('Error in request interceptor:', error);
+      console.warn('Error in request interceptor:', error);
       return config;
     }
   },

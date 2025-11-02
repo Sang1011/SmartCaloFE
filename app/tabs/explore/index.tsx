@@ -44,7 +44,6 @@ export const healthGoalOptions = [
   { label: "Tăng cơ", labelEN: "GainMuscle", value: HealthGoal.GainMuscle },
 ];
 
-
 export default function ExploreScreen() {
   const route = useRoute();
   const dispatch = useAppDispatch();
@@ -65,6 +64,7 @@ export default function ExploreScreen() {
   const [totalDays, setTotalDays] = useState<number>(0);
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [isPlanCompleted, setIsPlanCompleted] = useState<boolean>(false);
+  const [isPro, setIsPro] = useState<boolean>(false);
 
   // 🔹 CONST ĐỂ CHECK UI CHÚC MỪNG
   const SHOW_CONGRATS_UI = isPlanCompleted;
@@ -80,7 +80,10 @@ export default function ExploreScreen() {
     console.warn("UserStats", user?.userStats);
     if (user?.id) {
       fetchUserFromFirebase(user.id);
-      fetchCurrentMenu(user.id);
+      if (user.currentPlanId !== 1) {
+        setIsPro(true);
+        fetchCurrentMenu(user.id);
+      }
     }
   }, [user]);
 
@@ -99,52 +102,52 @@ export default function ExploreScreen() {
 
   const calculatePlanDetails = () => {
     if (!user || !userFromFB || !userFromFB.firstLoginDate) return;
-  
+
     const firstLoginTimestamp = userFromFB.firstLoginDate;
     const targetMonths = user.targetMonths || 1;
-  
+
     // 🔹 Normalize về 00:00:00 của ngày
     const startDate = normalizeDate(new Date(firstLoginTimestamp));
     const formattedStart = formatDate(startDate);
     setStartDateFormatted(formattedStart);
-  
+
     // 🔹 Tính ngày kết thúc
     const endDate = new Date(startDate);
     endDate.setMonth(endDate.getMonth() + targetMonths);
     const formattedEnd = formatDate(endDate);
     setEndDateFormatted(formattedEnd);
-  
+
     // 🔹 Tổng số ngày trong kế hoạch
     const totalDaysInPlan = Math.floor(
       (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
     );
     setTotalDays(totalDaysInPlan);
-  
+
     // 🔹 Normalize today về 00:00:00
     const today = normalizeDate(new Date());
-    
+
     // 🔹 Số ngày đã qua (từ startDate đến today)
     const daysElapsed = Math.floor(
       (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
     );
-    
-    // ✅ FIX: 
+
+    // ✅ FIX:
     // - Nếu cùng ngày (daysElapsed = 0) → completed = 1 (ngày đầu tiên)
     // - Nếu qua 1 ngày (daysElapsed = 1) → completed = 2 (ngày thứ 2)
     // - Không được vượt quá totalDaysInPlan
     const completed = Math.min(daysElapsed, totalDaysInPlan);
     setDaysCompleted(completed);
-  
+
     // 🔹 Tính phần trăm tiến độ
     const percent =
       totalDaysInPlan > 0 ? Math.round((completed / totalDaysInPlan) * 100) : 0;
     setProgressPercent(Math.min(percent, 100));
-  
+
     // 🔹 Kiểm tra kế hoạch đã hoàn thành chưa
     const isCompleted = today >= endDate;
     setIsPlanCompleted(isCompleted);
-    
-    console.log('📊 Plan calculation:', {
+
+    console.log("📊 Plan calculation:", {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
       today: today.toISOString(),
@@ -152,9 +155,9 @@ export default function ExploreScreen() {
       completed,
       totalDaysInPlan,
       percent,
-      'startDate normalized': startDate.getTime(),
-      'today normalized': today.getTime(),
-      'time diff (ms)': today.getTime() - startDate.getTime(),
+      "startDate normalized": startDate.getTime(),
+      "today normalized": today.getTime(),
+      "time diff (ms)": today.getTime() - startDate.getTime(),
     });
   };
 
@@ -164,21 +167,23 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     if (!user || !userFromFB) return;
-  
+
     // Check mỗi phút xem đã qua ngày mới chưa
     const checkNewDay = setInterval(() => {
       const now = new Date();
       const lastCheck = new Date(userFromFB.lastActiveDate || 0);
-      
+
       // Nếu ngày khác nhau → recalculate
-      if (now.getDate() !== lastCheck.getDate() || 
-          now.getMonth() !== lastCheck.getMonth() ||
-          now.getFullYear() !== lastCheck.getFullYear()) {
-        console.log('🌅 New day detected, recalculating...');
+      if (
+        now.getDate() !== lastCheck.getDate() ||
+        now.getMonth() !== lastCheck.getMonth() ||
+        now.getFullYear() !== lastCheck.getFullYear()
+      ) {
+        console.log("🌅 New day detected, recalculating...");
         calculatePlanDetails();
       }
     }, 60000); // Check mỗi 1 phút
-  
+
     return () => clearInterval(checkNewDay);
   }, [user, userFromFB]);
 
@@ -193,7 +198,7 @@ export default function ExploreScreen() {
     try {
       await dispatch(fetchMenuByUserId({ userId: id }));
     } catch (err) {
-      console.error("❌ Error fetching current menu:", err);
+      console.warn("❌ Error fetching current menu:", err);
     }
   };
 
@@ -205,7 +210,7 @@ export default function ExploreScreen() {
         console.log("✅ Firebase user loaded:", fbUser);
       }
     } catch (err) {
-      console.error("❌ Error fetching Firebase user:", err);
+      console.warn("❌ Error fetching Firebase user:", err);
     }
   };
 
@@ -467,37 +472,82 @@ export default function ExploreScreen() {
                 />
               </View>
 
+              <View style={styles.header}>
+                <Text style={styles.title}>Thực đơn đang áp dụng</Text>
+              </View>
               {/* --- Current Menu Section --- */}
-              {hasCurrentMenu && menuByUserId ? (
-                <CurrentMenuCard
-                  menuId={menuByUserId?.id}
-                  title={menuByUserId?.menuName}
-                  minCalorie={menuByUserId.dailyCaloriesMin}
-                  maxCalorie={menuByUserId.dailyCaloriesMax}
-                  image={menuByUserId.imageUrl}
-                  onChange={() => console.log("Thay đổi thực đơn")}
-                />
-              ) : (
-                <View style={[styles.emptyBox, { marginBottom: 28 }]}>
-                  <Ionicons
-                    name="restaurant-outline"
-                    size={36}
-                    color={color.dark_green}
-                  />
-                  <Text style={styles.emptyText}>Bạn chưa chọn thực đơn</Text>
-                  <SCButton
-                    title="Chọn thực đơn ngay"
-                    bgColor={color.dark_green}
-                    color={color.white}
-                    borderRadius={20}
-                    width={200}
-                    height={45}
-                    fontSize={14}
-                    fontFamily={FONTS.semiBold}
-                    onPress={() => handleRedirect("/tabs/recipe")}
-                  />
-                </View>
-              )}
+              <View style={styles.menuWrapper}>
+                {hasCurrentMenu && menuByUserId ? (
+                  <View style={!isPro && styles.blurredContent}>
+                    <CurrentMenuCard
+                      menuId={menuByUserId?.id}
+                      title={menuByUserId?.menuName}
+                      minCalorie={menuByUserId.dailyCaloriesMin}
+                      maxCalorie={menuByUserId.dailyCaloriesMax}
+                      image={menuByUserId.imageUrl}
+                      onChange={() => console.log("Thay đổi thực đơn")}
+                    />
+                  </View>
+                ) : (
+                  <View
+                    style={[
+                      styles.emptyBox,
+                      { marginBottom: 28 },
+                      !isPro && styles.blurredContent,
+                    ]}
+                  >
+                    <Ionicons
+                      name="restaurant-outline"
+                      size={36}
+                      color={color.dark_green}
+                    />
+                    <Text style={styles.emptyText}>Bạn chưa chọn thực đơn</Text>
+                    <SCButton
+                      title="Chọn thực đơn ngay"
+                      bgColor={color.dark_green}
+                      color={color.white}
+                      borderRadius={20}
+                      width={200}
+                      height={45}
+                      fontSize={14}
+                      fontFamily={FONTS.semiBold}
+                      onPress={() => handleRedirect("/tabs/recipe")}
+                    />
+                  </View>
+                )}
+
+                {/* ✅ Overlay khóa khi chưa Premimum */}
+                {!isPro && (
+                  <View style={styles.lockOverlay}>
+                    <View style={styles.lockContent}>
+                      <FontAwesome5
+                        name="lock"
+                        size={48}
+                        color={color.dark_green}
+                      />
+                      <Text style={styles.lockTitle}>
+                        Nâng cấp lên Premimum
+                      </Text>
+                      <Text style={styles.lockMessage}>
+                        Để sử dụng tính năng thực đơn
+                      </Text>
+                      <SCButton
+                        title="Nâng cấp ngay"
+                        bgColor={color.dark_green}
+                        color={color.white}
+                        borderRadius={20}
+                        width={180}
+                        height={45}
+                        fontSize={14}
+                        fontFamily={FONTS.semiBold}
+                        onPress={() => {
+                          navigateCustom("/subscription");
+                        }}
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
             </>
           )}
         </ScrollView>
@@ -539,10 +589,62 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   congratsContent: {
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 32,
+  },
+  menuWrapper: {
+    position: "relative",
+    marginBottom: 16,
+  },
+  blurredContent: {
+    opacity: 0.3,
+  },
+  lockOverlay: {
+    marginBottom: 80,
+    position: "absolute",
+    height: 200,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: color.dark_green,
+    borderStyle: "dashed",
+  },
+  lockContent: {
+    alignItems: "center",
+    padding: 24,
+  },
+  lockTitle: {
+    fontSize: 20,
+    fontFamily: FONTS.bold,
+    color: color.dark_green,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  lockMessage: {
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    color: color.dark_green,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 16,
+    fontFamily: FONTS.bold,
+    color: color.black,
   },
   congratsTitle: {
     fontSize: 32,

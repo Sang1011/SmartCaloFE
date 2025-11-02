@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -64,6 +65,7 @@ export default function ChatBoxScreen() {
 
   const [inputText, setInputText] = useState("");
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [isPro,setIsPro] = useState<boolean>(false);
 
   // ✅ Lấy user khi mới vào
   useEffect(() => {
@@ -71,6 +73,15 @@ export default function ChatBoxScreen() {
   }, []);
 
   // ✅ Khi có session → fetch message
+
+  useEffect(() => {
+    if(user){
+      if(user.currentPlanId !== 1){
+        setIsPro(true);
+      }
+    }
+  }, [user])
+
   useEffect(() => {
     if (!currentSessionId) return;
     dispatch(
@@ -86,6 +97,24 @@ export default function ChatBoxScreen() {
 
   // ✅ Gửi tin nhắn
   const handleSend = async () => {
+    if(!isPro){
+      Alert.alert(
+        "Nâng cấp tài khoản",
+        "Vui lòng nâng cấp tài khoản của bạn lên bản trả phí để sử dụng tính năng này!",
+        [
+          {
+            text: "Nâng cấp ngay",
+            style: "default",
+            onPress: () => navigateCustom("/subscription"),
+          },
+          {
+            text: "Rời khỏi",
+            style: "destructive",
+          },
+        ]
+      );
+      return;
+    }
     const trimmed = inputText.trim();
     if (!trimmed || !user?.id) return;
 
@@ -134,7 +163,7 @@ export default function ChatBoxScreen() {
         console.warn("❌ Lỗi gửi tin nhắn:", res.payload);
       }
     } catch (err) {
-      console.error("❌ Exception during API call:", err);
+      console.warn("❌ Exception during API call:", err);
     }
 
     setTimeout(() => {

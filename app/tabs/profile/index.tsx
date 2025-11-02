@@ -3,25 +3,23 @@ import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { useAuth } from "@contexts/AuthContext";
 import {
-  Feather,
   FontAwesome5,
   Ionicons,
-  MaterialIcons,
+  MaterialIcons
 } from "@expo/vector-icons";
-import { deleteAccountThunk, fetchCurrentUserThunk } from "@features/users";
+import { fetchCurrentUserThunk } from "@features/users";
 import { RootState } from "@redux";
 import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
 import { Link } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 export default function ProfileScreen() {
@@ -35,7 +33,7 @@ export default function ProfileScreen() {
       await logout();
       console.log("Đăng xuất thành công");
     } catch (error) {
-      console.error("Lỗi khi đăng xuất:", error);
+      console.warn("Lỗi khi đăng xuất:", error);
     }
   };
 
@@ -145,51 +143,6 @@ export default function ProfileScreen() {
               <MaterialIcons name="star-outline" size={20} color={color.icon} />
             </View>
             <Text style={styles.menuText}>Đánh giá ứng dụng</Text>
-            <MaterialIcons
-              name="keyboard-arrow-right"
-              size={24}
-              color={color.icon}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => {
-              if (!user?.id) return;
-
-              Alert.alert(
-                "Xác nhận xóa tài khoản",
-                "Hành động này sẽ xóa toàn bộ dữ liệu của bạn và không thể hoàn tác. Bạn có chắc chắn muốn tiếp tục?",
-                [
-                  { text: "Hủy", style: "cancel" },
-                  {
-                    text: "Xóa tài khoản",
-                    style: "destructive",
-                    onPress: async () => {
-                      try {
-                        await dispatch(deleteAccountThunk(user.id)).unwrap();
-                        await logout();
-                        Alert.alert(
-                          "Thành công",
-                          "Tài khoản của bạn đã được xóa vĩnh viễn."
-                        );
-                      } catch (err) {
-                        console.error("Lỗi khi xóa tài khoản:", err);
-                        Alert.alert(
-                          "Lỗi",
-                          "Không thể xóa tài khoản, vui lòng thử lại sau."
-                        );
-                      }
-                    },
-                  },
-                ]
-              );
-            }}
-          >
-            <View style={styles.menuIcon}>
-              <Feather name="trash-2" size={20} color={color.icon} />
-            </View>
-            <Text style={styles.menuText}>Xóa dữ liệu và tài khoản</Text>
             <MaterialIcons
               name="keyboard-arrow-right"
               size={24}

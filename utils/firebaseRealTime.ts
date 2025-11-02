@@ -36,7 +36,7 @@ function parseDate(dateStr: string): number {
 
     return timestamp;
   } catch (error) {
-    console.error('❌ Error parsing date:', dateStr, error);
+    console.warn('❌ Error parsing date:', dateStr, error);
     throw error;
   }
 }
@@ -98,7 +98,7 @@ export async function autoCreateDefaultUser(
     return defaultUser;
     
   } catch (error) {
-    console.error('❌ Lỗi autoCreateDefaultUser:', error);
+    console.warn('❌ Lỗi autoCreateDefaultUser:', error);
     throw new Error(`Không thể tạo user: ${error}`);
   }
 }
@@ -131,7 +131,7 @@ export async function autoUpdateStreaks(
       todayTimestamp = parseDate(today);
       console.log(`📅 Parsed today: ${today} -> ${todayTimestamp}`);
     } catch (error) {
-      console.error(`❌ Invalid date format: ${today}`, error);
+      console.warn(`❌ Invalid date format: ${today}`, error);
       throw new Error(`Invalid date format: ${today}. Expected format: dd-mm-yyyy`);
     }
 
@@ -207,7 +207,7 @@ export async function autoUpdateStreaks(
     return finalData;
 
   } catch (error) {
-    console.error('❌ Lỗi autoUpdateStreaks:', error);
+    console.warn('❌ Lỗi autoUpdateStreaks:', error);
     throw error;
   }
 }
@@ -227,7 +227,7 @@ export async function getUserStreakData(userId: string): Promise<UserStreakData 
 
     return snapshot.val() as UserStreakData;
   } catch (error) {
-    console.error('❌ Lỗi getUserStreakData:', error);
+    console.warn('❌ Lỗi getUserStreakData:', error);
     throw error;
   }
 }
@@ -268,7 +268,7 @@ export async function updateFreeScan(userId: string): Promise<UserStreakData> {
     return updatedUser;
 
   } catch (error) {
-    console.error('❌ Lỗi updateFreeScan:', error);
+    console.warn('❌ Lỗi updateFreeScan:', error);
     throw new Error(`Không thể update free scan: ${error}`);
   }
 }
@@ -291,7 +291,7 @@ export async function getDaysSinceFirstLogin(userId: string): Promise<number | n
     const daysPassed = getDaysDifference(userData.firstLoginDate, now);
     return daysPassed;
   } catch (error) {
-    console.error('❌ Lỗi getDaysSinceFirstLogin:', error);
+    console.warn('❌ Lỗi getDaysSinceFirstLogin:', error);
     return null;
   }
 }

@@ -16,12 +16,12 @@ import { navigateCustom } from "@utils/navigation";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Exercise } from "../../types/excercise";
@@ -94,7 +94,7 @@ export default function ScheduleDetailScreen() {
       );
       setWorkoutExcericeList(validExercises);
     } catch (error) {
-      console.error("Lỗi khi fetch nhiều exercise:", error);
+      console.warn("Lỗi khi fetch nhiều exercise:", error);
     }
   };
 
@@ -117,7 +117,7 @@ export default function ScheduleDetailScreen() {
           await handleFetchManyRequest(workoutExcercise);
         }
       } catch (err) {
-        console.error("❌ Lỗi khi load dữ liệu:", err);
+        console.warn("❌ Lỗi khi load dữ liệu:", err);
       } finally {
         setLoading(false); // ✅ chỉ tắt khi mọi thứ xong
       }

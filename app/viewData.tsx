@@ -147,7 +147,7 @@ export default function ViewData() {
         ).unwrap();
         console.log("Xóa hàng loạt thành công và đã cập nhật nhật ký ngày.");
       } catch (error) {
-        console.error("Lỗi xóa món ăn:", error);
+        console.warn("Lỗi xóa món ăn:", error);
         // Hoàn tác nếu xóa thất bại
         setLocalDeletedItemIds((prevIds) =>
           prevIds.filter((id) => !idsToRemove.includes(id))

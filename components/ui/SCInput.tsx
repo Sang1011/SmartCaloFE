@@ -4,6 +4,7 @@ import {
   StyleSheet,
   TextInput,
   TextInputProps,
+  TouchableOpacity,
   View,
 } from "react-native";
 import Color from "../../constants/color";
@@ -23,6 +24,9 @@ export interface SCInputProps extends TextInputProps {
   height?: number;
   width?: number;
   disabled?: boolean;
+  // Icon cho toggle password (EyeIcon và EyeOffIcon)
+  eyeIcon?: React.ReactNode;
+  eyeOffIcon?: React.ReactNode;
 }
 
 export default function SCInput({
@@ -33,21 +37,28 @@ export default function SCInput({
   fontFamily = FONTS.regular,
   fontSize,
   icon,
-  color, // Màu chữ
-  bgColor, // Màu nền container
+  color,
+  bgColor,
   borderColor,
   height,
   width,
   disabled = false,
+  eyeIcon,
+  eyeOffIcon,
   ...rest
 }: SCInputProps) {
   const inputRef = React.useRef<TextInput>(null);
+  const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
 
   const handlePress = () => {
     inputRef.current?.focus();
   };
+
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible(!isPasswordVisible);
+  };
+
   return (
-    // 1. Áp dụng style màu sắc và kích thước vào Container
     <Pressable
       style={[
         styles.container,
@@ -82,42 +93,47 @@ export default function SCInput({
         value={value}
         placeholderTextColor={Color.light_gray}
         onChangeText={onChangeText}
-        secureTextEntry={variant === "password"}
+        secureTextEntry={variant === "password" && !isPasswordVisible}
         ref={inputRef}
         style={[
           styles.input,
           {
             fontFamily: fontFamily,
             fontSize: fontSize,
-            // 2. Sửa lỗi: Đảm bảo màu chữ luôn là Color.black nếu không được truyền
             color: color || Color.black,
           },
-          // 3. Đảm bảo TextInput lấp đầy chiều cao của container
-          { height: '100%' } 
+          { height: "100%" },
         ]}
         {...rest}
       />
+
+      {/* Toggle Password Icon */}
+      {variant === "password" && (
+        <TouchableOpacity
+          onPress={togglePasswordVisibility}
+          style={styles.eyeIconContainer}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          {isPasswordVisible ? eyeOffIcon : eyeIcon}
+        </TouchableOpacity>
+      )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    // ❌ Đã loại bỏ các giá trị mặc định cho height, bgColor, borderColor ở đây
     paddingHorizontal: 12,
     borderWidth: 1,
     borderRadius: 12,
-    // Đảm bảo không có màu chữ ở đây
     flexDirection: "row",
-    alignItems: "center", 
+    alignItems: "center",
     gap: 10,
   },
   input: {
-    flex: 1, 
-    // Mặc định màu chữ tối (dù là text thường hay ký tự bảo mật)
-    color: Color.black, 
-    // Quan trọng: Bỏ padding dọc vì đã dùng height: '100%' ở style inline
-    paddingVertical: 0, 
+    flex: 1,
+    color: Color.black,
+    paddingVertical: 0,
   },
   iconContainer: {
     justifyContent: "center",
@@ -128,5 +144,10 @@ const styles = StyleSheet.create({
     backgroundColor: Color.light_gray,
     height: "65%",
     alignSelf: "center",
+  },
+  eyeIconContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 4,
   },
 });

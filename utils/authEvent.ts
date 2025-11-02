@@ -15,7 +15,7 @@ class AuthEventEmitter {
       try {
         listener();
       } catch (error) {
-        console.error("Error in auth event listener:", error);
+        console.warn("Error in auth event listener:", error);
       }
     });
   }

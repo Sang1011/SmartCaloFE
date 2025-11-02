@@ -4,11 +4,11 @@ import { Ionicons } from "@expo/vector-icons";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import { navigateCustom } from "@utils/navigation";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { scale } from "react-native-size-matters";
@@ -70,13 +70,15 @@ export default function TermsScreen() {
           bản như:
           {"\n"}- Nhận diện thức ăn (3 lần/ngày)
           {"\n"}- Theo dõi BMI/BMR/TDEE
+          {"\n"}- Tập luyện thể thao
           {"\n"}- Thực đơn cơ bản, ghi nhật ký ăn uống, tra cứu món ăn
           {"\n"}- Kiểm tra điểm danh hàng ngày
+          {"\n"}- Ghi lại lịch sử thay đổi cân nặng và chiều cao
           {"\n"}{"\n"}
           <Text style={styles.bold}>• Gói PREMIUM</Text> — Mở khóa thêm các
           tính năng nâng cao:
           {"\n"}- Nhận diện thức ăn không giới hạn
-          {"\n"}- Tạo thực đơn tùy chỉnh theo cá nhân
+          {"\n"}- Áp dụng thực đơn và tạo thực đơn tùy chỉnh theo cá nhân
           {"\n"}- AI Chatbox tư vấn chế độ ăn
           {"\n"}- Xem chi tiết dinh dưỡng của của bữa ăn đã ghi
           {"\n"}{"\n"}

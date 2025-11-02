@@ -28,7 +28,7 @@ export default function Step12a_TargetMonths({
     }));
   };
 
-  const targetMonths = surveyData.targetMonths || 1;
+  const targetMonths = surveyData.targetMonths || 2;
 
   return (
     <View style={styles.container}>
@@ -42,14 +42,14 @@ export default function Step12a_TargetMonths({
             {targetMonths}
           </Text>
           <Text style={[styles.unitText, globalStyles.semiBold]}>
-            {targetMonths === 1 ? "tháng" : "tháng"}
+            {targetMonths === 2 ? "tháng" : "tháng"}
           </Text>
         </View>
 
         <View style={styles.sliderContainer}>
           <SCSlider
             style={styles.slider}
-            minimumValue={1}
+            minimumValue={2}
             maximumValue={12}
             step={1}
             value={targetMonths}
@@ -57,7 +57,7 @@ export default function Step12a_TargetMonths({
           />
           <View style={styles.labelsContainer}>
             <Text style={[styles.labelText, globalStyles.regular]}>
-              1 tháng
+              2 tháng
             </Text>
             <Text style={[styles.labelText, globalStyles.regular]}>
               12 tháng
