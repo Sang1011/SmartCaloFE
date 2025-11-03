@@ -222,7 +222,9 @@ export default function WorkoutTest({
 
             <TouchableOpacity
               style={[styles.pauseBtn, { backgroundColor: color.white_40 }]}
-              onPress={() => console.log("🚪 Thoát ra")}
+              onPress={() => {
+                navigateCustom("/tabs");
+              }}
             >
               <Text style={styles.pauseBtnText}>Thoát</Text>
             </TouchableOpacity>

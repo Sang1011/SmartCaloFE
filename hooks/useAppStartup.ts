@@ -1,5 +1,6 @@
 import { HAS_LOGGED_IN } from "@constants/app";
-import { hydrateUserThunk, logout, refreshTokenThunk } from "@features/auth/authSlice"; // Import hydrateUserThunk
+import { logout, refreshTokenThunk } from "@features/auth/authSlice";
+import { fetchCurrentUserThunk } from "@features/users";
 import { useAppDispatch } from "@redux/hooks";
 import { getAccessToken, getRefreshToken, saveBooleanData } from "@stores";
 import { useEffect, useState } from "react";
@@ -31,69 +32,88 @@ const decodeToken = (token: string) => {
 const isTokenExpired = (token: string): boolean => {
     const payload = decodeToken(token);
     
-    // Nếu token không decode được hoặc không có exp, coi như hết hạn
     if (!payload?.exp) return true; 
     
     const now = Date.now() / 1000;
-    console.log("payload?.exp", payload?.exp);
-    console.log("now", now);
     return payload.exp < now;
 };
 
 export const useAppStartup = () => {
     const [ready, setReady] = useState(false);
+    const [userHydrated, setUserHydrated] = useState(false);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
+        let timeoutId: ReturnType<typeof setTimeout>;
+
         async function verifyTokens() {
+            // ✅ Timeout sau 10 giây
+            timeoutId = setTimeout(() => {
+                console.warn("⚠️ Startup timeout, forcing ready state");
+                setReady(true);
+            }, 10000);
+
             try {
                 const accessToken = await getAccessToken();
                 const refreshToken = await getRefreshToken();
 
                 if (accessToken && refreshToken) {
-                    let shouldHydrate = true;
-                    
                     if (isTokenExpired(accessToken)) {
                         console.log("Access token expired → refresh...");
                         try {
-                            // Cố gắng refresh token, refreshTokenThunk đã được sửa để hydrate user
-                            await dispatch(refreshTokenThunk()).unwrap(); 
+                            await dispatch(refreshTokenThunk()).unwrap();
                             console.log("Token refresh OK ✅");
                             await saveBooleanData(HAS_LOGGED_IN, true);
-                            shouldHydrate = false; // Đã hydrate trong refreshThunk
+                            
+                            // ✅ Fetch user sau khi refresh token
+                            await dispatch(fetchCurrentUserThunk()).unwrap();
+                            setUserHydrated(true);
+                            console.log("✅ User fetched after refresh");
                         } catch (err) {
-                            console.log("Token refresh failed → logout ❌");
+                            console.log("Token refresh or user fetch failed → logout ❌");
                             await dispatch(logout());
                             await saveBooleanData(HAS_LOGGED_IN, false);
-                            shouldHydrate = false;
+                            setUserHydrated(false);
                         }
                     } else {
                         console.log("Access token still valid ✅");
                         await saveBooleanData(HAS_LOGGED_IN, true);
+                        
+                        // ✅ Fetch user từ API /users/me
+                        console.log("Fetching current user from API...");
+                        try {
+                            await dispatch(fetchCurrentUserThunk()).unwrap();
+                            setUserHydrated(true);
+                            console.log("✅ User fetched successfully");
+                        } catch (error) {
+                            console.warn("❌ Failed to fetch user:", error);
+                            setUserHydrated(false);
+                            await dispatch(logout());
+                            await saveBooleanData(HAS_LOGGED_IN, false);
+                        }
                     }
-                    
-                    // Nếu token còn hiệu lực VÀ chưa được hydrate qua refreshThunk
-                    if (shouldHydrate && accessToken && !isTokenExpired(accessToken)) {
-                        console.log("Hydrating user from current valid token...");
-                        // BƯỚC QUAN TRỌNG: Tải thông tin user từ token vào Redux state
-                        await dispatch(hydrateUserThunk()); 
-                    }
-
                 } else {
                     console.log("No tokens found → logged out");
                     await saveBooleanData(HAS_LOGGED_IN, false);
+                    setUserHydrated(false);
                 }
             } catch (error) {
                 console.warn("Error verifying tokens:", error);
                 await saveBooleanData(HAS_LOGGED_IN, false);
+                setUserHydrated(false);
             } finally {
-                // Đảm bảo setReady(true) chỉ khi đã hoàn tất xác thực VÀ hydrate user
+                clearTimeout(timeoutId);
                 setReady(true);
+                console.log("🎉 App startup complete");
             }
         }
 
         verifyTokens();
+
+        return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+        };
     }, [dispatch]);
 
-    return { ready };
+    return { ready, userHydrated };
 };
