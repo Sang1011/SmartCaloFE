@@ -30,9 +30,10 @@ export const MealDishItem: React.FC<MealDishItemProps> = ({
       ]
     );
   };
+
   return (
     <Pressable style={styles.mealItemContainer}>
-      {item.imageUrl ? (
+      {item ? (
         <Image src={item.imageUrl} style={styles.mealItemImage} />
       ) : (
         <Image source={require("../../assets/images/salad.png")} style={styles.mealItemImage} />
