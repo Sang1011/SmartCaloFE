@@ -76,8 +76,6 @@ export default function NutrionScreen() {
     goal: "loseWeight" as const,
   };
 
-  const dishImageUrl = selectedDish.imageUrl;
-
   return (
     <SafeAreaView edges={["top"]} style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
@@ -94,8 +92,8 @@ export default function NutrionScreen() {
           </View>
 
           <View style={styles.imageContainer}>
-            {dishImageUrl ? (
-              <Image src={dishImageUrl} style={styles.image} />
+            {selectedDish ? (
+              <Image src={selectedDish.imageUrl} style={styles.image} />
             ) : (
               <Image
                 source={require("@assets/images/com-tam.png")}
@@ -134,7 +132,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  image: { width: 200, height: 200, borderRadius: 100, resizeMode: "cover" },
+  image: { width: 200, height: 200, borderRadius: 100, resizeMode: "cover", marginBottom: 15 },
   bodyContainer: {
     backgroundColor: color.white,
     borderTopLeftRadius: 25,

@@ -81,11 +81,11 @@ export default function Dishes() {
         setDishId(extractedId);
         dispatch(fetchDishById(extractedId));
       }
-  
-      return () => {
-        dispatch(clearSelectedDish());
-      };
     }, [id, dispatch]);
+
+    useEffect(() => {
+      console.log("selected: ", selectedDish);
+    }, [selectedDish])
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -192,7 +192,6 @@ export default function Dishes() {
   const dishCategory = selectedDish.category;
   const dishServings = `${selectedDish.servings} suất ăn`;
   const dishDescription = selectedDish.description;
-  const dishImageUrl = selectedDish.imageUrl;
   const calculateNutrion = calculateNutritionPercentages(selectedDish);
 
   const dishIngredients = selectedDish.ingredients
@@ -226,8 +225,8 @@ export default function Dishes() {
             />
           </View>
           <View style={styles.imageContainer}>
-            {dishImageUrl ? (
-              <Image src={dishImageUrl} style={styles.image} />
+            {selectedDish.imageUrl ? (
+              <Image src={selectedDish.imageUrl} style={styles.image} />
             ) : (
               <Image
                 source={require("@assets/images/com-tam.png")}
@@ -607,9 +606,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  image: {
-    marginHorizontal: "auto",
-  },
+  image: { width: 200, height: 200, borderRadius: 100, resizeMode: "cover", marginBottom: 15 },
   bodyContainer: {
     backgroundColor: color.white,
     borderRadius: 25,
