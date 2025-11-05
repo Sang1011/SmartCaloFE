@@ -2,8 +2,11 @@ import color from "@constants/color";
 import { FONTS } from "@constants/fonts";
 import { Ionicons } from "@expo/vector-icons";
 import Feather from '@expo/vector-icons/Feather';
+import { fetchDishById } from "@features/dishes";
+import { RootState } from "@redux";
+import { useAppDispatch, useAppSelector } from "@redux/hooks";
 import { navigateCustom } from "@utils/navigation";
-import React from "react";
+import React, { useEffect } from "react";
 import { Alert, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { MealDish } from "../../types/menu";
 
@@ -30,10 +33,22 @@ export const MealDishItem: React.FC<MealDishItemProps> = ({
       ]
     );
   };
+
+  const dispatch = useAppDispatch();
+    const { selectedDish, loading } = useAppSelector(
+      (state: RootState) => state.dish
+    );
+
+  useEffect(() => {
+    if(item && !item.imageUrl) {
+      dispatch(fetchDishById(item.id));
+    }
+  }, [item])
+
   return (
     <Pressable style={styles.mealItemContainer}>
-      {item.imageUrl ? (
-        <Image src={item.imageUrl} style={styles.mealItemImage} />
+      {selectedDish ? (
+        <Image src={selectedDish.imageUrl} style={styles.mealItemImage} />
       ) : (
         <Image source={require("../../assets/images/salad.png")} style={styles.mealItemImage} />
       )}

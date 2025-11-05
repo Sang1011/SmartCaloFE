@@ -14,16 +14,16 @@ import { navigateCustom } from "@utils/navigation";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { PieChart } from "react-native-gifted-charts/dist";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -48,6 +48,7 @@ export default function Dishes() {
   );
   const [dishId, setDishId] = useState<string | null>(null);
   const [isPredict, setIsPredict] = useState<boolean>(false);
+  const [isMenu, setIsMenu] = useState<boolean>(false);
 
   useEffect(() => {
     dispatch(fetchCurrentUserThunk());
@@ -65,14 +66,26 @@ export default function Dishes() {
       console.warn("⚠️ Không tìm thấy dishId hợp lệ:", id);
     }
 
-    if (predict) {
-      setIsPredict(true);
+    if (menuId) {
+      setIsMenu(true);
     }
 
     return () => {
       dispatch(clearSelectedDish());
     };
   }, [id, menuId, dispatch]);
+
+  useEffect(() => {
+      const extractedId = Array.isArray(id) ? id[0] : id;
+      if (extractedId && typeof extractedId === "string") {
+        setDishId(extractedId);
+        dispatch(fetchDishById(extractedId));
+      }
+  
+      return () => {
+        dispatch(clearSelectedDish());
+      };
+    }, [id, dispatch]);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -204,8 +217,8 @@ export default function Dishes() {
           <View style={styles.gobackButton}>
             <ButtonGoBack
               handleLogic={() => {
-                if (isPredict) {
-                  navigateCustom("/tabs");
+                if (isMenu) {
+                  navigateCustom("/tabs/recipe");
                 } else {
                   navigateCustom("/library");
                 }
