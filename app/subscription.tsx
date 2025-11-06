@@ -194,21 +194,32 @@ export default function SubscriptionScreen() {
     let intervalId: number | null = null;
     const POLLING_INTERVAL = 1000; // 1 giây
     const MAX_POLLING_DURATION = 10 * 60 * 1000; // 10 phút
-
+  
     // 1. Dừng Polling nếu đã thành công
     if (paymentStatus?.toString().toLowerCase() === "completed") {
       if (intervalId) clearInterval(intervalId);
-      Alert.alert("Thành công! 🎉", "Tài khoản của bạn đã được nâng cấp!");
-      forceRefreshUser();
-      return;
+      
+      // Chỉ thực hiện 1 lần duy nhất khi chuyển từ pending -> completed
+      Alert.alert("Thành công! 🎉", "Tài khoản của bạn đã được nâng cấp!", [
+        {
+          text: "OK",
+          onPress: async () => {
+            await forceRefreshUser();
+          }
+        }
+      ]);
+      
+      return; // Dừng effect
     }
-
+  
     // 2. Bắt đầu Polling: Chỉ Polling khi Modal mở, có ID giao dịch và chưa thành công
-    if (isModalVisible && transactionId && pollingStartTime) {
+    if (isModalVisible && transactionId && pollingStartTime && 
+        paymentStatus?.toString().toLowerCase() !== "completed") { // Thêm điều kiện này
+      
       setTimeout(() => {
         intervalId = setInterval(() => {
           const elapsedTime = Date.now() - pollingStartTime;
-
+  
           // Kiểm tra nếu đã quá 10 phút
           if (elapsedTime >= MAX_POLLING_DURATION) {
             if (intervalId) clearInterval(intervalId);
@@ -220,7 +231,7 @@ export default function SubscriptionScreen() {
             handleCloseModal();
             return;
           }
-
+  
           dispatch(fetchPaymentStatus(transactionId));
           console.log(
             `⏳ Checking payment status (${Math.floor(elapsedTime / 1000)}s)`
@@ -228,7 +239,7 @@ export default function SubscriptionScreen() {
         }, POLLING_INTERVAL);
       }, 2000);
     }
-
+  
     // 3. Cleanup Function: Dọn dẹp Interval
     return () => {
       if (intervalId) {

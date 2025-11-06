@@ -2,6 +2,7 @@ import SCButton from "@components/ui/SCButton";
 import SCInput from "@components/ui/SCInput";
 import color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
+import Feather from "@expo/vector-icons/Feather";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { registerThunk } from "@features/auth";
@@ -102,6 +103,8 @@ export default function RegisterScreen() {
             fontFamily={FONTS.regular}
             placeholder="Nhập mật khẩu"
             variant="password"
+            eyeIcon={<Feather name="eye" size={20} color={color.gray} />}
+            eyeOffIcon={<Feather name="eye-off" size={20} color={color.gray} />}
             icon={<MaterialIcons name="password" size={12} color="black" />}
             secureTextEntry={true}
             onChangeText={(text) => setPassword(text)}
@@ -111,6 +114,8 @@ export default function RegisterScreen() {
             fontFamily={FONTS.regular}
             placeholder="Xác nhận mật khẩu"
             variant="password"
+            eyeIcon={<Feather name="eye" size={20} color={color.gray} />}
+            eyeOffIcon={<Feather name="eye-off" size={20} color={color.gray} />}
             icon={<MaterialIcons name="lock-outline" size={12} color="black" />}
             secureTextEntry={true}
             onChangeText={(text) => setConfirmPass(text)}

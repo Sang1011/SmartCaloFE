@@ -101,12 +101,12 @@ export default function SurveyScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [surveyData, setSurveyData] = useState<SurveyData>({
     name: "",
-    age: 0,
-    height: 0,
-    weight: 0,
+    age: 18,
+    height: 150,
+    weight: 50,
     gender: Gender.Male,
     activityLevel: 0,
-    targetWeight: 0,
+    targetWeight: 50,
     targetMonths: 2,
     goal: 0,
   });
