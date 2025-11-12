@@ -5,7 +5,7 @@ import { responseInterceptor } from './interceptors/responseInterceptor';
 
 export const apiClient = axios.create({
   baseURL: Config.API_URL + "api",
-  timeout: 10000,
+  timeout: 80000,
 });
 
 export const apiClientFoodPrediction = axios.create({

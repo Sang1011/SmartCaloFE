@@ -15,6 +15,14 @@ export interface MeBodyRequest {
     updateProfileDto: UpdateProfileDto;
 }
 
+export interface FailedResponse {
+  title: string;
+  status: number;
+  detail: string;
+  instance: string;
+  traceId?: string;
+}
+
 export interface UserDTO {
     id: string; // UUID/GUID format
     email: string;

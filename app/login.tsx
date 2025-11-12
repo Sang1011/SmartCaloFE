@@ -29,7 +29,8 @@ import color from "../constants/color";
 import { FONTS, globalStyles } from "../constants/fonts";
 import { useAuth } from "../contexts/AuthContext";
 import { RegisterANDLoginResponse } from "../types/auth";
-import { UserStatusLabel } from "../types/me";
+import { FailedResponse, UserStatusLabel } from "../types/me";
+
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -82,25 +83,30 @@ export default function LoginScreen() {
     try {
       if (email && password && email.trim() !== "" && password.trim() !== "") {
         await handleRememberAccount();
-
+    
         const resultAction = await dispatch(loginThunk({ email, password }));
-
+    
         if (loginThunk.rejected.match(resultAction)) {
-          // ... (Giữ nguyên logic lỗi)
-          const errorMessage =
-            (resultAction.payload as string) ||
-            "Đăng nhập thất bại không rõ lý do.";
-          Alert.alert("Lỗi Đăng Nhập", "Email hoặc mật khẩu bị sai");
+          const errorPayload = resultAction.payload as FailedResponse | string;
+    
+          let errorMessage = "Đăng nhập thất bại không rõ lý do.";
+          if (typeof errorPayload === "object" && errorPayload.detail) {
+            errorMessage = errorPayload.detail; // ✅ Lấy thông báo chi tiết từ API
+          } else if (typeof errorPayload === "string") {
+            errorMessage = errorPayload;
+          }
+    
+          Alert.alert("Lỗi Đăng Nhập", errorMessage);
           return;
         }
-
-        // 💥 THAY THẾ LOGIC CŨ BẰNG VIỆC LẤY DỮ LIỆU TỪ resultAction
+    
+        // ✅ Nếu thành công, lấy user từ payload
         const loginPayload = resultAction.payload as RegisterANDLoginResponse;
-        const loggedInUser = loginPayload?.userDto; // LẤY DỮ LIỆU USER MỚI NHẤT TẠI ĐÂY
-
+        const loggedInUser = loginPayload?.userDto;
+    
         Alert.alert("Thành công", "Đăng nhập thành công!");
         console.log("user từ payload", loggedInUser);
-
+    
         if (loggedInUser) {
           if (loggedInUser.status === UserStatusLabel.PendingOnboarding) {
             navigateCustom("/survey");
@@ -113,7 +119,6 @@ export default function LoginScreen() {
             navigateCustom("/login");
           }
         } else {
-          // Trường hợp không có userDto trong payload (nên không xảy ra)
           Alert.alert(
             "Lỗi Dữ Liệu",
             "Đăng nhập thành công nhưng không nhận được thông tin người dùng."
@@ -124,10 +129,11 @@ export default function LoginScreen() {
       }
     } catch (error: any) {
       Alert.alert(
-        "Lỗi",
+        "Lỗi Hệ Thống",
         error.message || "Đăng nhập thất bại. Vui lòng thử lại."
       );
     }
+    
   };
 
   const handleGoogleLogin = async () => {
