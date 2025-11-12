@@ -31,6 +31,7 @@ export default function SubscriptionScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [pollingStartTime, setPollingStartTime] = useState<number | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(600); // 600 giây = 10 phút
+  const [hasShownSuccessAlert, setHasShownSuccessAlert] = useState(false);
 
   const dispatch = useAppDispatch();
   const { subscriptionPlans, loading } = useAppSelector(
@@ -41,6 +42,7 @@ export default function SubscriptionScreen() {
     useAppSelector((state: RootState) => state.payment);
   const { user } = useAppSelector((state: RootState) => state.user);
   const [isPro, setIsPro] = useState<boolean>(false);
+
   useEffect(() => {
     if (user) {
       if (user.currentPlanId !== 1) {
@@ -56,6 +58,7 @@ export default function SubscriptionScreen() {
     if (res?.transactionId) {
       setPollingStartTime(Date.now()); // Lưu thời gian bắt đầu
       setTimeRemaining(600); // Reset thời gian còn lại
+      setHasShownSuccessAlert(false); // Reset flag
       setIsModalVisible(true);
     } else {
       Alert.alert("Lỗi", "Không thể tạo QR. Vui lòng thử lại!");
@@ -66,6 +69,7 @@ export default function SubscriptionScreen() {
     setIsModalVisible(false);
     setPollingStartTime(null);
     setTimeRemaining(600);
+    setHasShownSuccessAlert(false); // Reset flag
   };
 
   const features = [
@@ -101,7 +105,7 @@ export default function SubscriptionScreen() {
   const checkToken = async () => {
     console.warn("accessToken", await getAccessToken());
     console.warn("refreshToken", await getRefreshToken());
-  }
+  };
 
   useEffect(() => {
     checkToken();
@@ -176,36 +180,58 @@ export default function SubscriptionScreen() {
     paymentStatus,
     pollingStartTime,
     dispatch,
-  ]);  
-  
-  const forceRefreshUser = async() => {
+  ]);
+
+  const forceRefreshUser = async () => {
     await dispatch(refreshTokenThunk())
-  .unwrap() 
-  .catch((err) => {
-    console.log("Refresh attempt failed gracefully:", err);
-  });
+      .unwrap()
+      .catch((err) => {
+        console.log("Refresh attempt failed gracefully:", err);
+      });
 
+    // Đóng modal
+    handleCloseModal();
+  };
 
-        // 3️⃣ Đóng modal
-        handleCloseModal();
-  }
   // Logic Polling chính (Chạy liên tục khi ở foreground)
   useEffect(() => {
-    let intervalId: number | null = null;
+    let intervalId: NodeJS.Timeout | null = null;
     const POLLING_INTERVAL = 1000; // 1 giây
     const MAX_POLLING_DURATION = 10 * 60 * 1000; // 10 phút
 
     // 1. Dừng Polling nếu đã thành công
-    if (paymentStatus?.toString().toLowerCase() === "completed") {
+    if (
+      paymentStatus?.toString().toLowerCase() === "completed" &&
+      !hasShownSuccessAlert
+    ) {
+      setHasShownSuccessAlert(true);
       if (intervalId) clearInterval(intervalId);
-      Alert.alert("Thành công! 🎉", "Tài khoản của bạn đã được nâng cấp!");
-      forceRefreshUser();
+
+      Alert.alert(
+        "Thành công! 🎉",
+        "Tài khoản của bạn đã được nâng cấp!",
+        [
+          {
+            text: "OK",
+            onPress: async () => {
+              await forceRefreshUser();
+            },
+          },
+        ]
+      );
+
       return;
     }
 
     // 2. Bắt đầu Polling: Chỉ Polling khi Modal mở, có ID giao dịch và chưa thành công
-    if (isModalVisible && transactionId && pollingStartTime) {
+    if (
+      isModalVisible &&
+      transactionId &&
+      pollingStartTime &&
+      paymentStatus?.toString().toLowerCase() !== "completed"
+    ) {
       setTimeout(() => {
+        let intervalId: number | null = null;
         intervalId = setInterval(() => {
           const elapsedTime = Date.now() - pollingStartTime;
 
@@ -242,6 +268,7 @@ export default function SubscriptionScreen() {
     paymentStatus,
     pollingStartTime,
     dispatch,
+    hasShownSuccessAlert,
   ]);
 
   const formatExpiryDate = (dateString: string) => {

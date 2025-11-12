@@ -2,6 +2,7 @@ import SCButton from "@components/ui/SCButton";
 import SCInput from "@components/ui/SCInput";
 import color from "@constants/color";
 import { FONTS, globalStyles } from "@constants/fonts";
+import Feather from "@expo/vector-icons/Feather";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { registerThunk } from "@features/auth";
@@ -11,6 +12,7 @@ import { Image } from "expo-image";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { FailedResponse } from "../types/me";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
@@ -42,14 +44,21 @@ export default function RegisterScreen() {
       const resultAction = await dispatch(
         registerThunk({ email, password, name: "register" })
       );
+    
       if (registerThunk.rejected.match(resultAction)) {
-        const errorMessage =
-          (resultAction.payload as string) ||
-          "Đăng ký thất bại không rõ lý do.";
+        const errorPayload = resultAction.payload as FailedResponse | string;
+    
+        let errorMessage = "Đăng ký thất bại không rõ lý do.";
+        if (typeof errorPayload === "object" && errorPayload.detail) {
+          errorMessage = errorPayload.detail;
+        } else if (typeof errorPayload === "string") {
+          errorMessage = errorPayload;
+        }
+    
         Alert.alert("Lỗi Đăng Ký", errorMessage);
         return;
       }
-      // await dispatch(loginThunk({ email, password }));
+    
       Alert.alert("Thành công", "Đăng ký thành công!");
       navigateCustom("/login");
     } catch (e) {
@@ -102,6 +111,8 @@ export default function RegisterScreen() {
             fontFamily={FONTS.regular}
             placeholder="Nhập mật khẩu"
             variant="password"
+            eyeIcon={<Feather name="eye" size={20} color={color.gray} />}
+            eyeOffIcon={<Feather name="eye-off" size={20} color={color.gray} />}
             icon={<MaterialIcons name="password" size={12} color="black" />}
             secureTextEntry={true}
             onChangeText={(text) => setPassword(text)}
@@ -111,6 +122,8 @@ export default function RegisterScreen() {
             fontFamily={FONTS.regular}
             placeholder="Xác nhận mật khẩu"
             variant="password"
+            eyeIcon={<Feather name="eye" size={20} color={color.gray} />}
+            eyeOffIcon={<Feather name="eye-off" size={20} color={color.gray} />}
             icon={<MaterialIcons name="lock-outline" size={12} color="black" />}
             secureTextEntry={true}
             onChangeText={(text) => setConfirmPass(text)}
