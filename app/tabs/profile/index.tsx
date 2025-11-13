@@ -15,6 +15,7 @@ import { Link } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Image,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -136,18 +137,18 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => navigateCustom("/tabs/profile/reviewApp")}
+            onPress={() => {
+              const url = "https://apkpure.com/reviews/com.penta.smartcalo";
+              Linking.canOpenURL(url).then((supported) => {
+                if (supported) {
+                  Linking.openURL(url);
+                } else {
+                  console.warn("Cannot open URL:", url);
+                }
+              });
+            }}
           >
-            <View style={styles.menuIcon}>
-              {/* Chọn icon phù hợp, ví dụ Star hoặc Edit */}
-              <MaterialIcons name="star-outline" size={20} color={color.icon} />
-            </View>
-            <Text style={styles.menuText}>Đánh giá ứng dụng</Text>
-            <MaterialIcons
-              name="keyboard-arrow-right"
-              size={24}
-              color={color.icon}
-            />
+            <Text style={styles.menuText}>Đánh giá ứng dụng trên APK Pure</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
