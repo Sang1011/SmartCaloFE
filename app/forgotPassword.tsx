@@ -50,6 +50,7 @@ export default function ForgotPasswordScreen() {
       setStep("otp");
       setCountdown(30);
     } else {
+      console.warn("❌ Forgot password failed", result.payload);
       Alert.alert("Thất bại", `Người dùng không tồn tại`);
     }
   };

@@ -232,28 +232,10 @@ export default function LoginScreen() {
                 Đăng ký ngay
               </Text>
             </Text>
-            <View style={styles.ORContainer}>
+            {/* <View style={styles.ORContainer}>
               <View style={styles.divider}></View>
               <Text style={styles.OR}>hoặc</Text>
               <View style={styles.divider}></View>
-            </View>
-            {/* <View style={styles.groupButton}>
-              <View style={styles.google}>
-                <SCButton
-                  variant="outline"
-                  iconPos="left"
-                  style={styles.buttonCus}
-                  borderRadius={50}
-                  icon={
-                    <Image
-                      source={require("../assets/images/googleIcon.png")}
-                      style={{ width: 20, height: 20 }}
-                    />
-                  }
-                  title="Tiếp tục với google"
-                  onPress={() => handleGoogleLogin()}
-                />
-              </View>
             </View> */}
             <Text style={styles.text}>
               Chúng tôi chỉ chia sẻ thông tin khi có sự đồng ý của bạn
