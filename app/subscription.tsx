@@ -15,15 +15,13 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  AppState,
-  AppStateStatus,
   Image,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 export default function SubscriptionScreen() {
@@ -141,38 +139,82 @@ export default function SubscriptionScreen() {
     }
   }, [isModalVisible, pollingStartTime]);
 
-  // Logic kiểm tra khi quay lại App
+  // Logic Polling chính (Chạy liên tục khi ở foreground)
   useEffect(() => {
-    const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (
-        nextAppState === "active" &&
-        isModalVisible &&
-        transactionId &&
-        pollingStartTime &&
-        paymentStatus?.toString().toLowerCase() !== "completed"
-      ) {
+    // 1. Dừng Polling nếu đã thành công
+    if (
+      paymentStatus?.toString().toLowerCase() === "completed" &&
+      !hasShownSuccessAlert
+    ) {
+      setHasShownSuccessAlert(true);
+
+      Alert.alert(
+        "Thành công! 🎉",
+        "Tài khoản của bạn đã được nâng cấp!",
+        [
+          {
+            text: "OK",
+            onPress: async () => {
+              await forceRefreshUser();
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    // 2. Không bắt đầu polling nếu:
+    // - Modal đã đóng
+    // - Không có transaction ID
+    // - Không có thời gian bắt đầu
+    // - Đã thành công rồi
+    // - Đã show alert rồi
+    if (
+      !isModalVisible ||
+      !transactionId ||
+      !pollingStartTime ||
+      paymentStatus?.toString().toLowerCase() === "completed" ||
+      hasShownSuccessAlert
+    ) {
+      return;
+    }
+
+    const POLLING_INTERVAL = 2000; // 2 giây
+    const MAX_POLLING_DURATION = 10 * 60 * 1000; // 10 phút
+
+    // 3. Bắt đầu polling sau 2 giây
+    const timeoutId = setTimeout(() => {
+      const intervalId = setInterval(() => {
         const elapsedTime = Date.now() - pollingStartTime;
 
-        // Kiểm tra nếu vẫn còn trong 10 phút
-        if (elapsedTime < 10 * 60 * 1000) {
-          console.log(
-            "App returned to foreground. Force checking payment status."
+        // Kiểm tra nếu đã quá 10 phút
+        if (elapsedTime >= MAX_POLLING_DURATION) {
+          clearInterval(intervalId);
+          console.log("🛑 Polling stopped after 10 minutes");
+          Alert.alert(
+            "Hết thời gian",
+            "Đã hết thời gian thanh toán (10 phút). Vui lòng thử lại."
           );
-          dispatch(fetchPaymentStatus(transactionId));
-        } else {
-          console.log("🛑 Polling time expired while app was in background");
           handleCloseModal();
+          return;
         }
-      }
-    };
 
-    const subscription = AppState.addEventListener(
-      "change",
-      handleAppStateChange
-    );
+        console.log(
+          `⏳ Checking payment status (${Math.floor(elapsedTime / 1000)}s)`
+        );
+        dispatch(fetchPaymentStatus(transactionId));
+      }, POLLING_INTERVAL);
 
+      // Cleanup interval khi component unmount hoặc dependencies thay đổi
+      return () => {
+        clearInterval(intervalId);
+        console.log("🛑 Payment status check stopped.");
+      };
+    }, 2000);
+
+    // 4. Cleanup timeout
     return () => {
-      subscription.remove();
+      clearTimeout(timeoutId);
     };
   }, [
     isModalVisible,
@@ -180,6 +222,7 @@ export default function SubscriptionScreen() {
     paymentStatus,
     pollingStartTime,
     dispatch,
+    hasShownSuccessAlert,
   ]);
 
   const forceRefreshUser = async () => {
