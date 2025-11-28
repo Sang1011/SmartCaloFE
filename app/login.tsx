@@ -33,7 +33,9 @@ export default function LoginScreen() {
   const checkEnvironment = async () => {
     try {
       // ✅ Lấy version hiện tại của app
-      const appVersion = Constants.expoConfig?.version || '1.1.0';
+      const appVersion = 
+        Constants.expoConfig?.version ||     // 1. Từ app.json (Expo Go/Dev)
+        '1.0.0';     
       console.log('📱 App version:', appVersion);
 
       // ✅ Check version trước
