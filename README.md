@@ -158,5 +158,5 @@ Dự án này được cấp phép theo [MIT License](LICENSE).
 
 Link: [SmartCaloBE](https://github.com/machgiahao/SmartCaloBE)
 
-- Mạch Gia Hào
-- Trần Trọng Tấn
+- Mạch Gia Hào — [GitHub](https://github.com/machgiahao) - machgiahao0979@gmail.com
+- Trần Trọng Tấn — [GitHub](https://github.com/kirikaza8x) — haveagooddaymr@gmail.com
